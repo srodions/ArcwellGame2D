@@ -1,0 +1,251 @@
+#ifndef E_ENTITY_H_
+#define E_ENTITY_H_
+
+// SPRITES & ANIMATION
+#define SPRITE_COUNT 8
+#define ANIMATION_TIME 200
+// AI
+#define AI_IDLE_MIN_RENEW_TIME 800
+#define AI_IDLE_MAX_RENEW_TIME 1500
+#define AI_CHASE_MIN_RENEW_TIME 400
+#define AI_CHASE_MAX_RENEW_TIME 800
+
+#include "u_utility.h"
+#include "p_physics.h"
+#include "typedefs.h"
+
+/* --- DEFINITIONS --- */
+
+void E_SpritesInit(SDL_Renderer* pRenderer, e_manager_t* pEntManager);
+void E_EntityInit(SDL_Renderer* pRenderer, e_manager_t* pEntManager, int spriteIndex, int posX, int posY);
+
+void E_RemoveEntityFromLoadList(int index, e_manager_t* pEntManager);
+
+void E_EntityWallCollisionCheck(location_t* pLocation, e_manager_t* pEntManager, gamestate_t* pGameState);
+void E_EntityToEntityCollisionCheck(e_manager_t* pEntManager, gamestate_t* pGameState);
+
+void E_AI_Chase(e_manager_t* pEntManager);
+void E_AI_Idle(e_manager_t* pEntManager);
+
+/* --- IMPLEMENTATIONS --- */
+
+#if defined(STB_ENTITY_IMPLEMENTATION)
+
+static SDL_Texture* entity_sprites[2];
+
+void E_SpritesInit(SDL_Renderer* pRenderer, e_manager_t* pEntManager)
+{
+	entity_sprites[0] = IMG_LoadTexture(pRenderer, "res/entity/player.png");
+	entity_sprites[1] = IMG_LoadTexture(pRenderer, "res/entity/skeleton.png");
+}
+
+/*
+ * This function initializes entity (data-oriented style).
+ */
+void E_EntityInit(SDL_Renderer* pRenderer, e_manager_t* pEntManager, int spriteIndex, int posX, int posY)
+{
+	// Texture load
+	pEntManager->sprites[pEntManager->entitiesCount].entityImg = entity_sprites[spriteIndex];
+	pEntManager->sprites[pEntManager->entitiesCount].entitySrc.x = 0;
+	pEntManager->sprites[pEntManager->entitiesCount].entitySrc.y = 0;
+	pEntManager->sprites[pEntManager->entitiesCount].entitySrc.w = ENTITY_SPRITE_SIZE;
+	pEntManager->sprites[pEntManager->entitiesCount].entitySrc.h = ENTITY_SPRITE_SIZE;
+	// Sprite controls
+	pEntManager->sprites[pEntManager->entitiesCount].direction = 'R';
+	pEntManager->sprites[pEntManager->entitiesCount].currentSprite = 0;
+	pEntManager->transforms[pEntManager->entitiesCount].logX = (float) posX;
+	pEntManager->transforms[pEntManager->entitiesCount].logY = (float) posY;
+	// Physics
+	pEntManager->transforms[pEntManager->entitiesCount].hitboxW = ENTITY_SPRITE_SIZE * ENTITY_SPRITE_SCALE - 64;
+	pEntManager->transforms[pEntManager->entitiesCount].hitboxH = ENTITY_SPRITE_SIZE * ENTITY_SPRITE_SCALE;
+	pEntManager->velocities[pEntManager->entitiesCount].gravityAccel = 0.0;
+	// Timers
+	pEntManager->animTimer[pEntManager->entitiesCount].reactionTime = ANIMATION_TIME;
+	pEntManager->aiTimer[pEntManager->entitiesCount].reactionTime = 0;
+	// Flags
+	pEntManager->isMoving[pEntManager->entitiesCount] = false;
+	pEntManager->isFalling[pEntManager->entitiesCount] = false;
+	pEntManager->isIdle[pEntManager->entitiesCount] = false;
+	// AI
+	pEntManager->aiParams[pEntManager->entitiesCount].isCollisionOnLeft = false;
+	pEntManager->aiParams[pEntManager->entitiesCount].isCollisionOnRight = false;
+	++pEntManager->entitiesCount;
+}
+
+/*
+ * This function removes the entity by its index from all of the data arrays
+ * and shifts all the data to the left from removed entity's index.
+ */
+void E_RemoveEntityFromLoadList(int index, e_manager_t* pEntManager)
+{
+	if (index <= 0 || index >= pEntManager->entitiesCount) return;
+
+	for (int i = index; i < pEntManager->entitiesCount - 1; i++)
+	{
+	    pEntManager->aiParams[i] = pEntManager->aiParams[i + 1];
+	    pEntManager->aiTimer[i] = pEntManager->aiTimer[i + 1];
+	    pEntManager->animTimer[i] = pEntManager->animTimer[i + 1];
+	    pEntManager->isFalling[i] = pEntManager->isFalling[i + 1];
+	    pEntManager->isIdle[i] = pEntManager->isIdle[i + 1];
+	    pEntManager->isMoving[i] = pEntManager->isMoving[i + 1];
+	    pEntManager->sprites[i] = pEntManager->sprites[i + 1];
+	    pEntManager->transforms[i] = pEntManager->transforms[i + 1];
+	    pEntManager->velocities[i] = pEntManager->velocities[i + 1];
+	}
+
+	--pEntManager->entitiesCount;
+}
+
+/*
+ * This method checks entity wall collision in all of directions (left, right)
+ */
+void E_EntityWallCollisionCheck(location_t* pLocation, e_manager_t* pEntManager, gamestate_t* pGameState)
+{
+	for (int i = 0; i < pEntManager->entitiesCount; ++i)
+	{
+		if (pEntManager->transforms[i].logX < pLocation->leftWallLength)
+		{
+			pEntManager->transforms[i].logX = (float) pLocation->leftWallLength;
+			pEntManager->aiParams[i].isCollisionOnLeft = true;
+			pLocation->isNextLocation = false;
+		}
+		else pEntManager->aiParams[i].isCollisionOnLeft = false;
+
+		if (pEntManager->transforms[i].logX > LOGICAL_WIDTH - pLocation->rightWallLength)
+		{
+			pEntManager->transforms[i].logX = LOGICAL_WIDTH - pLocation->rightWallLength;
+			pEntManager->aiParams[i].isCollisionOnRight = true;
+			pLocation->isNextLocation = true;
+		}
+		else pEntManager->aiParams[i].isCollisionOnRight = false;
+	}
+
+	/*
+	if (pEntity->base.posY < pLocation->upWallLength)
+	{
+		pEntity->base.posY = pLocation->upWallLength;
+		pEntity->isCollisionOnUp = true;
+	}
+	else pEntity->isCollisionOnUp = false;
+
+	if (pEntity->base.posY + pLocation->downWallLength > LOGICAL_HEIGHT)
+	{
+		pEntity->base.posY = LOGICAL_HEIGHT - pLocation->downWallLength;
+		pEntity->isCollisionOnDown = true;
+	}
+	else pEntity->isCollisionOnDown = false;
+	*/
+}
+
+void E_EntityToEntityCollisionCheck(e_manager_t* pEntManager, gamestate_t* pGameState)
+{
+	if (pEntManager->entitiesCount < 2) return;
+
+	double dt = pGameState->deltaTime;
+
+	for (int i = 0; i < pEntManager->entitiesCount; ++i)
+	{
+		for (int j = i + 1; j < pEntManager->entitiesCount; ++j)
+		{
+			SDL_Rect result;
+
+			SDL_Rect a = {
+				.x = (int) pEntManager->transforms[i].logX,
+				.y = (int) pEntManager->transforms[i].logY,
+				.w = pEntManager->transforms[i].hitboxW,
+				.h = pEntManager->transforms[i].hitboxH
+			};
+
+			SDL_Rect b = {
+				.x = (int) pEntManager->transforms[j].logX,
+				.y = (int) pEntManager->transforms[j].logY,
+				.w = pEntManager->transforms[j].hitboxW,
+				.h = pEntManager->transforms[j].hitboxH
+			};
+
+			if (SDL_IntersectRect(&a, &b, &result))
+			{
+				if (result.w >= result.h)
+				{
+					if (a.y + a.h / 2 < b.y + b.h / 2) 	// Top edge collision
+					{
+						pEntManager->transforms[i].logY -= knockback_strength * dt;
+						pEntManager->transforms[j].logY += knockback_strength * dt;
+					}
+					else								// Bottom edge collision
+					{
+						pEntManager->transforms[i].logY += knockback_strength * dt;
+						pEntManager->transforms[j].logY -= knockback_strength * dt;
+					}
+				}
+				else
+				{
+					if (a.x + a.w / 2 < b.x + b.w / 2)	// Left edge collision
+					{
+						pEntManager->transforms[i].logX -= knockback_strength * dt;
+						pEntManager->transforms[j].logX += knockback_strength * dt;
+					}
+					else								// Right edge collision
+					{
+						pEntManager->transforms[i].logX += knockback_strength * dt;
+						pEntManager->transforms[j].logX -= knockback_strength * dt;
+					}
+				}
+			}
+		}
+	}
+}
+#endif /* STB_ENTITY_IMPLEMENTATION */
+
+#if defined(STB_ENTITY_AI_IMPLEMENTATION)
+/*
+ * This function represents an chasing AI for entities.
+ */
+void E_AI_Chase(e_manager_t* pEntManager)
+{
+	for (int i = 0; i < pEntManager->entitiesCount; ++i)
+	{
+		if (!pEntManager->isChasing[i]) continue;
+
+		pEntManager->isMoving[i] = true;
+
+		if (pEntManager->transforms[i].logX >= pEntManager->transforms[0].logX - ENTITY_SPRITE_SIZE * ENTITY_SPRITE_SCALE
+			|| pEntManager->transforms[i].logX <= pEntManager->transforms[0].logX + ENTITY_SPRITE_SIZE * ENTITY_SPRITE_SCALE)
+		{
+
+		}
+	}
+}
+
+void E_AI_Idle(e_manager_t* pEntManager)
+{
+	for (int i = 0; i < pEntManager->entitiesCount; ++i)
+	{
+		if (!pEntManager->isIdle[i]) continue;
+
+		pEntManager->isMoving[i] = true;
+
+		if (pEntManager->aiParams[i].isCollisionOnLeft)
+			pEntManager->sprites[i].direction = 'R';
+		else if (pEntManager->aiParams[i].isCollisionOnRight)
+			pEntManager->sprites[i].direction = 'L';
+
+		U_ReactionTimerStart(&pEntManager->aiTimer[i]);
+
+		if (U_IsTimeToReact(&pEntManager->aiTimer[i]))
+		{
+			pEntManager->aiTimer[i].reactionTime = AI_IDLE_MIN_RENEW_TIME + rand() % AI_IDLE_MAX_RENEW_TIME;
+			pEntManager->aiParams[i].currentChoice = rand() % 100;
+
+			if (pEntManager->aiParams[i].currentChoice <= 50)
+				pEntManager->sprites[i].direction = 'L';
+			else
+				pEntManager->sprites[i].direction = 'R';
+
+			U_ReactionTimerEnd(&pEntManager->aiTimer[i]);
+		}
+	}
+}
+#endif /* STB_ENTITY_AI_IMPLEMENTATION */
+
+#endif /* E_ENTITY_H_ */
