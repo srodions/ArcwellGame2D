@@ -15,6 +15,7 @@ typedef struct _Keymap
     SDL_Scancode use;
     SDL_Scancode debug;
     SDL_Scancode remove;
+    SDL_Scancode exit;
 } keymap_t;
 
 typedef struct _Keystates
@@ -27,6 +28,7 @@ typedef struct _Keystates
     bool isUse;
     bool isDebug;
     bool isRemove;
+    bool isExit;
 } keystates_t;
 
 enum KBD_KEY_STATE
@@ -35,13 +37,13 @@ enum KBD_KEY_STATE
     KEY_STATE_DOWN
 };
 
-// --- DEFINITIONS ---
+/* --- DEFINITIONS --- */
 void K_InitKeymap();
 void K_HandleKeyboardInput(SDL_Scancode keyScancode, enum KBD_KEY_STATE keyState);
 void K_HandleEvents(SDL_Renderer* pRenderer, gamestate_t* pGameState, e_manager_t* pEntManager);
 void K_HandleKeyStates(SDL_Renderer* pRenderer, gamestate_t* pGameState, e_manager_t* pEntManager);
 
-// --- IMPLEMENTATIONS ---
+/* --- IMPLEMENTATIONS --- */
 #if defined(STB_KEYBOARD_HANDLER_IMPLEMENTATION)
 
 keymap_t keyMap;
@@ -60,6 +62,7 @@ void K_InitKeymap()
     keyMap.use = SDL_SCANCODE_E;
     keyMap.debug = SDL_SCANCODE_T;
     keyMap.remove = SDL_SCANCODE_R;
+    keyMap.exit = SDL_SCANCODE_ESCAPE;
 
     keyStates.isUp = false;
     keyStates.isDown = false;
@@ -69,6 +72,7 @@ void K_InitKeymap()
     keyStates.isUse = false;
     keyStates.isDebug = false;
     keyStates.isRemove = false;
+    keyStates.isExit = false;
 }
 
 /*
@@ -87,6 +91,8 @@ void K_HandleKeyboardInput(SDL_Scancode keyScancode, enum KBD_KEY_STATE keyState
 	else if (keyScancode == keyMap.right)
 		keyStates.isRight = keyState;
 
+	if (keyScancode == keyMap.exit)
+		keyStates.isExit = keyState;
 	if (keyScancode == keyMap.space)
 		keyStates.isSpace = keyState;
 	if (keyScancode == keyMap.use)
@@ -103,6 +109,9 @@ void K_HandleKeyboardInput(SDL_Scancode keyScancode, enum KBD_KEY_STATE keyState
  */
 void K_HandleKeyStates(SDL_Renderer* pRenderer, gamestate_t* pGameState, e_manager_t* pEntManager)
 {
+	if (keyStates.isExit)
+		pGameState->isRunning = false;
+
 	pEntManager->isMoving[0] = keyStates.isLeft || keyStates.isRight;
 
 	if (keyStates.isUp || keyStates.isSpace)
@@ -127,7 +136,7 @@ void K_HandleKeyStates(SDL_Renderer* pRenderer, gamestate_t* pGameState, e_manag
 
 	if (keyStates.isUse && pEntManager->entitiesCount < MAX_ENTITIES)
 	{
-		E_EntityInit(pRenderer, pEntManager, 1, 960, FLOOR_DISTANCE);
+		E_EntityInit(pEntManager, 1, 960, FLOOR_DISTANCE);
 		pEntManager->isIdle[pEntManager->entitiesCount - 1] = true;
 		keyStates.isUse = false;
 	}

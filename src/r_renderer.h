@@ -11,15 +11,14 @@ SDL_Renderer* R_RendererInit(SDL_Window* pWindow);
 font_t R_FontInit();
 
 void R_RenderLocation(SDL_Renderer* pRenderer, location_t* pLocation);
+void R_RenderObject(SDL_Renderer* pRenderer, location_t* pLocation, obj_manager_t* pObjManager);
 void R_RenderEntity(SDL_Renderer* pRenderer,  location_t* pLocation, e_manager_t* pEntity, gamestate_t* pGameState);
 void R_RenderStats(SDL_Renderer* pRenderer, gamestate_t* pGameState, int* entitiesCount);
 
 // --- IMPLEMENTATIONS ---
 #if defined(STB_RENDERER_IMPLEMENTATION)
 
-// --- GLOBAL VARIABLES ---
 font_t font;
-// --- PRIVATE VARIABLES ---
 rtimer_t _debugUpdTimer;
 
 /*
@@ -38,7 +37,7 @@ SDL_Window* R_WindowInit(gamestate_t* pGameState)
 	}
 
 	SDL_Window* pWindow = SDL_CreateWindow(
-		"Arcwell Game 2D ver 0.06",
+		"Arcwell Game 2D ver 0.09",
 		SDL_WINDOWPOS_CENTERED,
 		SDL_WINDOWPOS_CENTERED,
 		0, 0, SDL_WINDOW_FULLSCREEN_DESKTOP
@@ -50,9 +49,8 @@ SDL_Window* R_WindowInit(gamestate_t* pGameState)
 /*
  * This method creates a renderer and checks had been the renderer actually created.
  * If the renderer is NULL when this method tried to create it with the graphics card
- * acceleration, then it will try to create it with software (processor) rendering unit,
- * otherwise, method will send an error message, clear the SDL garbage and return NULL,
- * that need to be handled.
+ * acceleration, then it will try to create it with software renderer, otherwise,
+ * method will send an error message and return NULL, that need to be handled in main().
  */
 SDL_Renderer* R_RendererInit(SDL_Window* pWindow)
 {
@@ -65,9 +63,6 @@ SDL_Renderer* R_RendererInit(SDL_Window* pWindow)
 		if (pRenderer == NULL)
 		{
 			printf("SDL_CreateRenderer Error: %s, ensure that your video drivers had been installed!\n", SDL_GetError());
-			SDL_DestroyWindow(pWindow);
-			SDL_Quit();
-
 			return NULL;
 		}
 	}
@@ -93,6 +88,9 @@ font_t R_FontInit()
 	return font;
 }
 
+/*
+ * TODO: Make it to not render tiles when they out of monitor screen
+ */
 void R_RenderLocation(SDL_Renderer* pRenderer, location_t* pLocation)
 {
 	for (int y = 0; y < pLocation->columns; ++y)
@@ -118,7 +116,37 @@ void R_RenderLocation(SDL_Renderer* pRenderer, location_t* pLocation)
 }
 
 /*
- * This is entity rendering function, that renders all of the entities and displaying them on the screen.
+ * TODO: Make it to not render objects when they out of monitor screen
+ */
+void R_RenderObject(SDL_Renderer* pRenderer, location_t* pLocation, obj_manager_t* pObjManager)
+{
+	for (int i = 0; i < pObjManager->objCount; ++i)
+	{
+		if (pObjManager->isAnimated[i])
+		{
+			U_ReactionTimerStart(&pObjManager->animTimer[i]);
+
+			if (U_IsTimeToReact(&pObjManager->animTimer[i]))
+			{
+				pObjManager->sprites[i].currentSprite = (pObjManager->sprites[i].currentSprite + 1) % OBJ_SPRITE_COUNT;
+				pObjManager->sprites[i].spriteSrc.x = TILE_SPRITE_SIZE * pObjManager->sprites[i].currentSprite;
+
+				U_ReactionTimerEnd(&pObjManager->animTimer[i]);
+			}
+		}
+
+		if (pLocation->isNextLocation)
+			pObjManager->objDest[i].x -= camera_speed;
+
+		SDL_RenderCopy(
+			pRenderer, pObjManager->sprites[i].spriteImg,
+			&pObjManager->sprites[i].spriteSrc, &pObjManager->objDest[i]
+		);
+	}
+}
+
+/*
+ * TODO: Make it to not render entities (or just remove them) when they out of monitor screen
  */
 void R_RenderEntity(SDL_Renderer* pRenderer, location_t* pLocation, e_manager_t* pEntManager, gamestate_t* pGameState)
 {
@@ -155,17 +183,17 @@ void R_RenderEntity(SDL_Renderer* pRenderer, location_t* pLocation, e_manager_t*
 
 			if (U_IsTimeToReact(&pEntManager->animTimer[i]))
 			{
-				pEntManager->sprites[i].currentSprite = (pEntManager->sprites[i].currentSprite + 1) % SPRITE_COUNT;
-				pEntManager->sprites[i].entitySrc.x = ENTITY_SPRITE_SIZE * pEntManager->sprites[i].currentSprite;
+				pEntManager->sprites[i].currentSprite = (pEntManager->sprites[i].currentSprite + 1) % ENTITY_SPRITE_COUNT;
+				pEntManager->sprites[i].spriteSrc.x = ENTITY_SPRITE_SIZE * pEntManager->sprites[i].currentSprite;
 
 				U_ReactionTimerEnd(&pEntManager->animTimer[i]);
 			}
 		}
-		else pEntManager->sprites[i].entitySrc.x = 0;
+		else pEntManager->sprites[i].spriteSrc.x = 0;
 
 		SDL_RenderCopyEx(
-			pRenderer, pEntManager->sprites[i].entityImg,
-			&pEntManager->sprites[i].entitySrc, &pEntManager->entityDest,
+			pRenderer, pEntManager->sprites[i].spriteImg,
+			&pEntManager->sprites[i].spriteSrc, &pEntManager->entityDest,
 			0.0, NULL, pEntManager->sprites[i].flip
 		);
 	}

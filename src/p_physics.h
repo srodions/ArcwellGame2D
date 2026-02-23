@@ -3,10 +3,10 @@
 
 #define FLOOR_DISTANCE 512
 
-// --- DEFINITIONS ---
+/* --- DEFINITIONS --- */
 void P_EntityFallJump(e_manager_t* pEntManager, gamestate_t* pGameState);
 
-// --- IMPLEMENTATIONS ---
+/* --- IMPLEMENTATIONS --- */
 #if defined(STB_PHYSICS_IMPLEMENTATION)
 
 static const float 	gravity = 2200.0f;

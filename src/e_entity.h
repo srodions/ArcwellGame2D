@@ -2,7 +2,8 @@
 #define E_ENTITY_H_
 
 // SPRITES & ANIMATION
-#define SPRITE_COUNT 8
+#define ENTITY_SPRITE_COUNT 8
+#define OBJ_SPRITE_COUNT 5
 #define ANIMATION_TIME 200
 // AI
 #define AI_IDLE_MIN_RENEW_TIME 800
@@ -13,11 +14,11 @@
 #include "u_utility.h"
 #include "p_physics.h"
 #include "typedefs.h"
+#include "l_location.h"
 
 /* --- DEFINITIONS --- */
-
-void E_SpritesInit(SDL_Renderer* pRenderer, e_manager_t* pEntManager);
-void E_EntityInit(SDL_Renderer* pRenderer, e_manager_t* pEntManager, int spriteIndex, int posX, int posY);
+void E_EntitySpritesInit(SDL_Renderer* pRenderer);
+void E_EntityInit(e_manager_t* pEntManager, int spriteIndex, int posX, int posY);
 
 void E_RemoveEntityFromLoadList(int index, e_manager_t* pEntManager);
 
@@ -28,12 +29,11 @@ void E_AI_Chase(e_manager_t* pEntManager);
 void E_AI_Idle(e_manager_t* pEntManager);
 
 /* --- IMPLEMENTATIONS --- */
-
 #if defined(STB_ENTITY_IMPLEMENTATION)
 
 static SDL_Texture* entity_sprites[2];
 
-void E_SpritesInit(SDL_Renderer* pRenderer, e_manager_t* pEntManager)
+void E_EntitySpritesInit(SDL_Renderer* pRenderer)
 {
 	entity_sprites[0] = IMG_LoadTexture(pRenderer, "res/entity/player.png");
 	entity_sprites[1] = IMG_LoadTexture(pRenderer, "res/entity/skeleton.png");
@@ -42,14 +42,14 @@ void E_SpritesInit(SDL_Renderer* pRenderer, e_manager_t* pEntManager)
 /*
  * This function initializes entity (data-oriented style).
  */
-void E_EntityInit(SDL_Renderer* pRenderer, e_manager_t* pEntManager, int spriteIndex, int posX, int posY)
+void E_EntityInit(e_manager_t* pEntManager, int spriteIndex, int posX, int posY)
 {
 	// Texture load
-	pEntManager->sprites[pEntManager->entitiesCount].entityImg = entity_sprites[spriteIndex];
-	pEntManager->sprites[pEntManager->entitiesCount].entitySrc.x = 0;
-	pEntManager->sprites[pEntManager->entitiesCount].entitySrc.y = 0;
-	pEntManager->sprites[pEntManager->entitiesCount].entitySrc.w = ENTITY_SPRITE_SIZE;
-	pEntManager->sprites[pEntManager->entitiesCount].entitySrc.h = ENTITY_SPRITE_SIZE;
+	pEntManager->sprites[pEntManager->entitiesCount].spriteImg = entity_sprites[spriteIndex];
+	pEntManager->sprites[pEntManager->entitiesCount].spriteSrc.x = 0;
+	pEntManager->sprites[pEntManager->entitiesCount].spriteSrc.y = 0;
+	pEntManager->sprites[pEntManager->entitiesCount].spriteSrc.w = ENTITY_SPRITE_SIZE;
+	pEntManager->sprites[pEntManager->entitiesCount].spriteSrc.h = ENTITY_SPRITE_SIZE;
 	// Sprite controls
 	pEntManager->sprites[pEntManager->entitiesCount].direction = 'R';
 	pEntManager->sprites[pEntManager->entitiesCount].currentSprite = 0;
@@ -98,6 +98,7 @@ void E_RemoveEntityFromLoadList(int index, e_manager_t* pEntManager)
 
 /*
  * This method checks entity wall collision in all of directions (left, right)
+ * TODO: Add camera previous location flag (Optional)
  */
 void E_EntityWallCollisionCheck(location_t* pLocation, e_manager_t* pEntManager, gamestate_t* pGameState)
 {
@@ -115,7 +116,11 @@ void E_EntityWallCollisionCheck(location_t* pLocation, e_manager_t* pEntManager,
 		{
 			pEntManager->transforms[i].logX = LOGICAL_WIDTH - pLocation->rightWallLength;
 			pEntManager->aiParams[i].isCollisionOnRight = true;
-			pLocation->isNextLocation = true;
+			if (i == 0 && pLocation->currentLocationIndex < LOCATIONS_MAX_COUNT)
+			{
+				pLocation->isNextLocation = true;
+				++pLocation->currentLocationIndex; // TODO: Remove the crutch later
+			}
 		}
 		else pEntManager->aiParams[i].isCollisionOnRight = false;
 	}
@@ -199,8 +204,9 @@ void E_EntityToEntityCollisionCheck(e_manager_t* pEntManager, gamestate_t* pGame
 
 #if defined(STB_ENTITY_AI_IMPLEMENTATION)
 /*
- * This function represents an chasing AI for entities.
+ * TODO: Make this
  */
+/*
 void E_AI_Chase(e_manager_t* pEntManager)
 {
 	for (int i = 0; i < pEntManager->entitiesCount; ++i)
@@ -216,6 +222,7 @@ void E_AI_Chase(e_manager_t* pEntManager)
 		}
 	}
 }
+*/
 
 void E_AI_Idle(e_manager_t* pEntManager)
 {

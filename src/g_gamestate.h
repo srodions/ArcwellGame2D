@@ -10,14 +10,13 @@
 
 #include "typedefs.h"
 
-// --- DEFINITIONS ---
+/* --- DEFINITIONS --- */
 gamestate_t G_GameInit();
 
 void G_FrameStart();
 void G_FrameEnd(gamestate_t* pGameState);
 
-// --- IMPLEMENTATIONS ---
-
+/* --- IMPLEMENTATIONS --- */
 #if defined(STB_GAME_INIT_IMPLEMENTATION)
 /*
  * This method initializes structure with main parameters and states of the game.

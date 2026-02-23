@@ -2,7 +2,9 @@
 #define TYPEDEFS_H_
 
 #define MAX_ENTITIES 32
-#define MAX_MAP_SIZE 32
+#define MAX_OBJECTS 32
+#define MAX_MAP_COLUMNS 39
+#define MAX_MAP_ROWS 12
 
 typedef struct _GameState
 {
@@ -26,17 +28,24 @@ typedef struct _ReactionTimer
 
 typedef struct _EntitySprite
 {
-	SDL_Texture* 		entityImg;
-	SDL_Rect 			entitySrc;
+	SDL_Texture* 		spriteImg;
+	SDL_Rect 			spriteSrc;
 	SDL_RendererFlip	flip;
 	int					currentSprite;
 	char				direction;
 } e_sprite_t;
 
+typedef struct _ObjSprite
+{
+	SDL_Texture* 	spriteImg;
+	SDL_Rect 		spriteSrc;
+	int				currentSprite;
+} obj_sprite_t;
+
 typedef struct _EntityTransform
 {
 	float 	logX, logY;			// Logical coordinates
-	int		hitboxW, hitboxH; 	// Hit box size
+	int		hitboxW, hitboxH;
 } e_tform_t;
 
 typedef struct _EntityVel
@@ -76,23 +85,26 @@ typedef struct _Tile
 	int			posX, posY;
 } tile_t;
 
-typedef struct _Object
+typedef struct _ObjectManager
 {
-	SDL_Rect 	objSrc;
-	SDL_Rect 	objDest;
-	bool 		isAnimated;
-} object_t;
+	SDL_Rect 		objDest[MAX_OBJECTS];
+	obj_sprite_t	sprites[MAX_OBJECTS];
+	rtimer_t		animTimer[MAX_OBJECTS];
+	bool 			isAnimated[MAX_OBJECTS];
+	int				objCount;
+} obj_manager_t;
 
 typedef struct _Location
 {
 	SDL_Texture* 	tileMap;
 	SDL_Rect		locationDest;
 	FILE* 			locationFile;
-	tile_t 			locationTiles[MAX_MAP_SIZE][MAX_MAP_SIZE];
-	int 			rows;
-	int 			columns;
+	tile_t 			locationTiles[MAX_MAP_COLUMNS][MAX_MAP_ROWS];
+	int				rows;
+	int				columns;
 	int 			leftWallLength;
 	int 			rightWallLength;
+	int				currentLocationIndex;
 	bool			isNextLocation;
 } location_t;
 
