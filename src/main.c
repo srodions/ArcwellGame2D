@@ -19,12 +19,14 @@
 #include <time.h>
 #include <math.h>
 #include <string.h>
+#include "typedefs.h"
+#include "p_physics.h"
+#include "u_utility.h"
+#include "e_entity.h"
 #include "g_gamestate.h"
 #include "k_keyboard.h"
 #include "r_renderer.h"
 #include "l_location.h"
-#include "e_entity.h"
-#include "p_physics.h"
 
 SDL_Window* pWindow;
 SDL_Renderer* pRenderer;
@@ -59,25 +61,27 @@ void loop()
 {
 	while (gameState.isRunning)
 	{
+		// Clear frame
 		G_FrameStart();
 		SDL_SetRenderDrawColor(pRenderer, 0, 0, 0, 255);
 		SDL_RenderClear(pRenderer);
-
+		// Display location
 		R_RenderLocation(pRenderer, &location);
+		// Display objects
 		R_RenderObject(pRenderer, &location, &objManager);
-
-		// Player controls
+		// Handle player input
 		K_HandleEvents(pRenderer, &gameState, &entManager);
-
-		// Entities
+		// Update AI
 		E_AI_Idle(&entManager);
+		// Update physics
 		P_EntityFallJump(&entManager, &gameState);
 		E_EntityWallCollisionCheck(&location, &entManager, &gameState);
 		E_EntityToEntityCollisionCheck(&entManager, &gameState);
-
+		// Display entities
 		R_RenderEntity(pRenderer, &location, &entManager, &gameState);
+		// Display statistics (when in debug mode)
 		R_RenderStats(pRenderer, &gameState, &entManager.entitiesCount);
-
+		// Push frame
 		SDL_RenderPresent(pRenderer);
 		G_FrameEnd(&gameState);
 	}
@@ -88,10 +92,17 @@ int main()
 	init();
 
 	if (pRenderer == NULL || pWindow == NULL)
-		destruct(pWindow, pRenderer, &font, &entManager, &objManager, &location);
+	{
+		L_Destruct(&location, &objManager);
+		E_Destruct(&entManager);
+		R_Destruct(pRenderer, pWindow);
+		return -1;
+	}
 
 	loop();
-	destruct(pWindow, pRenderer, &font, &entManager, &objManager, &location);
+	L_Destruct(&location, &objManager);
+	E_Destruct(&entManager);
+	R_Destruct(pRenderer, pWindow);
 
 	return 0;
 }

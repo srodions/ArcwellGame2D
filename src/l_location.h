@@ -1,20 +1,17 @@
 #ifndef L_LOCATION_H_
 #define L_LOCATION_H_
 
-#define LOCATIONS_MAX_COUNT 1
-
-#include "typedefs.h"
-
 /* --- DEFINITIONS --- */
 location_t L_LocationInit(SDL_Renderer* pRenderer, obj_manager_t* pObjManager, char* locationName);
 tile_t L_TileInit(int srcX, int srcY, int posX, int posY);
 void L_ObjectInit(obj_manager_t* pObjManager, int spriteIndex, int srcX, int srcY, int posX, int posY, bool isAnimated);
 void L_ObjectSetter(obj_manager_t* pObjManager);
+void L_Destruct(location_t* pLocation, obj_manager_t* pObjManager);
 
 /* --- IMPLEMENTATIONS --- */
 #if defined(STB_LOCATION_IMPLEMENTATION)
 
-static SDL_Texture* obj_sprites[3];
+static SDL_Texture* obj_sprites[MAX_OBJ_SPRITES];
 
 void L_ObjectSpritesInit(SDL_Renderer* pRenderer)
 {
@@ -149,7 +146,7 @@ location_t L_LocationInit(SDL_Renderer* pRenderer, obj_manager_t* pObjManager, c
 
 void L_ObjectInit(obj_manager_t* pObjManager, int spriteIndex, int srcX, int srcY, int posX, int posY, bool isAnimated)
 {
-	pObjManager->animTimer[pObjManager->objCount].reactionTime = ANIMATION_TIME;
+	pObjManager->animTimer[pObjManager->objCount].reactionTime = ANIM_TIME;
 	pObjManager->isAnimated[pObjManager->objCount] = isAnimated;
 
 	pObjManager->objDest[pObjManager->objCount].w = TILE_SPRITE_SCALE * TILE_SPRITE_SIZE;
@@ -181,6 +178,28 @@ tile_t L_TileInit(int srcX, int srcY, int posX, int posY)
 	};
 
 	return tile;
+}
+
+/*
+ * Destructor method to clean up all location textures
+ * (Always need to be called in application crash or normal exit!!!)
+ */
+void L_Destruct(location_t* pLocation, obj_manager_t* pObjManager)
+{
+	for (int i = 0; i < pObjManager->objCount; ++i)
+		pObjManager->sprites[i].spriteImg = NULL;
+
+	for (int i = 0; i < MAX_OBJ_SPRITES; ++i)
+	{
+		if (obj_sprites[i] != NULL)
+			SDL_DestroyTexture(obj_sprites[i]);
+	}
+
+	if (pLocation->tileMap != NULL)
+	{
+		SDL_DestroyTexture(pLocation->tileMap);
+		pLocation->tileMap = NULL;
+	}
 }
 #endif /* STB_LOCATION_IMPLEMENTATION */
 

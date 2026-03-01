@@ -1,8 +1,6 @@
 #ifndef P_PHYSICS_H_
 #define P_PHYSICS_H_
 
-#define FLOOR_DISTANCE 512
-
 /* --- DEFINITIONS --- */
 void P_EntityFallJump(e_manager_t* pEntManager, gamestate_t* pGameState);
 

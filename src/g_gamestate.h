@@ -1,15 +1,6 @@
 #ifndef G_GAMESTATE_H_
 #define G_GAMESTATE_H_
 
-#define TILE_SPRITE_SCALE 6
-#define ENTITY_SPRITE_SCALE 5
-#define TILE_SPRITE_SIZE 16
-#define ENTITY_SPRITE_SIZE 32
-#define LOGICAL_WIDTH 1920
-#define LOGICAL_HEIGHT 1080
-
-#include "typedefs.h"
-
 /* --- DEFINITIONS --- */
 gamestate_t G_GameInit();
 

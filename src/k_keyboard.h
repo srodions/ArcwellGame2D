@@ -1,42 +1,6 @@
 #ifndef K_KEYBOARD_H_
 #define K_KEYBOARD_H_
 
-#include "g_gamestate.h"
-#include "e_entity.h"
-#include "p_physics.h"
-
-typedef struct _Keymap
-{
-    SDL_Scancode up;
-    SDL_Scancode down;
-    SDL_Scancode left;
-    SDL_Scancode right;
-    SDL_Scancode space;
-    SDL_Scancode use;
-    SDL_Scancode debug;
-    SDL_Scancode remove;
-    SDL_Scancode exit;
-} keymap_t;
-
-typedef struct _Keystates
-{
-	bool isUp;
-	bool isDown;
-    bool isLeft;
-    bool isRight;
-    bool isSpace;
-    bool isUse;
-    bool isDebug;
-    bool isRemove;
-    bool isExit;
-} keystates_t;
-
-enum KBD_KEY_STATE
-{
-    KEY_STATE_UP,
-    KEY_STATE_DOWN
-};
-
 /* --- DEFINITIONS --- */
 void K_InitKeymap();
 void K_HandleKeyboardInput(SDL_Scancode keyScancode, enum KBD_KEY_STATE keyState);

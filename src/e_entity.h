@@ -1,37 +1,20 @@
 #ifndef E_ENTITY_H_
 #define E_ENTITY_H_
 
-// SPRITES & ANIMATION
-#define ENTITY_SPRITE_COUNT 8
-#define OBJ_SPRITE_COUNT 5
-#define ANIMATION_TIME 200
-// AI
-#define AI_IDLE_MIN_RENEW_TIME 800
-#define AI_IDLE_MAX_RENEW_TIME 1500
-#define AI_CHASE_MIN_RENEW_TIME 400
-#define AI_CHASE_MAX_RENEW_TIME 800
-
-#include "u_utility.h"
-#include "p_physics.h"
-#include "typedefs.h"
-#include "l_location.h"
-
 /* --- DEFINITIONS --- */
 void E_EntitySpritesInit(SDL_Renderer* pRenderer);
 void E_EntityInit(e_manager_t* pEntManager, int spriteIndex, int posX, int posY);
-
 void E_RemoveEntityFromLoadList(int index, e_manager_t* pEntManager);
-
 void E_EntityWallCollisionCheck(location_t* pLocation, e_manager_t* pEntManager, gamestate_t* pGameState);
 void E_EntityToEntityCollisionCheck(e_manager_t* pEntManager, gamestate_t* pGameState);
-
 void E_AI_Chase(e_manager_t* pEntManager);
 void E_AI_Idle(e_manager_t* pEntManager);
+void E_Destruct(e_manager_t* pEntManager);
 
 /* --- IMPLEMENTATIONS --- */
 #if defined(STB_ENTITY_IMPLEMENTATION)
 
-static SDL_Texture* entity_sprites[2];
+static SDL_Texture* entity_sprites[MAX_ENTITY_SPRITES];
 
 void E_EntitySpritesInit(SDL_Renderer* pRenderer)
 {
@@ -60,7 +43,7 @@ void E_EntityInit(e_manager_t* pEntManager, int spriteIndex, int posX, int posY)
 	pEntManager->transforms[pEntManager->entitiesCount].hitboxH = ENTITY_SPRITE_SIZE * ENTITY_SPRITE_SCALE;
 	pEntManager->velocities[pEntManager->entitiesCount].gravityAccel = 0.0;
 	// Timers
-	pEntManager->animTimer[pEntManager->entitiesCount].reactionTime = ANIMATION_TIME;
+	pEntManager->animTimer[pEntManager->entitiesCount].reactionTime = ANIM_TIME;
 	pEntManager->aiTimer[pEntManager->entitiesCount].reactionTime = 0;
 	// Flags
 	pEntManager->isMoving[pEntManager->entitiesCount] = false;
@@ -116,7 +99,7 @@ void E_EntityWallCollisionCheck(location_t* pLocation, e_manager_t* pEntManager,
 		{
 			pEntManager->transforms[i].logX = LOGICAL_WIDTH - pLocation->rightWallLength;
 			pEntManager->aiParams[i].isCollisionOnRight = true;
-			if (i == 0 && pLocation->currentLocationIndex < LOCATIONS_MAX_COUNT)
+			if (i == 0 && pLocation->currentLocationIndex < MAX_LOCATIONS)
 			{
 				pLocation->isNextLocation = true;
 				++pLocation->currentLocationIndex; // TODO: Remove the crutch later
@@ -124,22 +107,6 @@ void E_EntityWallCollisionCheck(location_t* pLocation, e_manager_t* pEntManager,
 		}
 		else pEntManager->aiParams[i].isCollisionOnRight = false;
 	}
-
-	/*
-	if (pEntity->base.posY < pLocation->upWallLength)
-	{
-		pEntity->base.posY = pLocation->upWallLength;
-		pEntity->isCollisionOnUp = true;
-	}
-	else pEntity->isCollisionOnUp = false;
-
-	if (pEntity->base.posY + pLocation->downWallLength > LOGICAL_HEIGHT)
-	{
-		pEntity->base.posY = LOGICAL_HEIGHT - pLocation->downWallLength;
-		pEntity->isCollisionOnDown = true;
-	}
-	else pEntity->isCollisionOnDown = false;
-	*/
 }
 
 void E_EntityToEntityCollisionCheck(e_manager_t* pEntManager, gamestate_t* pGameState)
@@ -251,6 +218,22 @@ void E_AI_Idle(e_manager_t* pEntManager)
 
 			U_ReactionTimerEnd(&pEntManager->aiTimer[i]);
 		}
+	}
+}
+
+/*
+ * Destructor method to clean up all entities' textures before exit
+ * (Always need to be called in application crash or normal exit!!!)
+ */
+void E_Destruct(e_manager_t* pEntManager)
+{
+	for (int i = 0; i < pEntManager->entitiesCount; ++i)
+		pEntManager->sprites[i].spriteImg = NULL;
+
+	for (int i = 0; i < MAX_ENTITY_SPRITES; ++i)
+	{
+		if (entity_sprites[i] != NULL)
+			SDL_DestroyTexture(entity_sprites[i]);
 	}
 }
 #endif /* STB_ENTITY_AI_IMPLEMENTATION */

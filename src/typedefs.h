@@ -1,10 +1,32 @@
 #ifndef TYPEDEFS_H_
 #define TYPEDEFS_H_
 
-#define MAX_ENTITIES 32
-#define MAX_OBJECTS 32
-#define MAX_MAP_COLUMNS 39
-#define MAX_MAP_ROWS 12
+// LIMITS
+#define MAX_ENTITY_SPRITES 	2
+#define MAX_OBJ_SPRITES		3
+#define MAX_ENTITIES 		32
+#define MAX_OBJECTS 		32
+#define MAX_MAP_COLUMNS 	39
+#define MAX_MAP_ROWS 		12
+#define MAX_LOCATIONS 		1
+// SPRITES & ANIMATION
+#define ENTITY_FRAMES_COUNT 8
+#define OBJ_FRAMES_COUNT 	5
+#define ANIM_TIME 			200
+#define TILE_SPRITE_SIZE 	16
+#define TILE_SPRITE_SCALE 	6
+#define ENTITY_SPRITE_SIZE 	32
+#define ENTITY_SPRITE_SCALE 5
+// AI
+#define AI_IDLE_MIN_RENEW_TIME 	800
+#define AI_IDLE_MAX_RENEW_TIME 	1500
+#define AI_CHASE_MIN_RENEW_TIME 400
+#define AI_CHASE_MAX_RENEW_TIME 800
+// SCREEN
+#define LOGICAL_WIDTH 	1920
+#define LOGICAL_HEIGHT 	1080
+// ETC
+#define FLOOR_DISTANCE 512
 
 typedef struct _GameState
 {
@@ -18,6 +40,38 @@ typedef struct _GameState
 	bool 			isPaused;
 	bool 			isDebugMode;
 } gamestate_t;
+
+typedef struct _Keymap
+{
+    SDL_Scancode up;
+    SDL_Scancode down;
+    SDL_Scancode left;
+    SDL_Scancode right;
+    SDL_Scancode space;
+    SDL_Scancode use;
+    SDL_Scancode debug;
+    SDL_Scancode remove;
+    SDL_Scancode exit;
+} keymap_t;
+
+typedef struct _Keystates
+{
+	bool isUp;
+	bool isDown;
+    bool isLeft;
+    bool isRight;
+    bool isSpace;
+    bool isUse;
+    bool isDebug;
+    bool isRemove;
+    bool isExit;
+} keystates_t;
+
+enum KBD_KEY_STATE
+{
+    KEY_STATE_UP,
+    KEY_STATE_DOWN
+};
 
 typedef struct _ReactionTimer
 {

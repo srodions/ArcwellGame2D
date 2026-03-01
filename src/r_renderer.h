@@ -1,10 +1,6 @@
 #ifndef R_RENDERER_H_
 #define R_RENDERER_H_
 
-#include "u_utility.h"
-#include "p_physics.h"
-#include "typedefs.h"
-
 // --- DEFINITIONS ---
 SDL_Window* R_WindowInit(gamestate_t* pGameState);
 SDL_Renderer* R_RendererInit(SDL_Window* pWindow);
@@ -14,6 +10,7 @@ void R_RenderLocation(SDL_Renderer* pRenderer, location_t* pLocation);
 void R_RenderObject(SDL_Renderer* pRenderer, location_t* pLocation, obj_manager_t* pObjManager);
 void R_RenderEntity(SDL_Renderer* pRenderer,  location_t* pLocation, e_manager_t* pEntity, gamestate_t* pGameState);
 void R_RenderStats(SDL_Renderer* pRenderer, gamestate_t* pGameState, int* entitiesCount);
+void R_Destruct(SDL_Renderer* pRenderer, SDL_Window* pWindow);
 
 // --- IMPLEMENTATIONS ---
 #if defined(STB_RENDERER_IMPLEMENTATION)
@@ -128,7 +125,7 @@ void R_RenderObject(SDL_Renderer* pRenderer, location_t* pLocation, obj_manager_
 
 			if (U_IsTimeToReact(&pObjManager->animTimer[i]))
 			{
-				pObjManager->sprites[i].currentSprite = (pObjManager->sprites[i].currentSprite + 1) % OBJ_SPRITE_COUNT;
+				pObjManager->sprites[i].currentSprite = (pObjManager->sprites[i].currentSprite + 1) % OBJ_FRAMES_COUNT;
 				pObjManager->sprites[i].spriteSrc.x = TILE_SPRITE_SIZE * pObjManager->sprites[i].currentSprite;
 
 				U_ReactionTimerEnd(&pObjManager->animTimer[i]);
@@ -183,7 +180,7 @@ void R_RenderEntity(SDL_Renderer* pRenderer, location_t* pLocation, e_manager_t*
 
 			if (U_IsTimeToReact(&pEntManager->animTimer[i]))
 			{
-				pEntManager->sprites[i].currentSprite = (pEntManager->sprites[i].currentSprite + 1) % ENTITY_SPRITE_COUNT;
+				pEntManager->sprites[i].currentSprite = (pEntManager->sprites[i].currentSprite + 1) % ENTITY_FRAMES_COUNT;
 				pEntManager->sprites[i].spriteSrc.x = ENTITY_SPRITE_SIZE * pEntManager->sprites[i].currentSprite;
 
 				U_ReactionTimerEnd(&pEntManager->animTimer[i]);
@@ -236,6 +233,41 @@ void R_RenderStats(SDL_Renderer* pRenderer, gamestate_t* pGameState, int* pEntit
 
 		SDL_RenderCopy(pRenderer, font.textTexture, NULL, &font.textRect);
 	}
+}
+
+/*
+ * Destructor method to clean up all renderer textures, close files and quit the SDL
+ * (Always need to be called in application crash or normal exit!!!)
+ */
+void R_Destruct(SDL_Renderer* pRenderer, SDL_Window* pWindow)
+{
+	if (font.textTexture != NULL)
+	{
+		SDL_DestroyTexture(font.textTexture);
+		font.textTexture = NULL;
+	}
+
+	if (font.textSurface != NULL)
+	{
+		SDL_FreeSurface(font.textSurface);
+		font.textSurface = NULL;
+	}
+
+	if (font.file != NULL)
+	{
+		TTF_CloseFont(font.file);
+		font.file = NULL;
+	}
+
+	if (pRenderer != NULL)
+		SDL_DestroyRenderer(pRenderer);
+
+	if (pWindow != NULL)
+		SDL_DestroyWindow(pWindow);
+
+	TTF_Quit();
+	IMG_Quit();
+	SDL_Quit();
 }
 #endif /* STB_RENDERER_IMPLEMENTATION */
 
