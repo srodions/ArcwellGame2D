@@ -66,9 +66,9 @@ void loop()
 		SDL_SetRenderDrawColor(pRenderer, 0, 0, 0, 255);
 		SDL_RenderClear(pRenderer);
 		// Display location
-		R_RenderLocation(pRenderer, &location);
+		R_RenderLocation(pRenderer, &location, &entManager);
 		// Display objects
-		R_RenderObject(pRenderer, &location, &objManager);
+		R_RenderObject(pRenderer, &location, &objManager, &entManager);
 		// Handle player input
 		K_HandleEvents(pRenderer, &gameState, &entManager);
 		// Update AI

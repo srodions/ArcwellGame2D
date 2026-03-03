@@ -30,12 +30,12 @@
 
 typedef struct _GameState
 {
+	double 			targetFrameTime;
+	double 			deltaTime;
 	unsigned int 	screenW;
 	unsigned int 	screenH;
 	int 			targetFPS;
 	int 			currentFPS;
-	double 			targetFrameTime;
-	double 			deltaTime;
 	bool 			isRunning;
 	bool 			isPaused;
 	bool 			isDebugMode;
@@ -73,6 +73,12 @@ enum KBD_KEY_STATE
     KEY_STATE_DOWN
 };
 
+enum ENTITY_DIR
+{
+	LEFT,
+	RIGHT
+};
+
 typedef struct _ReactionTimer
 {
 	Uint32 			currentTime;
@@ -86,7 +92,7 @@ typedef struct _EntitySprite
 	SDL_Rect 			spriteSrc;
 	SDL_RendererFlip	flip;
 	int					currentSprite;
-	char				direction;
+	enum ENTITY_DIR		direction;
 } e_sprite_t;
 
 typedef struct _ObjSprite
@@ -119,18 +125,18 @@ typedef struct _EntityAI
 
 typedef struct _EntityManager
 {
-	SDL_Rect 	entityDest;
-	int			entitiesCount;
-	bool		isIdle[MAX_ENTITIES];
-	bool		isChasing[MAX_ENTITIES];
-	bool		isMoving[MAX_ENTITIES];
-	bool		isFalling[MAX_ENTITIES];
 	rtimer_t	aiTimer[MAX_ENTITIES];
 	rtimer_t	animTimer[MAX_ENTITIES];
 	e_sprite_t	sprites[MAX_ENTITIES];
 	e_tform_t 	transforms[MAX_ENTITIES];
 	e_vel_t		velocities[MAX_ENTITIES];
 	e_ai_t		aiParams[MAX_ENTITIES];
+	bool		isIdle[MAX_ENTITIES];
+	bool		isChasing[MAX_ENTITIES];
+	bool		isMoving[MAX_ENTITIES];
+	bool		isFalling[MAX_ENTITIES];
+	SDL_Rect 	entityDest;
+	int			entitiesCount;
 } e_manager_t;
 
 typedef struct _Tile
@@ -141,10 +147,11 @@ typedef struct _Tile
 
 typedef struct _ObjectManager
 {
-	SDL_Rect 		objDest[MAX_OBJECTS];
 	obj_sprite_t	sprites[MAX_OBJECTS];
 	rtimer_t		animTimer[MAX_OBJECTS];
+	e_tform_t		transforms[MAX_OBJECTS];
 	bool 			isAnimated[MAX_OBJECTS];
+	SDL_Rect		objDest;
 	int				objCount;
 } obj_manager_t;
 
@@ -158,8 +165,6 @@ typedef struct _Location
 	int				columns;
 	int 			leftWallLength;
 	int 			rightWallLength;
-	int				currentLocationIndex;
-	bool			isNextLocation;
 } location_t;
 
 typedef struct _Font

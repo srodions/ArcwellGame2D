@@ -33,8 +33,10 @@ void E_EntityInit(e_manager_t* pEntManager, int spriteIndex, int posX, int posY)
 	pEntManager->sprites[pEntManager->entitiesCount].spriteSrc.y = 0;
 	pEntManager->sprites[pEntManager->entitiesCount].spriteSrc.w = ENTITY_SPRITE_SIZE;
 	pEntManager->sprites[pEntManager->entitiesCount].spriteSrc.h = ENTITY_SPRITE_SIZE;
+	pEntManager->entityDest.w = ENTITY_SPRITE_SIZE * ENTITY_SPRITE_SCALE;
+	pEntManager->entityDest.h = ENTITY_SPRITE_SIZE * ENTITY_SPRITE_SCALE;
 	// Sprite controls
-	pEntManager->sprites[pEntManager->entitiesCount].direction = 'R';
+	pEntManager->sprites[pEntManager->entitiesCount].direction = RIGHT;
 	pEntManager->sprites[pEntManager->entitiesCount].currentSprite = 0;
 	pEntManager->transforms[pEntManager->entitiesCount].logX = (float) posX;
 	pEntManager->transforms[pEntManager->entitiesCount].logY = (float) posY;
@@ -91,7 +93,6 @@ void E_EntityWallCollisionCheck(location_t* pLocation, e_manager_t* pEntManager,
 		{
 			pEntManager->transforms[i].logX = (float) pLocation->leftWallLength;
 			pEntManager->aiParams[i].isCollisionOnLeft = true;
-			pLocation->isNextLocation = false;
 		}
 		else pEntManager->aiParams[i].isCollisionOnLeft = false;
 
@@ -99,11 +100,6 @@ void E_EntityWallCollisionCheck(location_t* pLocation, e_manager_t* pEntManager,
 		{
 			pEntManager->transforms[i].logX = LOGICAL_WIDTH - pLocation->rightWallLength;
 			pEntManager->aiParams[i].isCollisionOnRight = true;
-			if (i == 0 && pLocation->currentLocationIndex < MAX_LOCATIONS)
-			{
-				pLocation->isNextLocation = true;
-				++pLocation->currentLocationIndex; // TODO: Remove the crutch later
-			}
 		}
 		else pEntManager->aiParams[i].isCollisionOnRight = false;
 	}
@@ -114,26 +110,23 @@ void E_EntityToEntityCollisionCheck(e_manager_t* pEntManager, gamestate_t* pGame
 	if (pEntManager->entitiesCount < 2) return;
 
 	double dt = pGameState->deltaTime;
+	int screenXCenter = LOGICAL_WIDTH / 2 - pEntManager->entityDest.w / 2;
 
 	for (int i = 0; i < pEntManager->entitiesCount; ++i)
 	{
 		for (int j = i + 1; j < pEntManager->entitiesCount; ++j)
 		{
-			SDL_Rect result;
+			SDL_Rect a, b, result;
 
-			SDL_Rect a = {
-				.x = (int) pEntManager->transforms[i].logX,
-				.y = (int) pEntManager->transforms[i].logY,
-				.w = pEntManager->transforms[i].hitboxW,
-				.h = pEntManager->transforms[i].hitboxH
-			};
+			a.x = (int) pEntManager->transforms[i].logX;
+			a.y = (int) pEntManager->transforms[i].logY;
+			a.w = pEntManager->transforms[i].hitboxW;
+			a.h = pEntManager->transforms[i].hitboxH;
 
-			SDL_Rect b = {
-				.x = (int) pEntManager->transforms[j].logX,
-				.y = (int) pEntManager->transforms[j].logY,
-				.w = pEntManager->transforms[j].hitboxW,
-				.h = pEntManager->transforms[j].hitboxH
-			};
+			b.x = (int) (i > 0 ? pEntManager->transforms[j].logX : (pEntManager->transforms[j].logX - screenXCenter));
+			b.y = (int) pEntManager->transforms[j].logY;
+			b.w = pEntManager->transforms[j].hitboxW;
+			b.h = pEntManager->transforms[j].hitboxH;
 
 			if (SDL_IntersectRect(&a, &b, &result))
 			{
@@ -200,9 +193,9 @@ void E_AI_Idle(e_manager_t* pEntManager)
 		pEntManager->isMoving[i] = true;
 
 		if (pEntManager->aiParams[i].isCollisionOnLeft)
-			pEntManager->sprites[i].direction = 'R';
+			pEntManager->sprites[i].direction = RIGHT;
 		else if (pEntManager->aiParams[i].isCollisionOnRight)
-			pEntManager->sprites[i].direction = 'L';
+			pEntManager->sprites[i].direction = LEFT;
 
 		U_ReactionTimerStart(&pEntManager->aiTimer[i]);
 
@@ -212,9 +205,9 @@ void E_AI_Idle(e_manager_t* pEntManager)
 			pEntManager->aiParams[i].currentChoice = rand() % 100;
 
 			if (pEntManager->aiParams[i].currentChoice <= 50)
-				pEntManager->sprites[i].direction = 'L';
+				pEntManager->sprites[i].direction = LEFT;
 			else
-				pEntManager->sprites[i].direction = 'R';
+				pEntManager->sprites[i].direction = RIGHT;
 
 			U_ReactionTimerEnd(&pEntManager->aiTimer[i]);
 		}

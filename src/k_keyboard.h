@@ -88,9 +88,9 @@ void K_HandleKeyStates(SDL_Renderer* pRenderer, gamestate_t* pGameState, e_manag
 	}
 
 	if (keyStates.isLeft)
-		pEntManager->sprites[0].direction = 'L';
+		pEntManager->sprites[0].direction = LEFT;
 	else if (keyStates.isRight)
-		pEntManager->sprites[0].direction = 'R';
+		pEntManager->sprites[0].direction = RIGHT;
 
 	if (keyStates.isDebug)
 	{

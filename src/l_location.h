@@ -24,33 +24,33 @@ void L_ObjectSetter(obj_manager_t* pObjManager)
 {
 	int tileMove = TILE_SPRITE_SCALE * TILE_SPRITE_SIZE;
 	// Torches
-	L_ObjectInit(pObjManager, 0, 0, 0, tileMove * 3, tileMove * 4, true);
-	L_ObjectInit(pObjManager, 0, 0, 0, tileMove * 11, tileMove * 4, true);
-	L_ObjectInit(pObjManager, 0, 0, 0, tileMove * 19, tileMove * 4, true);
-	L_ObjectInit(pObjManager, 0, 0, 0, tileMove * 27, tileMove * 4, true);
-	L_ObjectInit(pObjManager, 0, 0, 0, tileMove * 35, tileMove * 4, true);
+	L_ObjectInit(pObjManager, 0, 0, 0, tileMove * 3, 	tileMove * 4, true);
+	L_ObjectInit(pObjManager, 0, 0, 0, tileMove * 11, 	tileMove * 4, true);
+	L_ObjectInit(pObjManager, 0, 0, 0, tileMove * 19, 	tileMove * 4, true);
+	L_ObjectInit(pObjManager, 0, 0, 0, tileMove * 27, 	tileMove * 4, true);
+	L_ObjectInit(pObjManager, 0, 0, 0, tileMove * 35, 	tileMove * 4, true);
 	// Chest
-	L_ObjectInit(pObjManager, 2, 0, 0, tileMove * 11, tileMove * 6, false);
+	L_ObjectInit(pObjManager, 2, 0, 0, tileMove * 11, 	tileMove * 6, false);
 	// Column 1
-	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE, TILE_SPRITE_SIZE, tileMove * 7, tileMove * 6, false);
-	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE * 2, TILE_SPRITE_SIZE, tileMove * 7, tileMove * 5, false);
-	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE * 2, TILE_SPRITE_SIZE, tileMove * 7, tileMove * 4, false);
-	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE * 3, TILE_SPRITE_SIZE, tileMove * 7, tileMove * 3, false);
+	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE, 		TILE_SPRITE_SIZE, tileMove * 7, tileMove * 6, false);
+	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE * 2, 	TILE_SPRITE_SIZE, tileMove * 7, tileMove * 5, false);
+	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE * 2, 	TILE_SPRITE_SIZE, tileMove * 7, tileMove * 4, false);
+	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE * 3, 	TILE_SPRITE_SIZE, tileMove * 7, tileMove * 3, false);
 	// Column 2
-	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE, TILE_SPRITE_SIZE, tileMove * 15, tileMove * 6, false);
-	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE * 2, TILE_SPRITE_SIZE, tileMove * 15, tileMove * 5, false);
-	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE * 2, TILE_SPRITE_SIZE, tileMove * 15, tileMove * 4, false);
-	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE * 3, TILE_SPRITE_SIZE, tileMove * 15, tileMove * 3, false);
+	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE, 		TILE_SPRITE_SIZE, tileMove * 15, tileMove * 6, false);
+	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE * 2, 	TILE_SPRITE_SIZE, tileMove * 15, tileMove * 5, false);
+	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE * 2, 	TILE_SPRITE_SIZE, tileMove * 15, tileMove * 4, false);
+	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE * 3, 	TILE_SPRITE_SIZE, tileMove * 15, tileMove * 3, false);
 	// Column 3
-	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE, TILE_SPRITE_SIZE, tileMove * 23, tileMove * 6, false);
-	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE * 2, TILE_SPRITE_SIZE, tileMove * 23, tileMove * 5, false);
-	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE * 2, TILE_SPRITE_SIZE, tileMove * 23, tileMove * 4, false);
-	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE * 3, TILE_SPRITE_SIZE, tileMove * 23, tileMove * 3, false);
+	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE, 		TILE_SPRITE_SIZE, tileMove * 23, tileMove * 6, false);
+	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE * 2, 	TILE_SPRITE_SIZE, tileMove * 23, tileMove * 5, false);
+	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE * 2, 	TILE_SPRITE_SIZE, tileMove * 23, tileMove * 4, false);
+	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE * 3, 	TILE_SPRITE_SIZE, tileMove * 23, tileMove * 3, false);
 	// Column 4
-	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE, TILE_SPRITE_SIZE, tileMove * 31, tileMove * 6, false);
-	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE * 2, TILE_SPRITE_SIZE, tileMove * 31, tileMove * 5, false);
-	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE * 2, TILE_SPRITE_SIZE, tileMove * 31, tileMove * 4, false);
-	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE * 3, TILE_SPRITE_SIZE, tileMove * 31, tileMove * 3, false);
+	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE, 		TILE_SPRITE_SIZE, tileMove * 31, tileMove * 6, false);
+	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE * 2, 	TILE_SPRITE_SIZE, tileMove * 31, tileMove * 5, false);
+	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE * 2, 	TILE_SPRITE_SIZE, tileMove * 31, tileMove * 4, false);
+	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE * 3, 	TILE_SPRITE_SIZE, tileMove * 31, tileMove * 3, false);
 }
 
 /*
@@ -62,10 +62,10 @@ location_t L_LocationInit(SDL_Renderer* pRenderer, obj_manager_t* pObjManager, c
 		// Location load
 		.tileMap = IMG_LoadTexture(pRenderer, "res/tile/tiles.png"),
 		.locationFile = fopen(locationName, "r"),
-		.isNextLocation = false,
 		.rows = 12,
 		.columns = 39,
-		.currentLocationIndex = 0,
+		.locationDest.w = TILE_SPRITE_SIZE * TILE_SPRITE_SCALE,
+		.locationDest.h = TILE_SPRITE_SIZE * TILE_SPRITE_SCALE,
 		// Location collision
 		.leftWallLength = 10,
 		.rightWallLength = 96
@@ -149,10 +149,10 @@ void L_ObjectInit(obj_manager_t* pObjManager, int spriteIndex, int srcX, int src
 	pObjManager->animTimer[pObjManager->objCount].reactionTime = ANIM_TIME;
 	pObjManager->isAnimated[pObjManager->objCount] = isAnimated;
 
-	pObjManager->objDest[pObjManager->objCount].w = TILE_SPRITE_SCALE * TILE_SPRITE_SIZE;
-	pObjManager->objDest[pObjManager->objCount].h = TILE_SPRITE_SCALE * TILE_SPRITE_SIZE;
-	pObjManager->objDest[pObjManager->objCount].x = posX;
-	pObjManager->objDest[pObjManager->objCount].y = posY;
+	pObjManager->objDest.w = TILE_SPRITE_SCALE * TILE_SPRITE_SIZE;
+	pObjManager->objDest.h = TILE_SPRITE_SCALE * TILE_SPRITE_SIZE;
+	pObjManager->transforms[pObjManager->objCount].logX = (float) posX;
+	pObjManager->transforms[pObjManager->objCount].logY = (float) posY;
 
 	pObjManager->sprites[pObjManager->objCount].currentSprite = 0;
 	pObjManager->sprites[pObjManager->objCount].spriteImg = obj_sprites[spriteIndex];

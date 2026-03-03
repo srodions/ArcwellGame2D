@@ -6,8 +6,8 @@ SDL_Window* R_WindowInit(gamestate_t* pGameState);
 SDL_Renderer* R_RendererInit(SDL_Window* pWindow);
 font_t R_FontInit();
 
-void R_RenderLocation(SDL_Renderer* pRenderer, location_t* pLocation);
-void R_RenderObject(SDL_Renderer* pRenderer, location_t* pLocation, obj_manager_t* pObjManager);
+void R_RenderLocation(SDL_Renderer* pRenderer, location_t* pLocation, e_manager_t* pEntManager);
+void R_RenderObject(SDL_Renderer* pRenderer, location_t* pLocation, obj_manager_t* pObjManager, e_manager_t* pEntManager);
 void R_RenderEntity(SDL_Renderer* pRenderer,  location_t* pLocation, e_manager_t* pEntity, gamestate_t* pGameState);
 void R_RenderStats(SDL_Renderer* pRenderer, gamestate_t* pGameState, int* entitiesCount);
 void R_Destruct(SDL_Renderer* pRenderer, SDL_Window* pWindow);
@@ -88,20 +88,14 @@ font_t R_FontInit()
 /*
  * TODO: Make it to not render tiles when they out of monitor screen
  */
-void R_RenderLocation(SDL_Renderer* pRenderer, location_t* pLocation)
+void R_RenderLocation(SDL_Renderer* pRenderer, location_t* pLocation, e_manager_t* pEntManager)
 {
 	for (int y = 0; y < pLocation->columns; ++y)
 	{
 		for (int x = 0; x < pLocation->rows; ++x)
 		{
-			// LOCATION SHIFT TO LEFT
-			if (pLocation->isNextLocation)
-				pLocation->locationTiles[y][x].posX -= camera_speed;
-
-			pLocation->locationDest.x = pLocation->locationTiles[y][x].posX;
+			pLocation->locationDest.x = pLocation->locationTiles[y][x].posX - pEntManager->transforms[0].logX; // Move relatively player
 			pLocation->locationDest.y = pLocation->locationTiles[y][x].posY;
-			pLocation->locationDest.w = TILE_SPRITE_SIZE * TILE_SPRITE_SCALE;
-			pLocation->locationDest.h = TILE_SPRITE_SIZE * TILE_SPRITE_SCALE;
 
 			SDL_RenderCopy(
 				pRenderer, pLocation->tileMap,
@@ -115,10 +109,13 @@ void R_RenderLocation(SDL_Renderer* pRenderer, location_t* pLocation)
 /*
  * TODO: Make it to not render objects when they out of monitor screen
  */
-void R_RenderObject(SDL_Renderer* pRenderer, location_t* pLocation, obj_manager_t* pObjManager)
+void R_RenderObject(SDL_Renderer* pRenderer, location_t* pLocation, obj_manager_t* pObjManager, e_manager_t* pEntManager)
 {
 	for (int i = 0; i < pObjManager->objCount; ++i)
 	{
+		pObjManager->objDest.x = (int) pObjManager->transforms[i].logX - pEntManager->transforms[0].logX; // Move relatively player
+		pObjManager->objDest.y = (int) pObjManager->transforms[i].logY;
+
 		if (pObjManager->isAnimated[i])
 		{
 			U_ReactionTimerStart(&pObjManager->animTimer[i]);
@@ -132,12 +129,9 @@ void R_RenderObject(SDL_Renderer* pRenderer, location_t* pLocation, obj_manager_
 			}
 		}
 
-		if (pLocation->isNextLocation)
-			pObjManager->objDest[i].x -= camera_speed;
-
 		SDL_RenderCopy(
 			pRenderer, pObjManager->sprites[i].spriteImg,
-			&pObjManager->sprites[i].spriteSrc, &pObjManager->objDest[i]
+			&pObjManager->sprites[i].spriteSrc, &pObjManager->objDest
 		);
 	}
 }
@@ -148,33 +142,32 @@ void R_RenderObject(SDL_Renderer* pRenderer, location_t* pLocation, obj_manager_
 void R_RenderEntity(SDL_Renderer* pRenderer, location_t* pLocation, e_manager_t* pEntManager, gamestate_t* pGameState)
 {
 	double dt = pGameState->deltaTime;
+	const int screenXCenter = LOGICAL_WIDTH / 2 - pEntManager->entityDest.w / 2;
 
 	for (int i = 0; i < pEntManager->entitiesCount; ++i)
 	{
 		switch (pEntManager->sprites[i].direction)
 		{
-		case 'L':
+		case LEFT:
 			pEntManager->sprites[i].flip = SDL_FLIP_HORIZONTAL;
-			if (pEntManager->isMoving[i] && !pLocation->isNextLocation)
+			if (pEntManager->isMoving[i])
 				pEntManager->transforms[i].logX -= player_speed * dt;
 			break;
-		case 'R':
+		case RIGHT:
 			pEntManager->sprites[i].flip = SDL_FLIP_NONE;
-			if (pEntManager->isMoving[i] && !pLocation->isNextLocation)
+			if (pEntManager->isMoving[i])
 				pEntManager->transforms[i].logX += player_speed * dt;
 			break;
 		}
 
-		// ENTITIES SHIFT TO LEFT
-		if (pLocation->isNextLocation)
-			pEntManager->transforms[i].logX -= camera_speed;
+		if (i > 0)
+			pEntManager->entityDest.x = (int) pEntManager->transforms[i].logX - pEntManager->transforms[0].logX; // For each exclude player (Move relatively player)
+		else
+			pEntManager->entityDest.x = screenXCenter; // For player (centered on the screen entity)
 
-		pEntManager->entityDest.x = (int) pEntManager->transforms[i].logX;
 		pEntManager->entityDest.y = (int) pEntManager->transforms[i].logY;
-		pEntManager->entityDest.w = ENTITY_SPRITE_SIZE * ENTITY_SPRITE_SCALE;
-		pEntManager->entityDest.h = ENTITY_SPRITE_SIZE * ENTITY_SPRITE_SCALE;
 
-		if (pEntManager->isMoving[i] && !pLocation->isNextLocation)
+		if (pEntManager->isMoving[i])
 		{
 			U_ReactionTimerStart(&pEntManager->animTimer[i]);
 
