@@ -83,7 +83,6 @@ void E_RemoveEntityFromLoadList(int index, e_manager_t* pEntManager)
 
 /*
  * This method checks entity wall collision in all of directions (left, right)
- * TODO: Add camera previous location flag (Optional)
  */
 void E_EntityWallCollisionCheck(location_t* pLocation, e_manager_t* pEntManager, gamestate_t* pGameState)
 {
@@ -118,11 +117,12 @@ void E_EntityToEntityCollisionCheck(e_manager_t* pEntManager, gamestate_t* pGame
 		{
 			SDL_Rect a, b, result;
 
-			a.x = (int) pEntManager->transforms[i].logX;
+			// Calculating collision from the center of the screen if opposite entity is player
+			a.x = (int) (j > 0 ? pEntManager->transforms[i].logX : (pEntManager->transforms[i].logX - screenXCenter));
 			a.y = (int) pEntManager->transforms[i].logY;
 			a.w = pEntManager->transforms[i].hitboxW;
 			a.h = pEntManager->transforms[i].hitboxH;
-
+			// Calculating collision from the center of the screen if opposite entity is player
 			b.x = (int) (i > 0 ? pEntManager->transforms[j].logX : (pEntManager->transforms[j].logX - screenXCenter));
 			b.y = (int) pEntManager->transforms[j].logY;
 			b.w = pEntManager->transforms[j].hitboxW;
