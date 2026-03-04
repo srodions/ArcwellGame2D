@@ -163,8 +163,6 @@ typedef struct _Location
 	tile_t 			locationTiles[MAX_MAP_COLUMNS][MAX_MAP_ROWS];
 	int				rows;
 	int				columns;
-	int 			leftWallLength;
-	int 			rightWallLength;
 } location_t;
 
 typedef struct _Font

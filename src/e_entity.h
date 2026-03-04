@@ -27,6 +27,7 @@ void E_EntitySpritesInit(SDL_Renderer* pRenderer)
  */
 void E_EntityInit(e_manager_t* pEntManager, int spriteIndex, int posX, int posY)
 {
+	assert(pEntManager->entitiesCount <= MAX_ENTITIES);
 	// Texture load
 	pEntManager->sprites[pEntManager->entitiesCount].spriteImg = entity_sprites[spriteIndex];
 	pEntManager->sprites[pEntManager->entitiesCount].spriteSrc.x = 0;
@@ -86,18 +87,19 @@ void E_RemoveEntityFromLoadList(int index, e_manager_t* pEntManager)
  */
 void E_EntityWallCollisionCheck(location_t* pLocation, e_manager_t* pEntManager, gamestate_t* pGameState)
 {
+	const int screenXCenter = LOGICAL_WIDTH / 2 - pEntManager->entityDest.w / 2;
 	for (int i = 0; i < pEntManager->entitiesCount; ++i)
 	{
-		if (pEntManager->transforms[i].logX < pLocation->leftWallLength)
+		if (pEntManager->transforms[i].logX < (float) pLocation->locationDest.x)
 		{
-			pEntManager->transforms[i].logX = (float) pLocation->leftWallLength;
+			pEntManager->transforms[i].logX = (float) pLocation->locationDest.x;
 			pEntManager->aiParams[i].isCollisionOnLeft = true;
 		}
 		else pEntManager->aiParams[i].isCollisionOnLeft = false;
 
-		if (pEntManager->transforms[i].logX > LOGICAL_WIDTH - pLocation->rightWallLength)
+		if (pEntManager->transforms[i].logX > (float) (pLocation->locationDest.x + pLocation->columns * TILE_SPRITE_SIZE * TILE_SPRITE_SCALE) / 2 + screenXCenter)
 		{
-			pEntManager->transforms[i].logX = LOGICAL_WIDTH - pLocation->rightWallLength;
+			pEntManager->transforms[i].logX = (float) ((pLocation->locationDest.x + pLocation->columns * TILE_SPRITE_SIZE * TILE_SPRITE_SCALE) / 2 + screenXCenter);
 			pEntManager->aiParams[i].isCollisionOnRight = true;
 		}
 		else pEntManager->aiParams[i].isCollisionOnRight = false;
@@ -109,7 +111,7 @@ void E_EntityToEntityCollisionCheck(e_manager_t* pEntManager, gamestate_t* pGame
 	if (pEntManager->entitiesCount < 2) return;
 
 	double dt = pGameState->deltaTime;
-	int screenXCenter = LOGICAL_WIDTH / 2 - pEntManager->entityDest.w / 2;
+	const int screenXCenter = LOGICAL_WIDTH / 2 - pEntManager->entityDest.w / 2;
 
 	for (int i = 0; i < pEntManager->entitiesCount; ++i)
 	{
@@ -158,6 +160,22 @@ void E_EntityToEntityCollisionCheck(e_manager_t* pEntManager, gamestate_t* pGame
 				}
 			}
 		}
+	}
+}
+
+/*
+ * Destructor method to clean up all entities' textures before exit
+ * (Always need to be called in application crash or normal exit!!!)
+ */
+void E_Destruct(e_manager_t* pEntManager)
+{
+	for (int i = 0; i < pEntManager->entitiesCount; ++i)
+		pEntManager->sprites[i].spriteImg = NULL;
+
+	for (int i = 0; i < MAX_ENTITY_SPRITES; ++i)
+	{
+		if (entity_sprites[i] != NULL)
+			SDL_DestroyTexture(entity_sprites[i]);
 	}
 }
 #endif /* STB_ENTITY_IMPLEMENTATION */
@@ -211,22 +229,6 @@ void E_AI_Idle(e_manager_t* pEntManager)
 
 			U_ReactionTimerEnd(&pEntManager->aiTimer[i]);
 		}
-	}
-}
-
-/*
- * Destructor method to clean up all entities' textures before exit
- * (Always need to be called in application crash or normal exit!!!)
- */
-void E_Destruct(e_manager_t* pEntManager)
-{
-	for (int i = 0; i < pEntManager->entitiesCount; ++i)
-		pEntManager->sprites[i].spriteImg = NULL;
-
-	for (int i = 0; i < MAX_ENTITY_SPRITES; ++i)
-	{
-		if (entity_sprites[i] != NULL)
-			SDL_DestroyTexture(entity_sprites[i]);
 	}
 }
 #endif /* STB_ENTITY_AI_IMPLEMENTATION */

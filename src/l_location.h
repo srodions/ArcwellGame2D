@@ -65,11 +65,10 @@ location_t L_LocationInit(SDL_Renderer* pRenderer, obj_manager_t* pObjManager, c
 		.rows = 12,
 		.columns = 39,
 		.locationDest.w = TILE_SPRITE_SIZE * TILE_SPRITE_SCALE,
-		.locationDest.h = TILE_SPRITE_SIZE * TILE_SPRITE_SCALE,
-		// Location collision
-		.leftWallLength = 10,
-		.rightWallLength = 96
+		.locationDest.h = TILE_SPRITE_SIZE * TILE_SPRITE_SCALE
 	};
+
+	assert(location.rows <= MAX_MAP_ROWS && location.columns <= MAX_MAP_COLUMNS);
 
 	char rowBuffer[128];
 	char* currentChar = NULL;
@@ -146,6 +145,8 @@ location_t L_LocationInit(SDL_Renderer* pRenderer, obj_manager_t* pObjManager, c
 
 void L_ObjectInit(obj_manager_t* pObjManager, int spriteIndex, int srcX, int srcY, int posX, int posY, bool isAnimated)
 {
+	assert(pObjManager->objCount <= MAX_OBJECTS);
+
 	pObjManager->animTimer[pObjManager->objCount].reactionTime = ANIM_TIME;
 	pObjManager->isAnimated[pObjManager->objCount] = isAnimated;
 

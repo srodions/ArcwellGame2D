@@ -19,6 +19,7 @@
 #include <time.h>
 #include <math.h>
 #include <string.h>
+#include <assert.h>
 #include "typedefs.h"
 #include "p_physics.h"
 #include "u_utility.h"
