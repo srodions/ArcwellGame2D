@@ -97,9 +97,9 @@ void E_EntityWallCollisionCheck(location_t* pLocation, e_manager_t* pEntManager,
 		}
 		else pEntManager->aiParams[i].isCollisionOnLeft = false;
 
-		if (pEntManager->transforms[i].logX > (float) (pLocation->locationDest.x + pLocation->columns * TILE_SPRITE_SIZE * TILE_SPRITE_SCALE) / 2 + screenXCenter)
+		if (pEntManager->transforms[i].logX > (float) (pLocation->locationDest.x + pLocation->rows * TILE_SPRITE_SIZE * TILE_SPRITE_SCALE) / 2 + screenXCenter)
 		{
-			pEntManager->transforms[i].logX = (float) ((pLocation->locationDest.x + pLocation->columns * TILE_SPRITE_SIZE * TILE_SPRITE_SCALE) / 2 + screenXCenter);
+			pEntManager->transforms[i].logX = (float) ((pLocation->locationDest.x + pLocation->rows * TILE_SPRITE_SIZE * TILE_SPRITE_SCALE) / 2 + screenXCenter);
 			pEntManager->aiParams[i].isCollisionOnRight = true;
 		}
 		else pEntManager->aiParams[i].isCollisionOnRight = false;
@@ -164,44 +164,26 @@ void E_EntityToEntityCollisionCheck(e_manager_t* pEntManager, gamestate_t* pGame
 }
 
 /*
- * Destructor method to clean up all entities' textures before exit
+ * De-structor method to clean up all entities' textures before exit
  * (Always need to be called in application crash or normal exit!!!)
  */
 void E_Destruct(e_manager_t* pEntManager)
 {
-	for (int i = 0; i < pEntManager->entitiesCount; ++i)
-		pEntManager->sprites[i].spriteImg = NULL;
-
 	for (int i = 0; i < MAX_ENTITY_SPRITES; ++i)
 	{
 		if (entity_sprites[i] != NULL)
+		{
 			SDL_DestroyTexture(entity_sprites[i]);
+			entity_sprites[i] = NULL;
+		}
 	}
+
+	for (int i = 0; i < pEntManager->entitiesCount; ++i)
+		pEntManager->sprites[i].spriteImg = NULL;
 }
 #endif /* STB_ENTITY_IMPLEMENTATION */
 
 #if defined(STB_ENTITY_AI_IMPLEMENTATION)
-/*
- * TODO: Make this
- */
-/*
-void E_AI_Chase(e_manager_t* pEntManager)
-{
-	for (int i = 0; i < pEntManager->entitiesCount; ++i)
-	{
-		if (!pEntManager->isChasing[i]) continue;
-
-		pEntManager->isMoving[i] = true;
-
-		if (pEntManager->transforms[i].logX >= pEntManager->transforms[0].logX - ENTITY_SPRITE_SIZE * ENTITY_SPRITE_SCALE
-			|| pEntManager->transforms[i].logX <= pEntManager->transforms[0].logX + ENTITY_SPRITE_SIZE * ENTITY_SPRITE_SCALE)
-		{
-
-		}
-	}
-}
-*/
-
 void E_AI_Idle(e_manager_t* pEntManager)
 {
 	for (int i = 0; i < pEntManager->entitiesCount; ++i)

@@ -191,41 +191,41 @@ void R_RenderEntity(SDL_Renderer* pRenderer, location_t* pLocation, e_manager_t*
 
 void R_RenderStats(SDL_Renderer* pRenderer, gamestate_t* pGameState, int* pEntitiesCount)
 {
-	if (pGameState->isDebugMode)
+	if (!pGameState->isDebugMode) return;
+
+	U_ReactionTimerStart(&_debugUpdTimer);
+
+	if (font.textTexture == NULL || U_IsTimeToReact(&_debugUpdTimer))
 	{
-		U_ReactionTimerStart(&_debugUpdTimer);
+		if (pGameState->deltaTime > 0)
+			pGameState->currentFPS = (int)(1.0 / pGameState->deltaTime);
 
-		if (font.textTexture == NULL || U_IsTimeToReact(&_debugUpdTimer))
+		if (font.textTexture != NULL) {
+			SDL_DestroyTexture(font.textTexture);
+			font.textTexture = NULL;
+		}
+
+		char textBuffer[64];
+		snprintf(textBuffer, sizeof(textBuffer), "FPS: %d | Entities: %d", pGameState->currentFPS, *pEntitiesCount);
+
+		SDL_Surface* tempSurface = TTF_RenderText_Blended(font.file, textBuffer, font.textColor);
+		if (tempSurface != NULL)
 		{
-			double dt = pGameState->deltaTime;
-
-			if (dt > 0)
-				pGameState->currentFPS = (int) (1.0 / dt);
-
-			if (font.textTexture != NULL)
-				SDL_DestroyTexture(font.textTexture);
-
-			char textBuffer[32];
-			snprintf(textBuffer, sizeof(textBuffer), "FPS: %d | Entities count: %d", pGameState->currentFPS, *pEntitiesCount);
-
-			font.textSurface = TTF_RenderText_Blended(font.file, textBuffer, font.textColor);
-			font.textTexture = SDL_CreateTextureFromSurface(pRenderer, font.textSurface);
-
-			int textW = font.textSurface->w;
-			int textH = font.textSurface->h;
-
-			SDL_FreeSurface(font.textSurface);
+			font.textTexture = SDL_CreateTextureFromSurface(pRenderer, tempSurface);
 
 			font.textRect.x = 100;
 			font.textRect.y = 100;
-			font.textRect.w = textW;
-			font.textRect.h = textH;
+			font.textRect.w = tempSurface->w;
+			font.textRect.h = tempSurface->h;
 
-			U_ReactionTimerEnd(&_debugUpdTimer);
+			SDL_FreeSurface(tempSurface);
 		}
 
-		SDL_RenderCopy(pRenderer, font.textTexture, NULL, &font.textRect);
+		U_ReactionTimerEnd(&_debugUpdTimer);
 	}
+
+	if (font.textTexture != NULL)
+		SDL_RenderCopy(pRenderer, font.textTexture, NULL, &font.textRect);
 }
 
 /*

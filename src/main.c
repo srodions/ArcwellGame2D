@@ -1,5 +1,3 @@
-#define SDL_MAIN_HANDLED
-
 #define STB_GAME_INIT_IMPLEMENTATION
 #define STB_KEYBOARD_HANDLER_IMPLEMENTATION
 #define STB_EVENT_HANDLER_IMPLEMENTATION
@@ -11,6 +9,7 @@
 #define STB_UTILITY_IMPLEMENTATION
 
 #include <SDL.h>
+#include <SDL_main.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
 #include <stdio.h>
@@ -20,6 +19,7 @@
 #include <math.h>
 #include <string.h>
 #include <assert.h>
+#include "cJSON.h"
 #include "typedefs.h"
 #include "p_physics.h"
 #include "u_utility.h"
@@ -36,26 +36,26 @@ location_t location;
 obj_manager_t objManager;
 e_manager_t entManager;
 
-void init()
+int init()
 {
+	if (IMG_Init(IMG_INIT_PNG) < 0 || TTF_Init() < 0) return -1;
 	K_InitKeymap();
-	SDL_Init(SDL_INIT_VIDEO);
-	IMG_Init(IMG_INIT_PNG);
-	TTF_Init();
 	srand(time(NULL));
 
 	gameState = G_GameInit();
 	pWindow = R_WindowInit(&gameState);
 	pRenderer = R_RendererInit(pWindow);
-	if (pRenderer == NULL || pWindow == NULL) return;
+	if (pRenderer == NULL || pWindow == NULL) return -1;
 
 	objManager.objCount = 0;
 	entManager.entitiesCount = 0;
-	location = L_LocationInit(pRenderer, &objManager, "res/location/tomb.dat");
+	location = L_LocationInit(pRenderer, &objManager);
 	L_ObjectSpritesInit(pRenderer);
-	L_ObjectSetter(&objManager);
+	L_ObjectSetter(&objManager, "res/location/objects.json");
 	E_EntitySpritesInit(pRenderer);
 	E_EntityInit(&entManager, 0, 50, FLOOR_DISTANCE); // Player spawn
+
+	return 0;
 }
 
 void loop()
@@ -88,11 +88,16 @@ void loop()
 	}
 }
 
-int main()
+int main(int argc, char* argv[])
 {
-	init();
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0)
+	{
+		printf("SDL_Init Error: %s\n", SDL_GetError());
+		return -1;
+	}
 
-	if (pRenderer == NULL || pWindow == NULL)
+	int result = init();
+	if (result < 0)
 	{
 		L_Destruct(&location, &objManager);
 		E_Destruct(&entManager);

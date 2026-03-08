@@ -6,8 +6,8 @@
 #define MAX_OBJ_SPRITES		3
 #define MAX_ENTITIES 		32
 #define MAX_OBJECTS 		32
-#define MAX_MAP_COLUMNS 	39
-#define MAX_MAP_ROWS 		12
+#define MAX_MAP_COLUMNS 	12
+#define MAX_MAP_ROWS 		64
 #define MAX_LOCATIONS 		1
 // SPRITES & ANIMATION
 #define ENTITY_FRAMES_COUNT 8
@@ -159,7 +159,6 @@ typedef struct _Location
 {
 	SDL_Texture* 	tileMap;
 	SDL_Rect		locationDest;
-	FILE* 			locationFile;
 	tile_t 			locationTiles[MAX_MAP_COLUMNS][MAX_MAP_ROWS];
 	int				rows;
 	int				columns;

@@ -2,10 +2,10 @@
 #define L_LOCATION_H_
 
 /* --- DEFINITIONS --- */
-location_t L_LocationInit(SDL_Renderer* pRenderer, obj_manager_t* pObjManager, char* locationName);
+location_t L_LocationInit(SDL_Renderer* pRenderer, obj_manager_t* pObjManager);
 tile_t L_TileInit(int srcX, int srcY, int posX, int posY);
-void L_ObjectInit(obj_manager_t* pObjManager, int spriteIndex, int srcX, int srcY, int posX, int posY, bool isAnimated);
-void L_ObjectSetter(obj_manager_t* pObjManager);
+void L_ObjectInit(obj_manager_t* pObjManager, int spriteIndex, int bsx, int bsy, int btx, int bty, bool isAnim);
+void L_ObjectSetter(obj_manager_t* pObjManager, const char* jsonFilePath);
 void L_Destruct(location_t* pLocation, obj_manager_t* pObjManager);
 
 /* --- IMPLEMENTATIONS --- */
@@ -20,147 +20,137 @@ void L_ObjectSpritesInit(SDL_Renderer* pRenderer)
 	obj_sprites[2] = IMG_LoadTexture(pRenderer, "res/object/chest.png");
 }
 
-void L_ObjectSetter(obj_manager_t* pObjManager)
+void L_ObjectSetter(obj_manager_t* pObjManager, const char* jsonFilePath)
 {
-	int tileMove = TILE_SPRITE_SCALE * TILE_SPRITE_SIZE;
-	// Torches
-	L_ObjectInit(pObjManager, 0, 0, 0, tileMove * 3, 	tileMove * 4, true);
-	L_ObjectInit(pObjManager, 0, 0, 0, tileMove * 11, 	tileMove * 4, true);
-	L_ObjectInit(pObjManager, 0, 0, 0, tileMove * 19, 	tileMove * 4, true);
-	L_ObjectInit(pObjManager, 0, 0, 0, tileMove * 27, 	tileMove * 4, true);
-	L_ObjectInit(pObjManager, 0, 0, 0, tileMove * 35, 	tileMove * 4, true);
-	// Chest
-	L_ObjectInit(pObjManager, 2, 0, 0, tileMove * 11, 	tileMove * 6, false);
-	// Column 1
-	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE, 		TILE_SPRITE_SIZE, tileMove * 7, tileMove * 6, false);
-	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE * 2, 	TILE_SPRITE_SIZE, tileMove * 7, tileMove * 5, false);
-	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE * 2, 	TILE_SPRITE_SIZE, tileMove * 7, tileMove * 4, false);
-	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE * 3, 	TILE_SPRITE_SIZE, tileMove * 7, tileMove * 3, false);
-	// Column 2
-	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE, 		TILE_SPRITE_SIZE, tileMove * 15, tileMove * 6, false);
-	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE * 2, 	TILE_SPRITE_SIZE, tileMove * 15, tileMove * 5, false);
-	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE * 2, 	TILE_SPRITE_SIZE, tileMove * 15, tileMove * 4, false);
-	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE * 3, 	TILE_SPRITE_SIZE, tileMove * 15, tileMove * 3, false);
-	// Column 3
-	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE, 		TILE_SPRITE_SIZE, tileMove * 23, tileMove * 6, false);
-	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE * 2, 	TILE_SPRITE_SIZE, tileMove * 23, tileMove * 5, false);
-	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE * 2, 	TILE_SPRITE_SIZE, tileMove * 23, tileMove * 4, false);
-	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE * 3, 	TILE_SPRITE_SIZE, tileMove * 23, tileMove * 3, false);
-	// Column 4
-	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE, 		TILE_SPRITE_SIZE, tileMove * 31, tileMove * 6, false);
-	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE * 2, 	TILE_SPRITE_SIZE, tileMove * 31, tileMove * 5, false);
-	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE * 2, 	TILE_SPRITE_SIZE, tileMove * 31, tileMove * 4, false);
-	L_ObjectInit(pObjManager, 1, TILE_SPRITE_SIZE * 3, 	TILE_SPRITE_SIZE, tileMove * 31, tileMove * 3, false);
+	char* data = (char*) SDL_LoadFile(jsonFilePath, NULL);
+
+	cJSON *json = cJSON_Parse(data);
+
+	if (json == NULL)
+	{
+		const char* errorMsg = cJSON_GetErrorPtr();
+		if (errorMsg != NULL)
+			fprintf(stderr, "JSON Parse Error: %s\n", errorMsg);
+		SDL_free(data);
+		return;
+	}
+
+	cJSON* objects = cJSON_GetObjectItem(json, "objects");
+	cJSON* object = NULL;
+
+	cJSON_ArrayForEach(object, objects)
+	{
+		int spriteIndex = cJSON_GetObjectItem(object, "spriteIndex")->valueint;
+		int bsx = cJSON_GetObjectItem(object, "bySpriteX")->valueint;
+		int bsy = cJSON_GetObjectItem(object, "bySpriteY")->valueint;
+	    int btx = cJSON_GetObjectItem(object, "byTileX")->valueint;
+	    int bty = cJSON_GetObjectItem(object, "byTileY")->valueint;
+	    bool isAnim = cJSON_IsTrue(cJSON_GetObjectItem(object, "isAnimated"));
+
+	    L_ObjectInit(pObjManager, spriteIndex, bsx, bsy, btx, bty, isAnim);
+	}
+
+	if (data != NULL)
+		SDL_free(data);
 }
 
 /*
  * This method implements map loading from a data file or any other ASCII file.
  */
-location_t L_LocationInit(SDL_Renderer* pRenderer, obj_manager_t* pObjManager, char* locationName)
+location_t L_LocationInit(SDL_Renderer* pRenderer, obj_manager_t* pObjManager)
 {
+	char* fullData = (char*) SDL_LoadFile("res/location/location.dat", NULL);
+	if (fullData == NULL) printf("Location load error!\n");
+
+	char* headerData = (char*) SDL_LoadFile("res/location/location.json", NULL);
+	cJSON *json = cJSON_Parse(headerData);
+	if (json == NULL)
+	{
+		const char* errorMsg = cJSON_GetErrorPtr();
+		if (errorMsg != NULL)
+			fprintf(stderr, "JSON Parse Error: %s\n", errorMsg);
+		SDL_free(headerData);
+	}
+
 	location_t location = {
-		// Location load
 		.tileMap = IMG_LoadTexture(pRenderer, "res/tile/tiles.png"),
-		.locationFile = fopen(locationName, "r"),
-		.rows = 12,
-		.columns = 39,
+		.rows = cJSON_GetObjectItem(json, "rows")->valueint, 		// 39
+		.columns = cJSON_GetObjectItem(json, "columns")->valueint, 	// 12
 		.locationDest.w = TILE_SPRITE_SIZE * TILE_SPRITE_SCALE,
 		.locationDest.h = TILE_SPRITE_SIZE * TILE_SPRITE_SCALE
 	};
 
 	assert(location.rows <= MAX_MAP_ROWS && location.columns <= MAX_MAP_COLUMNS);
 
-	char rowBuffer[128];
-	char* currentChar = NULL;
 	int currentCol = 0;
 	int tempY = 0;
-	int srcY = 0;
+	char* nextLine = NULL;
+	char* rowBuffer = strtok_r(fullData, "\n\r", &nextLine);
 
-	while (fgets(rowBuffer, sizeof(rowBuffer), location.locationFile) != NULL)
+	while (rowBuffer != NULL && currentCol < location.columns)
 	{
 		int currentRow = 0;
 		int tempX = 0;
 		int srcX = 0;
+		int srcY = 0;
+		char* nextChar = NULL;
+		char* currentChar = strtok_r(rowBuffer, " ", &nextChar);
 
-		currentChar = strtok(rowBuffer, " \n\r");
-		while (currentChar != NULL)
+		while (currentChar != NULL && currentRow < location.rows)
 		{
 			switch (*currentChar)
 			{
-			case 'A':
-				srcX = 0;
-				srcY = 0;
-				break;
-			case 'B':
-				srcX = TILE_SPRITE_SIZE;
-				srcY = 0;
-				break;
-			case 'C':
-				srcX = TILE_SPRITE_SIZE * 2;
-				srcY = 0;
-				break;
-			case 'D':
-				srcX = TILE_SPRITE_SIZE * 3;
-				srcY = 0;
-				break;
-			case 'E':
-				srcX = TILE_SPRITE_SIZE * 4;
-				srcY = 0;
-				break;
-			case 'F':
-				srcX = 0;
-				srcY = TILE_SPRITE_SIZE;
-				break;
-			case 'G':
-				srcX = TILE_SPRITE_SIZE;
-				srcY = TILE_SPRITE_SIZE;
-				break;
-			case 'H':
-				srcX = TILE_SPRITE_SIZE * 2;
-				srcY = TILE_SPRITE_SIZE;
-				break;
-			case 'I':
-				srcX = TILE_SPRITE_SIZE * 3;
-				srcY = TILE_SPRITE_SIZE;
-				break;
-			case 'J':
-				srcX = TILE_SPRITE_SIZE * 4;
-				srcY = TILE_SPRITE_SIZE;
-				break;
+			case 'A': 	srcX = 0; 						srcY = 0; break;
+			case 'B': 	srcX = TILE_SPRITE_SIZE; 		srcY = 0; break;
+			case 'C': 	srcX = TILE_SPRITE_SIZE * 2; 	srcY = 0; break;
+			case 'D': 	srcX = TILE_SPRITE_SIZE * 3; 	srcY = 0; break;
+			case 'E': 	srcX = TILE_SPRITE_SIZE * 4; 	srcY = 0; break;
+			case 'F': 	srcX = 0; 						srcY = TILE_SPRITE_SIZE; break;
+			case 'G': 	srcX = TILE_SPRITE_SIZE; 		srcY = TILE_SPRITE_SIZE; break;
+			case 'H': 	srcX = TILE_SPRITE_SIZE * 2; 	srcY = TILE_SPRITE_SIZE; break;
+			case 'I': 	srcX = TILE_SPRITE_SIZE * 3; 	srcY = TILE_SPRITE_SIZE; break;
+			case 'J': 	srcX = TILE_SPRITE_SIZE * 4; 	srcY = TILE_SPRITE_SIZE; break;
+			case '.':
+			default: 	srcX = 1024; 						srcY = 1024; break;
 			}
-			location.locationTiles[currentRow][currentCol] = L_TileInit(srcX, srcY, tempX, tempY);
 
+			location.locationTiles[currentCol][currentRow] = L_TileInit(srcX, srcY, tempX, tempY);
 			tempX += TILE_SPRITE_SIZE * TILE_SPRITE_SCALE;
 			++currentRow;
-			currentChar = strtok(NULL, " \n\r");
+			currentChar = strtok_r(NULL, " ", &nextChar);
 		}
 
 		tempY += TILE_SPRITE_SIZE * TILE_SPRITE_SCALE;
 		++currentCol;
+		rowBuffer = strtok_r(NULL, "\n\r", &nextLine);
 	}
 
-	fclose(location.locationFile);
+	if (fullData != NULL)
+		SDL_free(fullData);
+	if (headerData != NULL)
+		SDL_free(headerData);
+
 	return location;
 }
 
-void L_ObjectInit(obj_manager_t* pObjManager, int spriteIndex, int srcX, int srcY, int posX, int posY, bool isAnimated)
+void L_ObjectInit(obj_manager_t* pObjManager, int spriteIndex, int bsx, int bsy, int btx, int bty, bool isAnim)
 {
 	assert(pObjManager->objCount <= MAX_OBJECTS);
 
 	pObjManager->animTimer[pObjManager->objCount].reactionTime = ANIM_TIME;
-	pObjManager->isAnimated[pObjManager->objCount] = isAnimated;
+	pObjManager->isAnimated[pObjManager->objCount] = isAnim;
 
 	pObjManager->objDest.w = TILE_SPRITE_SCALE * TILE_SPRITE_SIZE;
 	pObjManager->objDest.h = TILE_SPRITE_SCALE * TILE_SPRITE_SIZE;
-	pObjManager->transforms[pObjManager->objCount].logX = (float) posX;
-	pObjManager->transforms[pObjManager->objCount].logY = (float) posY;
+	pObjManager->transforms[pObjManager->objCount].logX = (float) btx * TILE_SPRITE_SIZE * TILE_SPRITE_SCALE;
+	pObjManager->transforms[pObjManager->objCount].logY = (float) bty * TILE_SPRITE_SIZE * TILE_SPRITE_SCALE;
 
 	pObjManager->sprites[pObjManager->objCount].currentSprite = 0;
 	pObjManager->sprites[pObjManager->objCount].spriteImg = obj_sprites[spriteIndex];
 	pObjManager->sprites[pObjManager->objCount].spriteSrc.w = TILE_SPRITE_SIZE;
 	pObjManager->sprites[pObjManager->objCount].spriteSrc.h = TILE_SPRITE_SIZE;
-	pObjManager->sprites[pObjManager->objCount].spriteSrc.x = srcX;
-	pObjManager->sprites[pObjManager->objCount].spriteSrc.y = srcY;
+	pObjManager->sprites[pObjManager->objCount].spriteSrc.x = bsx * TILE_SPRITE_SIZE;
+	pObjManager->sprites[pObjManager->objCount].spriteSrc.y = bsy * TILE_SPRITE_SIZE;
 
 	++pObjManager->objCount;
 }
@@ -187,20 +177,23 @@ tile_t L_TileInit(int srcX, int srcY, int posX, int posY)
  */
 void L_Destruct(location_t* pLocation, obj_manager_t* pObjManager)
 {
-	for (int i = 0; i < pObjManager->objCount; ++i)
-		pObjManager->sprites[i].spriteImg = NULL;
+	if (pLocation->tileMap != NULL)
+	{
+	    SDL_DestroyTexture(pLocation->tileMap);
+		pLocation->tileMap = NULL;
+	}
 
 	for (int i = 0; i < MAX_OBJ_SPRITES; ++i)
 	{
 		if (obj_sprites[i] != NULL)
+		{
 			SDL_DestroyTexture(obj_sprites[i]);
+			obj_sprites[i] = NULL;
+		}
 	}
 
-	if (pLocation->tileMap != NULL)
-	{
-		SDL_DestroyTexture(pLocation->tileMap);
-		pLocation->tileMap = NULL;
-	}
+	for (int i = 0; i < pObjManager->objCount; ++i)
+		pObjManager->sprites[i].spriteImg = NULL;
 }
 #endif /* STB_LOCATION_IMPLEMENTATION */
 
