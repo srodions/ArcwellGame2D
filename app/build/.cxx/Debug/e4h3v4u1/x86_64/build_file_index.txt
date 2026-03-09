@@ -1,0 +1,2 @@
+C:\lib\SDL2-2.32.10\android-project\app\jni\Android.mk
+C:\lib\SDL2-2.32.10\android-project\app\jni\Application.mk
