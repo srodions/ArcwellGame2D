@@ -1,25 +1,24 @@
 LOCAL_PATH := $(call my-dir)
 
-# Обязательно импортируем SDL2 ПЕРЕД объявлением нашего модуля
+# 1. Imports SDL2 BEFORE defining the module
 $(call import-add-path, $(LOCAL_PATH)/..)
 
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := main
 
-# Пути теперь корректны относительно папки jni/src
+# 2. The path must be correct relatively to the <jni/src> folder
 SDL_PATH := ../SDL2
 
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/$(SDL_PATH)/include \
                     $(LOCAL_PATH)/../SDL2_image \
                     $(LOCAL_PATH)/../SDL2_ttf
 
-# Если файл лежит в той же папке, что и этот Android.mk, пишем БЕЗ src/
 LOCAL_SRC_FILES := main.c cJSON.c
 
 LOCAL_LDLIBS := -llog -landroid
 
-# Флаг, чтобы функции (SDL_main) были видны снаружи библиотеки
+# 3. Flag for function (SDL_main) visibility outside the library
 LOCAL_CFLAGS += -fvisibility=default
 
 LOCAL_SHARED_LIBRARIES := SDL2 SDL2_image SDL2_ttf
