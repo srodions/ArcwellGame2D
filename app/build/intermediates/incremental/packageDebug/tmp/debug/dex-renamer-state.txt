@@ -1,4 +1,0 @@
-#Sun Mar 08 23:07:37 MSK 2026
-base.0=C\:\\lib\\SDL2-2.32.10\\android-project\\app\\build\\intermediates\\dex\\debug\\mergeDexDebug\\classes.dex
-renamed.0=classes.dex
-path.0=classes.dex
