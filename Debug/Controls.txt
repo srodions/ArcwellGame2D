@@ -1,8 +1,0 @@
----Controls of the game---
-<ESC>-----------Exit
-<A>-------------Move left
-<D>-------------Move right
-<W/Space>-------Jump
-<T>-------------Debug mode
-
-
