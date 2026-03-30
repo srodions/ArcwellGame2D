@@ -25,8 +25,8 @@
 #include "u_utility.h"
 #include "e_entity.h"
 #include "g_gamestate.h"
-#include "k_keyboard.h"
 #include "r_renderer.h"
+#include "k_keyboard.h"
 #include "l_location.h"
 
 SDL_Window* pWindow;
@@ -81,7 +81,7 @@ void loop()
 		// Display entities
 		R_RenderEntity(pRenderer, &location, &entManager, &gameState);
 		// Display statistics (when in debug mode)
-		R_RenderStats(pRenderer, &gameState, &entManager.entitiesCount);
+		R_RenderStats(pRenderer, &gameState, &entManager);
 		// Push frame
 		SDL_RenderPresent(pRenderer);
 		G_FrameEnd(&gameState);

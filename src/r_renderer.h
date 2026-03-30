@@ -8,8 +8,8 @@ font_t R_FontInit();
 
 void R_RenderLocation(SDL_Renderer* pRenderer, location_t* pLocation, e_manager_t* pEntManager);
 void R_RenderObject(SDL_Renderer* pRenderer, location_t* pLocation, obj_manager_t* pObjManager, e_manager_t* pEntManager);
-void R_RenderEntity(SDL_Renderer* pRenderer,  location_t* pLocation, e_manager_t* pEntity, gamestate_t* pGameState);
-void R_RenderStats(SDL_Renderer* pRenderer, gamestate_t* pGameState, int* entitiesCount);
+void R_RenderEntity(SDL_Renderer* pRenderer,  location_t* pLocation, e_manager_t* pEntManager, gamestate_t* pGameState);
+void R_RenderStats(SDL_Renderer* pRenderer, gamestate_t* pGameState, e_manager_t* pEntManager);
 void R_Destruct(SDL_Renderer* pRenderer, SDL_Window* pWindow);
 
 // --- IMPLEMENTATIONS ---
@@ -189,7 +189,7 @@ void R_RenderEntity(SDL_Renderer* pRenderer, location_t* pLocation, e_manager_t*
 	}
 }
 
-void R_RenderStats(SDL_Renderer* pRenderer, gamestate_t* pGameState, int* pEntitiesCount)
+void R_RenderStats(SDL_Renderer* pRenderer, gamestate_t* pGameState, e_manager_t* entManager)
 {
 	if (!pGameState->isDebugMode) return;
 
@@ -206,7 +206,10 @@ void R_RenderStats(SDL_Renderer* pRenderer, gamestate_t* pGameState, int* pEntit
 		}
 
 		char textBuffer[64];
-		snprintf(textBuffer, sizeof(textBuffer), "FPS: %d | Entities: %d", pGameState->currentFPS, *pEntitiesCount);
+		snprintf(textBuffer, sizeof(textBuffer), "FPS: %d | Entities: %d | x: %d | y: %d",
+			pGameState->currentFPS, entManager->entitiesCount,
+			(int) entManager->transforms[0].logX, (int) entManager->transforms[0].logY
+		);
 
 		SDL_Surface* tempSurface = TTF_RenderText_Blended(font.file, textBuffer, font.textColor);
 		if (tempSurface != NULL)
