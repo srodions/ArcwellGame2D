@@ -100,7 +100,7 @@ void K_HandleKeyStates(SDL_Renderer* pRenderer, gamestate_t* pGameState, e_manag
 
 	if (keyStates.isUse && pEntManager->entitiesCount < MAX_ENTITIES)
 	{
-		E_EntityInit(pEntManager, 1, 960, FLOOR_DISTANCE);
+		E_EntityInit(pEntManager, 1, 1300, FLOOR_DISTANCE);
 		pEntManager->isIdle[pEntManager->entitiesCount - 1] = true;
 		keyStates.isUse = false;
 	}

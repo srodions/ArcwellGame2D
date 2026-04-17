@@ -6,8 +6,8 @@
 #define MAX_OBJ_SPRITES		3
 #define MAX_ENTITIES 		32
 #define MAX_OBJECTS 		32
-#define MAX_MAP_COLUMNS 	12
-#define MAX_MAP_ROWS 		64
+#define MAX_MAP_COLUMNS 	64
+#define MAX_MAP_ROWS 		12
 #define MAX_LOCATIONS 		1
 // SPRITES & ANIMATION
 #define ENTITY_FRAMES_COUNT 8
@@ -27,6 +27,13 @@
 #define LOGICAL_HEIGHT 	1080
 // ETC
 #define FLOOR_DISTANCE 512
+
+typedef struct _ARCF_Header
+{
+	char signature[4]; 		// ARCF
+	uint32_t rows;			// Map rows count
+	uint32_t columns;		// Map columns count
+} arcf_header_t;
 
 typedef struct _GameState
 {
@@ -159,9 +166,9 @@ typedef struct _Location
 {
 	SDL_Texture* 	tileMap;
 	SDL_Rect		locationDest;
-	tile_t 			locationTiles[MAX_MAP_COLUMNS][MAX_MAP_ROWS];
-	int				rows;
-	int				columns;
+	tile_t* 		locationTiles;
+	uint32_t		rows;
+	uint32_t		columns;
 } location_t;
 
 typedef struct _Font

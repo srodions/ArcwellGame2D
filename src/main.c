@@ -32,7 +32,7 @@
 SDL_Window* pWindow;
 SDL_Renderer* pRenderer;
 gamestate_t gameState;
-location_t location;
+location_t* location;
 obj_manager_t objManager;
 e_manager_t entManager;
 
@@ -49,11 +49,11 @@ int init()
 
 	objManager.objCount = 0;
 	entManager.entitiesCount = 0;
-	location = L_LocationInit(pRenderer, &objManager);
+	location = L_LocationInit("res/location/tomb.arc", pRenderer, &objManager);
 	L_ObjectSpritesInit(pRenderer);
 	L_ObjectSetter(&objManager, "res/location/objects.json");
 	E_EntitySpritesInit(pRenderer);
-	E_EntityInit(&entManager, 0, 50, FLOOR_DISTANCE); // Player spawn
+	E_EntityInit(&entManager, 0, 1050, FLOOR_DISTANCE); // Player spawn
 
 	return 0;
 }
@@ -67,19 +67,19 @@ void loop()
 		SDL_SetRenderDrawColor(pRenderer, 0, 0, 0, 255);
 		SDL_RenderClear(pRenderer);
 		// Display location
-		R_RenderLocation(pRenderer, &location, &entManager);
+		R_RenderLocation(pRenderer, location, &entManager);
 		// Display objects
-		R_RenderObject(pRenderer, &location, &objManager, &entManager);
+		R_RenderObject(pRenderer, location, &objManager, &entManager);
 		// Handle player input
 		K_HandleEvents(pRenderer, &gameState, &entManager);
 		// Update AI
 		E_AI_Idle(&entManager);
 		// Update physics
 		P_EntityFallJump(&entManager, &gameState);
-		E_EntityWallCollisionCheck(&location, &entManager, &gameState);
+		E_EntityWallCollisionCheck(location, &entManager, &gameState);
 		E_EntityToEntityCollisionCheck(&entManager, &gameState);
 		// Display entities
-		R_RenderEntity(pRenderer, &location, &entManager, &gameState);
+		R_RenderEntity(pRenderer, location, &entManager, &gameState);
 		// Display statistics (when in debug mode)
 		R_RenderStats(pRenderer, &gameState, &entManager);
 		// Push frame
@@ -99,14 +99,14 @@ int main(int argc, char* argv[])
 	int result = init();
 	if (result < 0)
 	{
-		L_Destruct(&location, &objManager);
+		L_Destruct(location, &objManager);
 		E_Destruct(&entManager);
 		R_Destruct(pRenderer, pWindow);
 		return -1;
 	}
 
 	loop();
-	L_Destruct(&location, &objManager);
+	L_Destruct(location, &objManager);
 	E_Destruct(&entManager);
 	R_Destruct(pRenderer, pWindow);
 

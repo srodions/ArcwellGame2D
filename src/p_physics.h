@@ -9,7 +9,7 @@ void P_EntityFallJump(e_manager_t* pEntManager, gamestate_t* pGameState);
 
 static const float 	gravity = 2200.0f;
 static const float 	jump_force = -800.0f;
-static const float 	player_speed = 150.0f;
+static const float 	player_speed = 200.0f;
 static const float 	camera_speed = 6.0f;
 static const float 	knockback_strength = 300.0f;
 

@@ -2,7 +2,7 @@
 #define L_LOCATION_H_
 
 /* --- DEFINITIONS --- */
-location_t L_LocationInit(SDL_Renderer* pRenderer, obj_manager_t* pObjManager);
+location_t* L_LocationInit(const char* filePath, SDL_Renderer* pRenderer, obj_manager_t* pObjManager);
 tile_t L_TileInit(int srcX, int srcY, int posX, int posY);
 void L_ObjectInit(obj_manager_t* pObjManager, int spriteIndex, int bsx, int bsy, int btx, int bty, bool isAnim);
 void L_ObjectSetter(obj_manager_t* pObjManager, const char* jsonFilePath);
@@ -55,8 +55,9 @@ void L_ObjectSetter(obj_manager_t* pObjManager, const char* jsonFilePath)
 }
 
 /*
- * This method implements map loading from a data file or any other ASCII file.
+ * This method implements map loading from a data file or any other ASCII file. (deprecated)
  */
+/*
 location_t L_LocationInit(SDL_Renderer* pRenderer, obj_manager_t* pObjManager)
 {
 	char* fullData = (char*) SDL_LoadFile("res/location/location.dat", NULL);
@@ -129,6 +130,87 @@ location_t L_LocationInit(SDL_Renderer* pRenderer, obj_manager_t* pObjManager)
 		SDL_free(fullData);
 	if (headerData != NULL)
 		SDL_free(headerData);
+
+	return location;
+}
+*/
+
+/*
+ * This new function is not compatible with Android platform
+ * TODO: Use SDL file methods in future
+ */
+location_t* L_LocationInit(const char* filePath, SDL_Renderer* pRenderer, obj_manager_t* pObjManager)
+{
+	FILE* mapFile = fopen(filePath, "rb");
+	if (!mapFile) return NULL;
+
+	arcf_header_t header;
+	fread(&header, sizeof(arcf_header_t), 1, mapFile);
+
+	assert(header.rows <= MAX_MAP_ROWS && header.columns <= MAX_MAP_COLUMNS);
+
+	if (strncmp(header.signature, "ARCF", 4) != 0)
+	{
+		printf("Missing signature!\n");
+		fclose(mapFile);
+		return NULL;
+	}
+
+	uint32_t rows = header.rows;
+	uint32_t columns = header.columns;
+	const int totalTiles = rows * columns;
+
+	location_t* location = (location_t*) malloc(sizeof(location_t));
+	location->tileMap = IMG_LoadTexture(pRenderer, "res/tile/tiles.png");
+	location->rows = rows;
+	location->columns = columns;
+	location->locationDest.w = TILE_SPRITE_SIZE * TILE_SPRITE_SCALE;
+	location->locationDest.h = TILE_SPRITE_SIZE * TILE_SPRITE_SCALE;
+	location->locationTiles = (tile_t*) malloc(totalTiles * sizeof(tile_t));
+
+	char* mapData = (char*) malloc(totalTiles * sizeof(char));
+
+	fread(mapData, sizeof(char), totalTiles, mapFile);
+	fclose(mapFile);
+
+	printf("Map (%d * %d) loaded!\n", rows, columns);
+
+	int tempY = 0;
+
+	for (uint32_t y = 0; y < rows; ++y)
+	{
+		int srcX = 0;
+		int srcY = 0;
+		int tempX = 0;
+
+		for (uint32_t x = 0; x < columns; ++x)
+		{
+			char currentTile = mapData[y * header.columns + x];
+
+			switch (currentTile)
+			{
+			case 'A': 	srcX = 0; 						srcY = 0; break;
+			case 'B': 	srcX = TILE_SPRITE_SIZE; 		srcY = 0; break;
+			case 'C': 	srcX = TILE_SPRITE_SIZE * 2; 	srcY = 0; break;
+			case 'D': 	srcX = TILE_SPRITE_SIZE * 3; 	srcY = 0; break;
+			case 'E': 	srcX = TILE_SPRITE_SIZE * 4; 	srcY = 0; break;
+			case 'F': 	srcX = 0; 						srcY = TILE_SPRITE_SIZE; break;
+			case 'G': 	srcX = TILE_SPRITE_SIZE; 		srcY = TILE_SPRITE_SIZE; break;
+			case 'H': 	srcX = TILE_SPRITE_SIZE * 2; 	srcY = TILE_SPRITE_SIZE; break;
+			case 'I': 	srcX = TILE_SPRITE_SIZE * 3; 	srcY = TILE_SPRITE_SIZE; break;
+			case 'J': 	srcX = TILE_SPRITE_SIZE * 4; 	srcY = TILE_SPRITE_SIZE; break;
+			case '.':
+			default: 	srcX = 1024; 					srcY = 1024; break;
+			}
+
+			location->locationTiles[y * header.columns + x] = L_TileInit(srcX, srcY, tempX, tempY);
+			tempX += TILE_SPRITE_SIZE * TILE_SPRITE_SCALE;
+		}
+
+		tempY += TILE_SPRITE_SIZE * TILE_SPRITE_SCALE;
+	}
+
+	if (mapData != NULL) free(mapData);
 
 	return location;
 }

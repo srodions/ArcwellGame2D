@@ -90,16 +90,18 @@ font_t R_FontInit()
  */
 void R_RenderLocation(SDL_Renderer* pRenderer, location_t* pLocation, e_manager_t* pEntManager)
 {
-	for (int y = 0; y < pLocation->columns; ++y)
+	const float screenXCenter = (float)(LOGICAL_WIDTH / 2 - pEntManager->entityDest.w / 2);
+
+	for (uint32_t y = 0; y < pLocation->rows; ++y)
 	{
-		for (int x = 0; x < pLocation->rows; ++x)
+		for (uint32_t x = 0; x < pLocation->columns; ++x)
 		{
-			pLocation->locationDest.x = pLocation->locationTiles[y][x].posX - pEntManager->transforms[0].logX; // Move relatively player
-			pLocation->locationDest.y = pLocation->locationTiles[y][x].posY;
+			pLocation->locationDest.x = pLocation->locationTiles[y * pLocation->columns + x].posX - pEntManager->transforms[0].logX + screenXCenter; // Move relatively player
+			pLocation->locationDest.y = pLocation->locationTiles[y * pLocation->columns + x].posY;
 
 			SDL_RenderCopy(
 				pRenderer, pLocation->tileMap,
-				&pLocation->locationTiles[y][x].tileSrc,
+				&pLocation->locationTiles[y * pLocation->columns + x].tileSrc,
 				&pLocation->locationDest
 			);
 		}
@@ -111,9 +113,11 @@ void R_RenderLocation(SDL_Renderer* pRenderer, location_t* pLocation, e_manager_
  */
 void R_RenderObject(SDL_Renderer* pRenderer, location_t* pLocation, obj_manager_t* pObjManager, e_manager_t* pEntManager)
 {
+	const float screenXCenter = (float)(LOGICAL_WIDTH / 2 - pEntManager->entityDest.w / 2);
+
 	for (int i = 0; i < pObjManager->objCount; ++i)
 	{
-		pObjManager->objDest.x = (int) pObjManager->transforms[i].logX - pEntManager->transforms[0].logX; // Move relatively player
+		pObjManager->objDest.x = (int) pObjManager->transforms[i].logX - pEntManager->transforms[0].logX + screenXCenter; // Move relatively player
 		pObjManager->objDest.y = (int) pObjManager->transforms[i].logY;
 
 		if (pObjManager->isAnimated[i])

@@ -87,19 +87,21 @@ void E_RemoveEntityFromLoadList(int index, e_manager_t* pEntManager)
  */
 void E_EntityWallCollisionCheck(location_t* pLocation, e_manager_t* pEntManager, gamestate_t* pGameState)
 {
-	const int screenXCenter = LOGICAL_WIDTH / 2 - pEntManager->entityDest.w / 2;
+	const float mapWidth = (float)(pLocation->columns * TILE_SPRITE_SIZE * TILE_SPRITE_SCALE);
+	const float screenXCenter = (float)(LOGICAL_WIDTH / 2 - pEntManager->entityDest.w / 2);
+
 	for (int i = 0; i < pEntManager->entitiesCount; ++i)
 	{
-		if (pEntManager->transforms[i].logX < (float) pLocation->locationDest.x)
+		if (pEntManager->transforms[i].logX < screenXCenter)
 		{
-			pEntManager->transforms[i].logX = (float) pLocation->locationDest.x;
+			pEntManager->transforms[i].logX = screenXCenter;
 			pEntManager->aiParams[i].isCollisionOnLeft = true;
 		}
 		else pEntManager->aiParams[i].isCollisionOnLeft = false;
 
-		if (pEntManager->transforms[i].logX > (float) (pLocation->locationDest.x + pLocation->rows * TILE_SPRITE_SIZE * TILE_SPRITE_SCALE) / 2 + screenXCenter)
+		if (pEntManager->transforms[i].logX > mapWidth / 2 + screenXCenter / 2 + pEntManager->entityDest.w * 2)
 		{
-			pEntManager->transforms[i].logX = (float) ((pLocation->locationDest.x + pLocation->rows * TILE_SPRITE_SIZE * TILE_SPRITE_SCALE) / 2 + screenXCenter);
+			pEntManager->transforms[i].logX = mapWidth / 2 + screenXCenter / 2 + pEntManager->entityDest.w * 2;
 			pEntManager->aiParams[i].isCollisionOnRight = true;
 		}
 		else pEntManager->aiParams[i].isCollisionOnRight = false;
@@ -111,7 +113,7 @@ void E_EntityToEntityCollisionCheck(e_manager_t* pEntManager, gamestate_t* pGame
 	if (pEntManager->entitiesCount < 2) return;
 
 	double dt = pGameState->deltaTime;
-	const int screenXCenter = LOGICAL_WIDTH / 2 - pEntManager->entityDest.w / 2;
+	const float screenXCenter = (float)(LOGICAL_WIDTH / 2 - pEntManager->entityDest.w / 2);
 
 	for (int i = 0; i < pEntManager->entitiesCount; ++i)
 	{
