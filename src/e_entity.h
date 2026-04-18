@@ -4,6 +4,7 @@
 /* --- DEFINITIONS --- */
 void E_EntitySpritesInit(SDL_Renderer* pRenderer);
 void E_EntityInit(e_manager_t* pEntManager, int spriteIndex, int posX, int posY);
+void E_MarkEntityToRemove(int index, e_manager_t* pEntManager);
 void E_RemoveEntityFromLoadList(int index, e_manager_t* pEntManager);
 void E_EntityWallCollisionCheck(location_t* pLocation, e_manager_t* pEntManager, gamestate_t* pGameState);
 void E_EntityToEntityCollisionCheck(e_manager_t* pEntManager, gamestate_t* pGameState);
@@ -46,6 +47,7 @@ void E_EntityInit(e_manager_t* pEntManager, int spriteIndex, int posX, int posY)
 	pEntManager->transforms[pEntManager->entitiesCount].hitboxH = ENTITY_SPRITE_SIZE * ENTITY_SPRITE_SCALE;
 	pEntManager->velocities[pEntManager->entitiesCount].gravityAccel = 0.0;
 	// Timers
+	pEntManager->destructTimer[pEntManager->entitiesCount].reactionTime = ENTITY_DESTRUCT_TIME;
 	pEntManager->animTimer[pEntManager->entitiesCount].reactionTime = ANIM_TIME;
 	pEntManager->aiTimer[pEntManager->entitiesCount].reactionTime = 0;
 	// Flags
@@ -56,6 +58,17 @@ void E_EntityInit(e_manager_t* pEntManager, int spriteIndex, int posX, int posY)
 	pEntManager->aiParams[pEntManager->entitiesCount].isCollisionOnLeft = false;
 	pEntManager->aiParams[pEntManager->entitiesCount].isCollisionOnRight = false;
 	++pEntManager->entitiesCount;
+}
+
+void E_MarkEntityToRemove(int index, e_manager_t* pEntManager)
+{
+	U_ReactionTimerStart(&pEntManager->destructTimer[index]);
+
+	if (U_IsTimeToReact(&pEntManager->destructTimer[index]))
+	{
+		U_ReactionTimerEnd(&pEntManager->destructTimer[index]);
+		E_RemoveEntityFromLoadList(index, pEntManager);
+	}
 }
 
 /*
@@ -122,12 +135,12 @@ void E_EntityToEntityCollisionCheck(e_manager_t* pEntManager, gamestate_t* pGame
 			SDL_Rect a, b, result;
 
 			// Calculating collision from the center of the screen if opposite entity is player
-			a.x = (int) (j > 0 ? pEntManager->transforms[i].logX : (pEntManager->transforms[i].logX - screenXCenter));
+			a.x = (int) (j > 0 ? pEntManager->transforms[i].logX + screenXCenter : (pEntManager->transforms[i].logX + screenXCenter));
 			a.y = (int) pEntManager->transforms[i].logY;
 			a.w = pEntManager->transforms[i].hitboxW;
 			a.h = pEntManager->transforms[i].hitboxH;
 			// Calculating collision from the center of the screen if opposite entity is player
-			b.x = (int) (i > 0 ? pEntManager->transforms[j].logX : (pEntManager->transforms[j].logX - screenXCenter));
+			b.x = (int) (i > 0 ? pEntManager->transforms[j].logX + screenXCenter : (pEntManager->transforms[j].logX + screenXCenter));
 			b.y = (int) pEntManager->transforms[j].logY;
 			b.w = pEntManager->transforms[j].hitboxW;
 			b.h = pEntManager->transforms[j].hitboxH;

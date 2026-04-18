@@ -96,8 +96,20 @@ void R_RenderLocation(SDL_Renderer* pRenderer, location_t* pLocation, e_manager_
 	{
 		for (uint32_t x = 0; x < pLocation->columns; ++x)
 		{
-			pLocation->locationDest.x = pLocation->locationTiles[y * pLocation->columns + x].posX - pEntManager->transforms[0].logX + screenXCenter; // Move relatively player
-			pLocation->locationDest.y = pLocation->locationTiles[y * pLocation->columns + x].posY;
+			int screenX = pLocation->locationTiles[y * pLocation->columns + x].posX - pEntManager->transforms[0].logX + screenXCenter;
+			int screenY = pLocation->locationTiles[y * pLocation->columns + x].posY;
+
+			// Tiles culling
+			if (screenX + TILE_SPRITE_SIZE * TILE_SPRITE_SCALE < 0
+				|| screenX > LOGICAL_WIDTH
+				|| screenY < 0
+				|| screenY > LOGICAL_HEIGHT)
+			{
+				continue;
+			}
+
+			pLocation->locationDest.x = screenX;
+			pLocation->locationDest.y = screenY;
 
 			SDL_RenderCopy(
 				pRenderer, pLocation->tileMap,
@@ -117,8 +129,20 @@ void R_RenderObject(SDL_Renderer* pRenderer, location_t* pLocation, obj_manager_
 
 	for (int i = 0; i < pObjManager->objCount; ++i)
 	{
-		pObjManager->objDest.x = (int) pObjManager->transforms[i].logX - pEntManager->transforms[0].logX + screenXCenter; // Move relatively player
-		pObjManager->objDest.y = (int) pObjManager->transforms[i].logY;
+		int screenX = (int) pObjManager->transforms[i].logX - pEntManager->transforms[0].logX + screenXCenter; // Move relatively player
+		int screenY = (int) pObjManager->transforms[i].logY;
+
+		// Objects culling
+		if (screenX + TILE_SPRITE_SIZE * TILE_SPRITE_SCALE < 0
+			|| screenX > LOGICAL_WIDTH
+			|| screenY < 0
+			|| screenY > LOGICAL_HEIGHT)
+		{
+			continue;
+		}
+
+		pObjManager->objDest.x = screenX;
+		pObjManager->objDest.y = screenY;
 
 		if (pObjManager->isAnimated[i])
 		{
@@ -140,13 +164,10 @@ void R_RenderObject(SDL_Renderer* pRenderer, location_t* pLocation, obj_manager_
 	}
 }
 
-/*
- * TODO: Make it to not render entities (or just remove them) when they out of monitor screen
- */
 void R_RenderEntity(SDL_Renderer* pRenderer, location_t* pLocation, e_manager_t* pEntManager, gamestate_t* pGameState)
 {
 	double dt = pGameState->deltaTime;
-	const int screenXCenter = LOGICAL_WIDTH / 2 - pEntManager->entityDest.w / 2;
+	const float screenXCenter = (float) (LOGICAL_WIDTH / 2 - pEntManager->entityDest.w / 2);
 
 	for (int i = 0; i < pEntManager->entitiesCount; ++i)
 	{
@@ -164,12 +185,29 @@ void R_RenderEntity(SDL_Renderer* pRenderer, location_t* pLocation, e_manager_t*
 			break;
 		}
 
-		if (i > 0)
-			pEntManager->entityDest.x = (int) pEntManager->transforms[i].logX - pEntManager->transforms[0].logX; // For each exclude player (Move relatively player)
-		else
-			pEntManager->entityDest.x = screenXCenter; // For player (centered on the screen entity)
+		int screenX;
+		int screenY;
 
-		pEntManager->entityDest.y = (int) pEntManager->transforms[i].logY;
+		if (i > 0)
+			screenX = (int) pEntManager->transforms[i].logX - pEntManager->transforms[0].logX + screenXCenter; // For each exclude player (Move relatively player)
+		else
+			screenX = (int) screenXCenter; // For player (centered on the screen entity)
+
+		screenY = (int) pEntManager->transforms[i].logY;
+
+		// Entity culling
+		if (screenX + ENTITY_SPRITE_SIZE * ENTITY_SPRITE_SCALE < 0
+			|| screenX > LOGICAL_WIDTH
+			|| screenY < 0
+			|| screenY > LOGICAL_HEIGHT)
+		{
+			E_MarkEntityToRemove(i, pEntManager);
+			continue;
+		}
+		else U_ReactionTimerReset(&pEntManager->destructTimer[i]);
+
+		pEntManager->entityDest.x = screenX;
+		pEntManager->entityDest.y = screenY;
 
 		if (pEntManager->isMoving[i])
 		{

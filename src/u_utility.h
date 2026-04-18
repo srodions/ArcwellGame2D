@@ -4,6 +4,7 @@
 /* --- DEFINITIONS --- */
 void U_ReactionTimerStart(rtimer_t* pReactionTimer);
 void U_ReactionTimerEnd(rtimer_t* pReactionTimer);
+void U_ReactionTimerReset(rtimer_t* pReactionTimer);
 bool U_IsTimeToReact(rtimer_t* pReactionTimer);
 
 /* --- IMPLEMENTATIONS --- */
@@ -19,6 +20,11 @@ void U_ReactionTimerStart(rtimer_t* pReactionTimer)
 void U_ReactionTimerEnd(rtimer_t* pReactionTimer)
 {
 	pReactionTimer->lastTime = pReactionTimer->currentTime;
+}
+
+void U_ReactionTimerReset(rtimer_t* pReactionTimer)
+{
+    pReactionTimer->lastTime = SDL_GetTicks();
 }
 
 /*

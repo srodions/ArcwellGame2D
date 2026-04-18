@@ -27,6 +27,7 @@
 #define LOGICAL_HEIGHT 	1080
 // ETC
 #define FLOOR_DISTANCE 512
+#define ENTITY_DESTRUCT_TIME 10000
 
 typedef struct _ARCF_Header
 {
@@ -132,6 +133,7 @@ typedef struct _EntityAI
 
 typedef struct _EntityManager
 {
+	rtimer_t	destructTimer[MAX_ENTITIES];
 	rtimer_t	aiTimer[MAX_ENTITIES];
 	rtimer_t	animTimer[MAX_ENTITIES];
 	e_sprite_t	sprites[MAX_ENTITIES];
