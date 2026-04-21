@@ -100,8 +100,9 @@ void K_HandleKeyStates(SDL_Renderer* pRenderer, gamestate_t* pGameState, e_manag
 
 	if (keyStates.isUse && pEntManager->entitiesCount < MAX_ENTITIES)
 	{
-		E_EntityInit(pEntManager, 1, rand() % LOGICAL_WIDTH + 880, FLOOR_DISTANCE);
-		pEntManager->isIdle[pEntManager->entitiesCount - 1] = true;
+		E_EntityInit(pEntManager, rand() % LOGICAL_WIDTH + 880, FLOOR_DISTANCE, player_speed, SKELETON);
+		pEntManager->state[pEntManager->entitiesCount - 1] = STATE_SPAWNING;
+		pEntManager->ai[pEntManager->entitiesCount - 1] = AI_IDLE;
 		keyStates.isUse = false;
 	}
 	else if (keyStates.isRemove)

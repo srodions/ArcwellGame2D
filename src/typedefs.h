@@ -1,6 +1,7 @@
 #ifndef TYPEDEFS_H_
 #define TYPEDEFS_H_
 
+// TODO: Move hardcoded macro parameters into the config.json file, then parse them
 // LIMITS
 #define MAX_ENTITY_SPRITES 	2
 #define MAX_OBJ_SPRITES		3
@@ -12,6 +13,7 @@
 // SPRITES & ANIMATION
 #define ENTITY_FRAMES_COUNT 8
 #define OBJ_FRAMES_COUNT 	5
+#define SPAWN_FRAMES_COUNT	10
 #define ANIM_TIME 			200
 #define TILE_SPRITE_SIZE 	16
 #define TILE_SPRITE_SCALE 	6
@@ -87,6 +89,26 @@ enum ENTITY_DIR
 	RIGHT
 };
 
+enum ENTITY_ID
+{
+	PLAYER,
+	SKELETON
+};
+
+enum ENTITY_STATE
+{
+	STATE_NONE,
+    STATE_SPAWNING,
+    STATE_REMOVING
+};
+
+enum ENTITY_AI
+{
+	AI_NONE,
+	AI_IDLE,
+	AI_CHASING
+};
+
 typedef struct _ReactionTimer
 {
 	Uint32 			currentTime;
@@ -119,6 +141,7 @@ typedef struct _EntityTransform
 typedef struct _EntityVel
 {
 	float 	gravityAccel;
+	float 	currentSpeed;
 } e_vel_t;
 
 typedef struct _EntityAI
@@ -133,19 +156,20 @@ typedef struct _EntityAI
 
 typedef struct _EntityManager
 {
-	rtimer_t	destructTimer[MAX_ENTITIES];
-	rtimer_t	aiTimer[MAX_ENTITIES];
-	rtimer_t	animTimer[MAX_ENTITIES];
-	e_sprite_t	sprites[MAX_ENTITIES];
-	e_tform_t 	transforms[MAX_ENTITIES];
-	e_vel_t		velocities[MAX_ENTITIES];
-	e_ai_t		aiParams[MAX_ENTITIES];
-	bool		isIdle[MAX_ENTITIES];
-	bool		isChasing[MAX_ENTITIES];
-	bool		isMoving[MAX_ENTITIES];
-	bool		isFalling[MAX_ENTITIES];
-	SDL_Rect 	entityDest;
-	int			entitiesCount;
+	rtimer_t			destructTimer[MAX_ENTITIES];
+	rtimer_t			aiTimer[MAX_ENTITIES];
+	rtimer_t			animTimer[MAX_ENTITIES];
+	e_sprite_t			sprites[MAX_ENTITIES];
+	e_tform_t 			transforms[MAX_ENTITIES];
+	e_vel_t				velocities[MAX_ENTITIES];
+	e_ai_t				aiParams[MAX_ENTITIES];
+	enum ENTITY_STATE 	state[MAX_ENTITIES];
+	enum ENTITY_AI		ai[MAX_ENTITIES];
+	enum ENTITY_ID 		id[MAX_ENTITIES];
+	bool				isMoving[MAX_ENTITIES];
+	bool				isFalling[MAX_ENTITIES];
+	SDL_Rect 			entityDest;
+	int					entitiesCount;
 } e_manager_t;
 
 typedef struct _Tile

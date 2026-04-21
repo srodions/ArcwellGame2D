@@ -9,6 +9,7 @@ font_t R_FontInit();
 void R_RenderLocation(SDL_Renderer* pRenderer, location_t* pLocation, e_manager_t* pEntManager);
 void R_RenderObject(SDL_Renderer* pRenderer, location_t* pLocation, obj_manager_t* pObjManager, e_manager_t* pEntManager);
 void R_RenderEntity(SDL_Renderer* pRenderer,  location_t* pLocation, e_manager_t* pEntManager, gamestate_t* pGameState);
+void R_Anim_SkeletonSpawn(SDL_Renderer* pRenderer, e_manager_t* pEntManager);
 void R_RenderStats(SDL_Renderer* pRenderer, gamestate_t* pGameState, e_manager_t* pEntManager);
 void R_Destruct(SDL_Renderer* pRenderer, SDL_Window* pWindow);
 
@@ -171,17 +172,19 @@ void R_RenderEntity(SDL_Renderer* pRenderer, location_t* pLocation, e_manager_t*
 
 	for (int i = 0; i < pEntManager->entitiesCount; ++i)
 	{
+		if (pEntManager->state[i] == STATE_SPAWNING || pEntManager->state[i] == STATE_REMOVING) continue;
+
 		switch (pEntManager->sprites[i].direction)
 		{
 		case LEFT:
-			pEntManager->sprites[i].flip = SDL_FLIP_HORIZONTAL;
-			if (pEntManager->isMoving[i])
-				pEntManager->transforms[i].logX -= player_speed * dt;
-			break;
-		case RIGHT:
 			pEntManager->sprites[i].flip = SDL_FLIP_NONE;
 			if (pEntManager->isMoving[i])
-				pEntManager->transforms[i].logX += player_speed * dt;
+				pEntManager->transforms[i].logX -= pEntManager->velocities[i].currentSpeed * (float) dt;
+			break;
+		case RIGHT:
+			pEntManager->sprites[i].flip = SDL_FLIP_HORIZONTAL;
+			if (pEntManager->isMoving[i])
+				pEntManager->transforms[i].logX += pEntManager->velocities[i].currentSpeed * (float) dt;
 			break;
 		}
 
@@ -217,11 +220,55 @@ void R_RenderEntity(SDL_Renderer* pRenderer, location_t* pLocation, e_manager_t*
 			{
 				pEntManager->sprites[i].currentSprite = (pEntManager->sprites[i].currentSprite + 1) % ENTITY_FRAMES_COUNT;
 				pEntManager->sprites[i].spriteSrc.x = ENTITY_SPRITE_SIZE * pEntManager->sprites[i].currentSprite;
+				pEntManager->sprites[i].spriteSrc.y = 0;
 
 				U_ReactionTimerEnd(&pEntManager->animTimer[i]);
 			}
 		}
 		else pEntManager->sprites[i].spriteSrc.x = 0;
+
+		SDL_RenderCopyEx(
+			pRenderer, pEntManager->sprites[i].spriteImg,
+			&pEntManager->sprites[i].spriteSrc, &pEntManager->entityDest,
+			0.0, NULL, pEntManager->sprites[i].flip
+		);
+	}
+}
+
+void R_Anim_SkeletonSpawn(SDL_Renderer* pRenderer, e_manager_t* pEntManager)
+{
+	const float screenXCenter = (float)(LOGICAL_WIDTH / 2 - pEntManager->entityDest.w / 2);
+
+	for (int i = 0; i < pEntManager->entitiesCount; ++i)
+	{
+		if (pEntManager->id[i] != SKELETON && pEntManager->state[i] != STATE_SPAWNING) continue;
+
+		int screenX = (int) pEntManager->transforms[i].logX - (int) pEntManager->transforms[0].logX + (int) screenXCenter;
+		int screenY = (int) pEntManager->transforms[i].logY;
+
+		pEntManager->entityDest.x = screenX;
+		pEntManager->entityDest.y = screenY;
+
+		U_ReactionTimerStart(&pEntManager->animTimer[i]);
+
+		if (U_IsTimeToReact(&pEntManager->animTimer[i]))
+		{
+			++(pEntManager->sprites[i].currentSprite);
+
+			if (pEntManager->sprites[i].currentSprite >= SPAWN_FRAMES_COUNT)
+			{
+				pEntManager->state[i] = STATE_NONE;
+				pEntManager->sprites[i].currentSprite = 0;
+
+				U_ReactionTimerEnd(&pEntManager->animTimer[i]);
+				continue;
+			}
+
+			pEntManager->sprites[i].spriteSrc.x = ENTITY_SPRITE_SIZE * pEntManager->sprites[i].currentSprite;
+			pEntManager->sprites[i].spriteSrc.y = ENTITY_SPRITE_SIZE; // Next atlas row
+
+			U_ReactionTimerEnd(&pEntManager->animTimer[i]);
+		}
 
 		SDL_RenderCopyEx(
 			pRenderer, pEntManager->sprites[i].spriteImg,

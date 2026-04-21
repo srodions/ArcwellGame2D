@@ -53,7 +53,7 @@ int init()
 	L_ObjectSpritesInit(pRenderer);
 	L_ObjectSetter(&objManager, "res/location/objects.json");
 	E_EntitySpritesInit(pRenderer);
-	E_EntityInit(&entManager, 0, 1050, FLOOR_DISTANCE); // Player spawn
+	E_EntityInit(&entManager, 1050, FLOOR_DISTANCE, player_speed, PLAYER); // Player spawn
 
 	return 0;
 }
@@ -80,6 +80,8 @@ void loop()
 		E_EntityToEntityCollisionCheck(&entManager, &gameState);
 		// Display entities
 		R_RenderEntity(pRenderer, location, &entManager, &gameState);
+		// Display entities' specific animations
+		R_Anim_SkeletonSpawn(pRenderer, &entManager);
 		// Display statistics (when in debug mode)
 		R_RenderStats(pRenderer, &gameState, &entManager);
 		// Push frame

@@ -3,7 +3,7 @@
 
 /* --- DEFINITIONS --- */
 void E_EntitySpritesInit(SDL_Renderer* pRenderer);
-void E_EntityInit(e_manager_t* pEntManager, int spriteIndex, int posX, int posY);
+void E_EntityInit(e_manager_t* pEntManager, int posX, int posY, float speed, enum ENTITY_ID id);
 void E_MarkEntityToRemove(int index, e_manager_t* pEntManager);
 void E_RemoveEntityFromLoadList(int index, e_manager_t* pEntManager);
 void E_EntityWallCollisionCheck(location_t* pLocation, e_manager_t* pEntManager, gamestate_t* pGameState);
@@ -26,37 +26,40 @@ void E_EntitySpritesInit(SDL_Renderer* pRenderer)
 /*
  * This function initializes entity (data-oriented style).
  */
-void E_EntityInit(e_manager_t* pEntManager, int spriteIndex, int posX, int posY)
+void E_EntityInit(e_manager_t* pEntManager, int posX, int posY, float speed, enum ENTITY_ID id)
 {
-	assert(pEntManager->entitiesCount <= MAX_ENTITIES);
+	int i = pEntManager->entitiesCount;
+	assert(i <= MAX_ENTITIES);
 	// Texture load
-	pEntManager->sprites[pEntManager->entitiesCount].spriteImg = entity_sprites[spriteIndex];
-	pEntManager->sprites[pEntManager->entitiesCount].spriteSrc.x = 0;
-	pEntManager->sprites[pEntManager->entitiesCount].spriteSrc.y = 0;
-	pEntManager->sprites[pEntManager->entitiesCount].spriteSrc.w = ENTITY_SPRITE_SIZE;
-	pEntManager->sprites[pEntManager->entitiesCount].spriteSrc.h = ENTITY_SPRITE_SIZE;
+	pEntManager->id[i] = id;
+	pEntManager->sprites[i].spriteImg = entity_sprites[id];
+	pEntManager->sprites[i].spriteSrc.x = 0;
+	pEntManager->sprites[i].spriteSrc.y = 0;
+	pEntManager->sprites[i].spriteSrc.w = ENTITY_SPRITE_SIZE;
+	pEntManager->sprites[i].spriteSrc.h = ENTITY_SPRITE_SIZE;
 	pEntManager->entityDest.w = ENTITY_SPRITE_SIZE * ENTITY_SPRITE_SCALE;
 	pEntManager->entityDest.h = ENTITY_SPRITE_SIZE * ENTITY_SPRITE_SCALE;
 	// Sprite controls
-	pEntManager->sprites[pEntManager->entitiesCount].direction = RIGHT;
-	pEntManager->sprites[pEntManager->entitiesCount].currentSprite = 0;
-	pEntManager->transforms[pEntManager->entitiesCount].logX = (float) posX;
-	pEntManager->transforms[pEntManager->entitiesCount].logY = (float) posY;
+	pEntManager->sprites[i].direction = RIGHT;
+	pEntManager->sprites[i].currentSprite = 0;
+	pEntManager->transforms[i].logX = (float) posX;
+	pEntManager->transforms[i].logY = (float) posY;
 	// Physics
-	pEntManager->transforms[pEntManager->entitiesCount].hitboxW = ENTITY_SPRITE_SIZE * ENTITY_SPRITE_SCALE - 64;
-	pEntManager->transforms[pEntManager->entitiesCount].hitboxH = ENTITY_SPRITE_SIZE * ENTITY_SPRITE_SCALE;
-	pEntManager->velocities[pEntManager->entitiesCount].gravityAccel = 0.0;
+	pEntManager->transforms[i].hitboxW = ENTITY_SPRITE_SIZE * ENTITY_SPRITE_SCALE - 64;
+	pEntManager->transforms[i].hitboxH = ENTITY_SPRITE_SIZE * ENTITY_SPRITE_SCALE;
+	pEntManager->velocities[i].gravityAccel = 0.0;
+	pEntManager->velocities[i].currentSpeed = speed;
 	// Timers
-	pEntManager->destructTimer[pEntManager->entitiesCount].reactionTime = ENTITY_DESTRUCT_TIME;
-	pEntManager->animTimer[pEntManager->entitiesCount].reactionTime = ANIM_TIME;
-	pEntManager->aiTimer[pEntManager->entitiesCount].reactionTime = 0;
+	pEntManager->destructTimer[i].reactionTime = ENTITY_DESTRUCT_TIME;
+	pEntManager->animTimer[i].reactionTime = ANIM_TIME;
+	pEntManager->aiTimer[i].reactionTime = 0;
 	// Flags
-	pEntManager->isMoving[pEntManager->entitiesCount] = false;
-	pEntManager->isFalling[pEntManager->entitiesCount] = false;
-	pEntManager->isIdle[pEntManager->entitiesCount] = false;
+	pEntManager->isMoving[i] = false;
+	pEntManager->isFalling[i] = false;
+	pEntManager->state[i] = STATE_NONE;
 	// AI
-	pEntManager->aiParams[pEntManager->entitiesCount].isCollisionOnLeft = false;
-	pEntManager->aiParams[pEntManager->entitiesCount].isCollisionOnRight = false;
+	pEntManager->aiParams[i].isCollisionOnLeft = false;
+	pEntManager->aiParams[i].isCollisionOnRight = false;
 	++pEntManager->entitiesCount;
 }
 
@@ -84,8 +87,7 @@ void E_RemoveEntityFromLoadList(int index, e_manager_t* pEntManager)
 	    pEntManager->aiParams[i] = pEntManager->aiParams[i + 1];
 	    pEntManager->aiTimer[i] = pEntManager->aiTimer[i + 1];
 	    pEntManager->animTimer[i] = pEntManager->animTimer[i + 1];
-	    pEntManager->isFalling[i] = pEntManager->isFalling[i + 1];
-	    pEntManager->isIdle[i] = pEntManager->isIdle[i + 1];
+	    pEntManager->state[i] = pEntManager->state[i + 1];
 	    pEntManager->isMoving[i] = pEntManager->isMoving[i + 1];
 	    pEntManager->sprites[i] = pEntManager->sprites[i + 1];
 	    pEntManager->transforms[i] = pEntManager->transforms[i + 1];
@@ -105,6 +107,8 @@ void E_EntityWallCollisionCheck(location_t* pLocation, e_manager_t* pEntManager,
 
 	for (int i = 0; i < pEntManager->entitiesCount; ++i)
 	{
+		if (pEntManager->state[i] == STATE_SPAWNING || pEntManager->state[i] == STATE_REMOVING) continue;
+
 		if (pEntManager->transforms[i].logX < screenXCenter)
 		{
 			pEntManager->transforms[i].logX = screenXCenter;
@@ -123,15 +127,19 @@ void E_EntityWallCollisionCheck(location_t* pLocation, e_manager_t* pEntManager,
 
 void E_EntityToEntityCollisionCheck(e_manager_t* pEntManager, gamestate_t* pGameState)
 {
-	if (pEntManager->entitiesCount < 2) return;
+	int eCount = pEntManager->entitiesCount;
+	if (eCount < 2) return;
 
 	double dt = pGameState->deltaTime;
 	const float screenXCenter = (float)(LOGICAL_WIDTH / 2 - pEntManager->entityDest.w / 2);
 
-	for (int i = 0; i < pEntManager->entitiesCount; ++i)
+	for (int i = 0; i < eCount; ++i)
 	{
-		for (int j = i + 1; j < pEntManager->entitiesCount; ++j)
+		for (int j = i + 1; j < eCount; ++j)
 		{
+			if (pEntManager->state[i] == STATE_SPAWNING || pEntManager->state[i] == STATE_REMOVING
+				|| pEntManager->state[j] == STATE_SPAWNING || pEntManager->state[j] == STATE_REMOVING) continue;
+
 			SDL_Rect a, b, result;
 
 			// Calculating collision from the center of the screen if opposite entity is player
@@ -203,7 +211,8 @@ void E_AI_Idle(e_manager_t* pEntManager)
 {
 	for (int i = 0; i < pEntManager->entitiesCount; ++i)
 	{
-		if (!pEntManager->isIdle[i]) continue;
+		if (pEntManager->ai[i] != AI_IDLE
+			|| pEntManager->state[i] == STATE_SPAWNING || pEntManager->state[i] == STATE_REMOVING) continue;
 
 		pEntManager->isMoving[i] = true;
 
