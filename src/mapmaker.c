@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
-#include <assert.h>
 
 #define SDL_MAIN_HANDLED
 #define SPRITE_SCALE 2
@@ -16,12 +16,26 @@ typedef struct _ARCF_Header
 	uint32_t offsetToLumpsTable;// Offset to table of files in bytes
 } arcf_header_t;
 
+typedef struct _ARCF_MapEntryHeader
+{
+	uint32_t mapRows;
+	uint32_t mapColumns;
+} arcf_mapheader_t;
+
+typedef struct _ARCF_ObjEntryHeader
+{
+	uint32_t spriteIndex;
+	uint32_t bySpriteX;
+	uint32_t bySpriteY;
+	uint32_t byTileX;
+	uint32_t byTileY;
+	bool isAnimated;
+} arcf_objheader_t;
+
 typedef struct _ARCF_Entry
 {
     uint32_t offsetToFile;		// Offset to current file in the table in bytes
     uint32_t lumpSize;			// Size of current file in bytes
-    uint32_t mapRows;
-    uint32_t mapColumns;
     char lumpName[16];			// The name(id) of the file to find it in the table
 } arcf_entry_t;
 
@@ -45,25 +59,27 @@ void packMap_Tomb(FILE* arcFile, uint32_t rows, uint32_t columns, uint32_t* curr
 	if (rows > maxRows) rows = maxRows;
 
 	const int totalTiles = rows * columns;
-	char* mapData = malloc(totalTiles);
+	arcf_mapheader_t* mapDataHeader = (arcf_mapheader_t*) malloc(totalTiles + sizeof(arcf_mapheader_t));
+	mapDataHeader->mapRows = rows;
+	mapDataHeader->mapColumns = columns;
+	char* mapData = (char*)(mapDataHeader + 1);
 
 	// Filling map data array string by string from design array
 	for(int y = 0; y < rows; y++)
 	    memcpy(&mapData[y * columns], design[y], columns);
 
 	allEntries[*currentFilesCount].offsetToFile = *currentOffset;
-	allEntries[*currentFilesCount].lumpSize = totalTiles;
-	allEntries[*currentFilesCount].mapRows = rows;
-	allEntries[*currentFilesCount].mapColumns = columns;
+	allEntries[*currentFilesCount].lumpSize = totalTiles + sizeof(arcf_mapheader_t);
 	snprintf(allEntries[*currentFilesCount].lumpName, 16, "TOMB");
 
 	fseek(arcFile, *currentOffset, SEEK_SET);
+	fwrite(mapDataHeader, sizeof(arcf_mapheader_t), 1, arcFile);
 	fwrite(mapData, sizeof(char), totalTiles, arcFile);
 
-	*currentOffset += sizeof(char) * totalTiles;
+	*currentOffset += (sizeof(char) * totalTiles + sizeof(arcf_mapheader_t));
 	++(*currentFilesCount);
 
-	free(mapData);
+	free(mapDataHeader);
 	printf("Map (%d * %d) packed at offset %u!\n", rows, columns, *currentOffset);
 }
 
@@ -94,6 +110,31 @@ void packTexture(const char* filePath, const char* textureName, FILE* arcFile, u
 
 	free(imgBytesBuffer);
 	printf("Texture '%s' (%ld bytes) packed at offset %u!\n", textureName, imgSize, *currentOffset);
+}
+
+void packObjectData(const char* name, uint32_t si, uint32_t bsx, uint32_t bsy, uint32_t btx, uint32_t bty, bool isAnim, FILE* arcFile, uint32_t* currentOffset, uint32_t* currentFilesCount)
+{
+	arcf_objheader_t objHeader = {
+		.spriteIndex = si,
+		.bySpriteX = bsx,
+		.bySpriteY = bsy,
+		.byTileX = btx,
+		.byTileY = bty,
+		.isAnimated = isAnim
+	};
+
+	allEntries[*currentFilesCount].offsetToFile = *currentOffset;
+	allEntries[*currentFilesCount].lumpSize = sizeof(arcf_objheader_t);
+	memset(allEntries[*currentFilesCount].lumpName, 0, sizeof(allEntries[*currentFilesCount].lumpName));
+	strncpy(allEntries[*currentFilesCount].lumpName, name, 15);
+
+	fseek(arcFile, *currentOffset, SEEK_SET);
+	fwrite(&objHeader, 1, sizeof(arcf_objheader_t), arcFile);
+
+	*currentOffset += (uint32_t) sizeof(arcf_objheader_t);
+	++(*currentFilesCount);
+
+	printf("Object '%s' (%lld bytes) packed at offset %u!\n", name, sizeof(arcf_objheader_t), *currentOffset);
 }
 
 void finishArchive(FILE* arcFile, uint32_t* currentOffset, uint32_t* currentFilesCount)
@@ -153,11 +194,15 @@ void* loadLump(const char* filePath, const char* lumpName, uint32_t* outSize)
 	return buffer;
 }
 
-void printMap(uint32_t rows, uint32_t columns, char* mapData)
+void printMap(arcf_mapheader_t* mapDataHeader)
 {
-	if (!mapData) return;
+	if (!mapDataHeader) return;
 
-	printf("Preview:\n");
+	uint32_t rows = mapDataHeader->mapRows;
+	uint32_t columns = mapDataHeader->mapColumns;
+	char* mapData = (char*)(mapDataHeader + 1);
+
+	printf("Preview (%d * %d):\n", rows, columns);
 
 	for (uint32_t y = 0; y < rows; ++y)
 	{
@@ -169,7 +214,17 @@ void printMap(uint32_t rows, uint32_t columns, char* mapData)
 
 		printf("\n");
 	}
-	free(mapData);
+}
+
+void printObjectData(arcf_objheader_t* objData)
+{
+	printf("Object Data Preview:\n");
+	printf("spriteIndex: %d\n", objData->spriteIndex);
+	printf("byTileX: %d\n", objData->byTileX);
+	printf("byTileY: %d\n", objData->byTileY);
+	printf("bySpriteX: %d\n", objData->bySpriteX);
+	printf("bySpriteY: %d\n", objData->bySpriteY);
+	printf("isAnimated: %d\n", objData->isAnimated);
 }
 
 void displayTexture(SDL_Renderer* pRenderer, void* textureData, uint32_t* currentFileSize, int width, int height)
@@ -190,12 +245,12 @@ void displayTexture(SDL_Renderer* pRenderer, void* textureData, uint32_t* curren
 		.h = height
 	};
 	SDL_Event event;
-	int running = 1;
+	bool running = true;
 	while (running)
 	{
 		while (SDL_PollEvent(&event))
 		{
-			if (event.type == SDL_QUIT) running = 0;
+			if (event.type == SDL_QUIT) running = false;
 		}
 
 		SDL_SetRenderDrawColor(pRenderer, 255, 255, 255, 255);
@@ -224,18 +279,42 @@ int main()
 	FILE* arcFile = fopen("out/assets.arc", "wb");
 
 	packMap_Tomb(arcFile, 9, 39, &currentOffset, &currentFilesCount);
+	packObjectData("TORCH_1", 0, 0, 0, 3, 4, true, arcFile, &currentOffset, &currentFilesCount);
 	packTexture("in/player.png", "PLAYER", arcFile, &currentOffset, &currentFilesCount);
 	packTexture("in/skeleton.png", "SKELETON", arcFile, &currentOffset, &currentFilesCount);
+	packTexture("in/tiles.png", "TILES", arcFile, &currentOffset, &currentFilesCount);
+	packTexture("in/torch.png", "TORCH", arcFile, &currentOffset, &currentFilesCount);
+	packTexture("in/chest.png", "CHEST", arcFile, &currentOffset, &currentFilesCount);
+	packTexture("in/decoration.png", "DECORATION", arcFile, &currentOffset, &currentFilesCount);
 	finishArchive(arcFile, &currentOffset, &currentFilesCount);
 
 	fclose(arcFile);
 
-	char* mapData = (char*) loadLump("out/assets.arc", "TOMB", &currentFileSize);
-	printMap(9, 39, mapData);
+	arcf_mapheader_t* mapDataHeader = (arcf_mapheader_t*) loadLump("out/assets.arc", "TOMB", &currentFileSize);
+	printMap(mapDataHeader);
+	free(mapDataHeader);
+
+	arcf_objheader_t* objDataHeader = (arcf_objheader_t*) loadLump("out/assets.arc", "TORCH_1", &currentFileSize);
+	printObjectData(objDataHeader);
+	free(objDataHeader);
+
 	void* playerTextureData = loadLump("out/assets.arc", "PLAYER", &currentFileSize);
 	displayTexture(pRenderer, playerTextureData, &currentFileSize, 256 * SPRITE_SCALE, 32 * SPRITE_SCALE);
+
 	void* skeletonTextureData = loadLump("out/assets.arc", "SKELETON", &currentFileSize);
 	displayTexture(pRenderer, skeletonTextureData, &currentFileSize, 320 * SPRITE_SCALE, 64 * SPRITE_SCALE);
+
+	void* tilesTextureData = loadLump("out/assets.arc", "TILES", &currentFileSize);
+	displayTexture(pRenderer, tilesTextureData, &currentFileSize, 80 * SPRITE_SCALE, 32 * SPRITE_SCALE);
+
+	void* torchTextureData = loadLump("out/assets.arc", "TORCH", &currentFileSize);
+	displayTexture(pRenderer, torchTextureData, &currentFileSize, 80 * SPRITE_SCALE, 16 * SPRITE_SCALE);
+
+	void* chestTextureData = loadLump("out/assets.arc", "CHEST", &currentFileSize);
+	displayTexture(pRenderer, chestTextureData, &currentFileSize, 48 * SPRITE_SCALE, 16 * SPRITE_SCALE);
+
+	void* decorationTextureData = loadLump("out/assets.arc", "DECORATION", &currentFileSize);
+	displayTexture(pRenderer, decorationTextureData, &currentFileSize, 80 * SPRITE_SCALE, 32 * SPRITE_SCALE);
 
 	SDL_DestroyRenderer(pRenderer);
 	SDL_DestroyWindow(pWindow);
