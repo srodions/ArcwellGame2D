@@ -221,7 +221,7 @@ int main()
 	uint32_t currentFilesCount = 0;
 	uint32_t currentFileSize = 0;
 
-	FILE* arcFile = fopen("res/assets.arc", "wb");
+	FILE* arcFile = fopen("out/assets.arc", "wb");
 
 	packMap_Tomb(arcFile, 9, 39, &currentOffset, &currentFilesCount);
 	packTexture("in/player.png", "PLAYER", arcFile, &currentOffset, &currentFilesCount);
@@ -230,11 +230,11 @@ int main()
 
 	fclose(arcFile);
 
-	char* mapData = (char*) loadLump("res/assets.arc", "TOMB", &currentFileSize);
+	char* mapData = (char*) loadLump("out/assets.arc", "TOMB", &currentFileSize);
 	printMap(9, 39, mapData);
-	void* playerTextureData = loadLump("res/assets.arc", "PLAYER", &currentFileSize);
+	void* playerTextureData = loadLump("out/assets.arc", "PLAYER", &currentFileSize);
 	displayTexture(pRenderer, playerTextureData, &currentFileSize, 256 * SPRITE_SCALE, 32 * SPRITE_SCALE);
-	void* skeletonTextureData = loadLump("res/assets.arc", "SKELETON", &currentFileSize);
+	void* skeletonTextureData = loadLump("out/assets.arc", "SKELETON", &currentFileSize);
 	displayTexture(pRenderer, skeletonTextureData, &currentFileSize, 320 * SPRITE_SCALE, 64 * SPRITE_SCALE);
 
 	SDL_DestroyRenderer(pRenderer);

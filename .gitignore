@@ -1,3 +1,7 @@
 Debug/
+
 .settings/
-res/assets.arc
+
+out/*
+
+!out/.gitkeep
