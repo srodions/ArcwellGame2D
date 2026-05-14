@@ -2,7 +2,7 @@
 #define E_ENTITY_H_
 
 /* --- DEFINITIONS --- */
-void E_EntitySpritesInit(SDL_Renderer* pRenderer);
+void E_EntitySpritesInit(SDL_Renderer* pRenderer, FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable);
 void E_EntityInit(e_manager_t* pEntManager, int posX, int posY, float speed, enum ENTITY_ID id);
 void E_MarkEntityToRemove(int index, e_manager_t* pEntManager);
 void E_RemoveEntityFromLoadList(int index, e_manager_t* pEntManager);
@@ -15,12 +15,13 @@ void E_Destruct(e_manager_t* pEntManager);
 /* --- IMPLEMENTATIONS --- */
 #if defined(STB_ENTITY_IMPLEMENTATION)
 
-static SDL_Texture* entity_sprites[MAX_ENTITY_SPRITES];
+SDL_Texture* entity_sprites[MAX_ENTITY_SPRITES];
 
-void E_EntitySpritesInit(SDL_Renderer* pRenderer)
+void E_EntitySpritesInit(SDL_Renderer* pRenderer, FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable)
 {
-	entity_sprites[0] = IMG_LoadTexture(pRenderer, "res/entity/player.png");
-	entity_sprites[1] = IMG_LoadTexture(pRenderer, "res/entity/skeleton.png");
+	uint32_t currentFileSize = 0;
+	entity_sprites[0] = L_InitTexture(pRenderer, arcFile, "PLAYER", pHeader, pTable, &currentFileSize);
+	entity_sprites[1] = L_InitTexture(pRenderer, arcFile, "SKELETON", pHeader, pTable, &currentFileSize);
 }
 
 /*

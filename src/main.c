@@ -7,6 +7,7 @@
 #define STB_LOCATION_IMPLEMENTATION
 #define STB_PHYSICS_IMPLEMENTATION
 #define STB_UTILITY_IMPLEMENTATION
+#define STB_ARCLOADER_IMPLEMENTATION
 
 #include <SDL.h>
 #include <SDL_main.h>
@@ -23,6 +24,7 @@
 #include "typedefs.h"
 #include "p_physics.h"
 #include "u_utility.h"
+#include "l_arcloader.h"
 #include "e_entity.h"
 #include "g_gamestate.h"
 #include "r_renderer.h"
@@ -49,10 +51,23 @@ int init()
 
 	objManager.objCount = 0;
 	entManager.entitiesCount = 0;
-	location = L_LocationInit("res/location/tomb.arc", pRenderer, &objManager);
-	L_ObjectSpritesInit(pRenderer);
+
+	FILE* arcFile = fopen("res/assets.arc", "rb");
+	if (!arcFile) return -1;
+	arcf_header_t* header = L_LoadHeader(arcFile);
+	if (!header) return -1;
+	arcf_entry_t* table = L_LoadLumpsTable(arcFile, header);
+	if (!table) return -1;
+
+	location = L_LocationInit(arcFile, pRenderer, header, table, &objManager);
+	L_ObjectSpritesInit(pRenderer, arcFile, header, table);
 	L_ObjectSetter(&objManager, "res/location/objects.json");
-	E_EntitySpritesInit(pRenderer);
+	E_EntitySpritesInit(pRenderer, arcFile, header, table);
+
+	fclose(arcFile);
+	free(header);
+	free(table);
+
 	E_EntityInit(&entManager, 1050, FLOOR_DISTANCE, player_speed, PLAYER); // Player spawn
 
 	return 0;

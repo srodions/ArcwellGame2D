@@ -33,10 +33,33 @@
 
 typedef struct _ARCF_Header
 {
-	char signature[4]; 		// ARCF
-	uint32_t rows;			// Map rows count
-	uint32_t columns;		// Map columns count
+	char signature[4]; 			// ARCF
+	uint32_t lumpsCount;		// Files count in arc file
+	uint32_t offsetToLumpsTable;// Offset to table of files in bytes
 } arcf_header_t;
+
+typedef struct _ARCF_MapEntryHeader
+{
+	uint32_t mapRows;
+	uint32_t mapColumns;
+} arcf_mapheader_t;
+
+typedef struct _ARCF_ObjEntryHeader
+{
+	uint32_t spriteIndex;
+	uint32_t bySpriteX;
+	uint32_t bySpriteY;
+	uint32_t byTileX;
+	uint32_t byTileY;
+	bool isAnimated;
+} arcf_objheader_t;
+
+typedef struct _ARCF_Entry
+{
+    uint32_t offsetToFile;		// Offset to current file in the table in bytes
+    uint32_t lumpSize;			// Size of current file in bytes
+    char lumpName[16];			// The name(id) of the file to find it in the table
+} arcf_entry_t;
 
 typedef struct _GameState
 {

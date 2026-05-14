@@ -2,8 +2,9 @@
 #define L_LOCATION_H_
 
 /* --- DEFINITIONS --- */
-location_t* L_LocationInit(const char* filePath, SDL_Renderer* pRenderer, obj_manager_t* pObjManager);
+location_t* L_LocationInit(FILE* arcFile, SDL_Renderer* pRenderer, arcf_header_t* pHeader, arcf_entry_t* pTable, obj_manager_t* pObjManager);
 tile_t L_TileInit(int srcX, int srcY, int posX, int posY);
+void L_ObjectSpritesInit(SDL_Renderer* pRenderer, FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable);
 void L_ObjectInit(obj_manager_t* pObjManager, int spriteIndex, int bsx, int bsy, int btx, int bty, bool isAnim);
 void L_ObjectSetter(obj_manager_t* pObjManager, const char* jsonFilePath);
 void L_Destruct(location_t* pLocation, obj_manager_t* pObjManager);
@@ -11,13 +12,14 @@ void L_Destruct(location_t* pLocation, obj_manager_t* pObjManager);
 /* --- IMPLEMENTATIONS --- */
 #if defined(STB_LOCATION_IMPLEMENTATION)
 
-static SDL_Texture* obj_sprites[MAX_OBJ_SPRITES];
+SDL_Texture* obj_sprites[MAX_OBJ_SPRITES];
 
-void L_ObjectSpritesInit(SDL_Renderer* pRenderer)
+void L_ObjectSpritesInit(SDL_Renderer* pRenderer, FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable)
 {
-	obj_sprites[0] = IMG_LoadTexture(pRenderer, "res/object/torch.png");
-	obj_sprites[1] = IMG_LoadTexture(pRenderer, "res/object/decoration.png");
-	obj_sprites[2] = IMG_LoadTexture(pRenderer, "res/object/chest.png");
+	uint32_t currentFileSize = 0;
+	obj_sprites[0] = L_InitTexture(pRenderer, arcFile, "TORCH", pHeader, pTable, &currentFileSize);
+	obj_sprites[1] = L_InitTexture(pRenderer, arcFile, "DECORATION", pHeader, pTable, &currentFileSize);
+	obj_sprites[2] = L_InitTexture(pRenderer, arcFile, "CHEST", pHeader, pTable, &currentFileSize);
 }
 
 void L_ObjectSetter(obj_manager_t* pObjManager, const char* jsonFilePath)
@@ -137,46 +139,31 @@ location_t L_LocationInit(SDL_Renderer* pRenderer, obj_manager_t* pObjManager)
 
 /*
  * This new function is not compatible with Android platform
- * TODO: Use SDL file methods in future
+ * TODO: Use SDL I/O methods in future
  */
-location_t* L_LocationInit(const char* filePath, SDL_Renderer* pRenderer, obj_manager_t* pObjManager)
+location_t* L_LocationInit(FILE* arcFile, SDL_Renderer* pRenderer, arcf_header_t* pHeader, arcf_entry_t* pTable, obj_manager_t* pObjManager)
 {
-	FILE* mapFile = fopen(filePath, "rb");
-	if (!mapFile) return NULL;
+	// LOADING DATA
+	uint32_t currentFileSize = 0;
+	arcf_mapheader_t* mapDataHeader = (arcf_mapheader_t*) L_LoadLump(arcFile, "TOMB", pHeader, pTable, &currentFileSize);
+	uint32_t rows = mapDataHeader->mapRows;
+	uint32_t columns = mapDataHeader->mapColumns;
 
-	arcf_header_t header;
-	fread(&header, sizeof(arcf_header_t), 1, mapFile);
+	assert(rows <= MAX_MAP_ROWS && columns <= MAX_MAP_COLUMNS);
 
-	assert(header.rows <= MAX_MAP_ROWS && header.columns <= MAX_MAP_COLUMNS);
-
-	if (strncmp(header.signature, "ARCF", 4) != 0)
-	{
-		printf("Missing signature!\n");
-		fclose(mapFile);
-		return NULL;
-	}
-
-	uint32_t rows = header.rows;
-	uint32_t columns = header.columns;
 	const int totalTiles = rows * columns;
+	char* mapData = (char*)(mapDataHeader + 1);
 
 	location_t* location = (location_t*) malloc(sizeof(location_t));
-	location->tileMap = IMG_LoadTexture(pRenderer, "res/tile/tiles.png");
+	location->tileMap = L_InitTexture(pRenderer, arcFile, "TILES", pHeader, pTable, &currentFileSize);
 	location->rows = rows;
 	location->columns = columns;
 	location->locationDest.w = TILE_SPRITE_SIZE * TILE_SPRITE_SCALE;
 	location->locationDest.h = TILE_SPRITE_SIZE * TILE_SPRITE_SCALE;
 	location->locationTiles = (tile_t*) malloc(totalTiles * sizeof(tile_t));
 
-	char* mapData = (char*) malloc(totalTiles * sizeof(char));
-
-	fread(mapData, sizeof(char), totalTiles, mapFile);
-	fclose(mapFile);
-
-	printf("Map (%d * %d) loaded!\n", rows, columns);
-
+	// WORKING WITH DATA
 	int tempY = 0;
-
 	for (uint32_t y = 0; y < rows; ++y)
 	{
 		int srcX = 0;
@@ -185,7 +172,7 @@ location_t* L_LocationInit(const char* filePath, SDL_Renderer* pRenderer, obj_ma
 
 		for (uint32_t x = 0; x < columns; ++x)
 		{
-			char currentTile = mapData[y * header.columns + x];
+			char currentTile = mapData[y * columns + x];
 
 			switch (currentTile)
 			{
@@ -203,14 +190,14 @@ location_t* L_LocationInit(const char* filePath, SDL_Renderer* pRenderer, obj_ma
 			default: 	srcX = 1024; 					srcY = 1024; break;
 			}
 
-			location->locationTiles[y * header.columns + x] = L_TileInit(srcX, srcY, tempX, tempY);
+			location->locationTiles[y * columns + x] = L_TileInit(srcX, srcY, tempX, tempY);
 			tempX += TILE_SPRITE_SIZE * TILE_SPRITE_SCALE;
 		}
 
 		tempY += TILE_SPRITE_SIZE * TILE_SPRITE_SCALE;
 	}
 
-	if (mapData != NULL) free(mapData);
+	if (mapDataHeader != NULL) free(mapDataHeader);
 
 	return location;
 }
