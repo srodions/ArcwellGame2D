@@ -1,38 +1,16 @@
-#define STB_GAME_INIT_IMPLEMENTATION
-#define STB_KEYBOARD_HANDLER_IMPLEMENTATION
-#define STB_EVENT_HANDLER_IMPLEMENTATION
-#define STB_ENTITY_IMPLEMENTATION
-#define STB_ENTITY_AI_IMPLEMENTATION
-#define STB_RENDERER_IMPLEMENTATION
-#define STB_LOCATION_IMPLEMENTATION
-#define STB_PHYSICS_IMPLEMENTATION
-#define STB_UTILITY_IMPLEMENTATION
-#define STB_ARCLOADER_IMPLEMENTATION
-
-#include <SDL.h>
-#include <SDL_main.h>
-#include <SDL_image.h>
-#include <SDL_ttf.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <time.h>
-#include <math.h>
-#include <string.h>
-#include <assert.h>
-#include "cJSON.h"
-#include "typedefs.h"
+#include "s_system.h"
 #include "p_physics.h"
-#include "u_utility.h"
 #include "l_arcloader.h"
 #include "e_entity.h"
 #include "g_gamestate.h"
+#include "h_keyboard.h"
 #include "r_renderer.h"
-#include "k_keyboard.h"
 #include "l_location.h"
+#include "typedefs.h"
 
-SDL_Window* pWindow;
-SDL_Renderer* pRenderer;
 gamestate_t gameState;
 location_t* location;
 obj_manager_t objManager;
@@ -40,17 +18,16 @@ e_manager_t entManager;
 
 int init()
 {
-	if (IMG_Init(IMG_INIT_PNG) < 0 || TTF_Init() < 0) return -1;
-	K_InitKeymap();
-	srand(time(NULL));
+	if (S_LibInit() < 0) return -1;
 
+	S_InitKeymap();
 	gameState = G_GameInit();
-	pWindow = R_WindowInit(&gameState);
-	pRenderer = R_RendererInit(pWindow);
-	if (pRenderer == NULL || pWindow == NULL) return -1;
 
-	objManager.objCount = 0;
+	if (S_WindowInit(&gameState) < 0 || S_RendererInit() < 0) return -1;
+
+	S_FontInit();
 	entManager.entitiesCount = 0;
+	objManager.objCount = 0;
 
 	FILE* arcFile = fopen("res/assets.arc", "rb");
 	if (!arcFile) return -1;
@@ -58,12 +35,9 @@ int init()
 	if (!header) return -1;
 	arcf_entry_t* table = L_LoadLumpsTable(arcFile, header);
 	if (!table) return -1;
-
-	location = L_LocationInit(arcFile, pRenderer, header, table, &objManager);
-	L_ObjectSpritesInit(pRenderer, arcFile, header, table);
-	L_ObjectSetter(&objManager, "res/location/objects.json");
-	E_EntitySpritesInit(pRenderer, arcFile, header, table);
-
+	S_ARC_InitTextures(arcFile, header, table);
+	location = L_LocationInit(arcFile, header, table, &objManager);
+	S_ObjectSetter(&objManager, "res/location/objects.json");
 	fclose(arcFile);
 	free(header);
 	free(table);
@@ -73,59 +47,54 @@ int init()
 	return 0;
 }
 
+void update()
+{
+	// Handle player input
+	S_HandleEvents(&gameState, &entManager, &h_keyStates);
+	H_HandleKeyStates(&gameState, &entManager);
+	// Update AI
+	E_AI_Idle(&entManager);
+	// Update physics
+	P_EntityFallJump(&entManager, &gameState);
+	P_EntityWallCollisionCheck(location, &entManager, &gameState);
+	P_EntityToEntityCollisionCheck(&entManager, &gameState);
+	// Update transforms
+	E_UpdateEntity(&gameState, &entManager);
+}
+
+void render(int* frameStart)
+{
+	// Clear frame
+	S_FrameStart(frameStart);
+	// Render
+	R_RenderLocation(location, &entManager);
+	R_RenderObject(&objManager, &entManager);
+	R_RenderEntity(&entManager);
+	R_RenderDebugStats(&gameState, &entManager);
+	// Push frame
+	S_FrameEnd(&gameState, frameStart);
+}
+
 void loop()
 {
+	int frameStart = 0;
 	while (gameState.isRunning)
 	{
-		// Clear frame
-		G_FrameStart();
-		SDL_SetRenderDrawColor(pRenderer, 0, 0, 0, 255);
-		SDL_RenderClear(pRenderer);
-		// Display location
-		R_RenderLocation(pRenderer, location, &entManager);
-		// Display objects
-		R_RenderObject(pRenderer, location, &objManager, &entManager);
-		// Handle player input
-		K_HandleEvents(pRenderer, &gameState, &entManager);
-		// Update AI
-		E_AI_Idle(&entManager);
-		// Update physics
-		P_EntityFallJump(&entManager, &gameState);
-		E_EntityWallCollisionCheck(location, &entManager, &gameState);
-		E_EntityToEntityCollisionCheck(&entManager, &gameState);
-		// Display entities
-		R_RenderEntity(pRenderer, location, &entManager, &gameState);
-		// Display entities' specific animations
-		R_Anim_SkeletonSpawn(pRenderer, &entManager);
-		// Display statistics (when in debug mode)
-		R_RenderStats(pRenderer, &gameState, &entManager);
-		// Push frame
-		SDL_RenderPresent(pRenderer);
-		G_FrameEnd(&gameState);
+		update();
+		render(&frameStart);
 	}
 }
 
 int main(int argc, char* argv[])
 {
-	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0)
+	if (init() < 0)
 	{
-		printf("SDL_Init Error: %s\n", SDL_GetError());
-		return -1;
-	}
-
-	int result = init();
-	if (result < 0)
-	{
-		L_Destruct(location, &objManager);
-		E_Destruct(&entManager);
-		R_Destruct(pRenderer, pWindow);
+		S_Destruct(&objManager, &entManager);
 		return -1;
 	}
 
 	loop();
-	L_Destruct(location, &objManager);
-	E_Destruct(&entManager);
-	R_Destruct(pRenderer, pWindow);
+	S_Destruct(&objManager, &entManager);
 
 	return 0;
 }
