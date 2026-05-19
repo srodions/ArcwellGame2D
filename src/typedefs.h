@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include "g_constants.h"
 
-typedef struct _GameState
+typedef struct GameState
 {
 	double 			targetFrameTime;
 	double 			deltaTime;
@@ -18,20 +18,25 @@ typedef struct _GameState
 	bool 			isDebugMode;
 } gamestate_t;
 
-typedef struct _ARCF_Header
+typedef struct Rect {
+    float x, y;
+    int w, h;
+} rect_t;
+
+typedef struct ARCF_Header
 {
 	char signature[4]; 			// ARCF
 	uint32_t lumpsCount;		// Files count in arc file
 	uint32_t offsetToLumpsTable;// Offset to table of files in bytes
 } arcf_header_t;
 
-typedef struct _ARCF_MapEntryHeader
+typedef struct ARCF_MapEntryHeader
 {
 	uint32_t mapRows;
 	uint32_t mapColumns;
 } arcf_mapheader_t;
 
-typedef struct _ARCF_ObjEntryHeader
+typedef struct ARCF_ObjEntryHeader
 {
 	uint32_t spriteIndex;
 	uint32_t bySpriteX;
@@ -41,14 +46,14 @@ typedef struct _ARCF_ObjEntryHeader
 	bool isAnimated;
 } arcf_objheader_t;
 
-typedef struct _ARCF_Entry
+typedef struct ARCF_Entry
 {
     uint32_t offsetToFile;		// Offset to current file in the table in bytes
     uint32_t lumpSize;			// Size of current file in bytes
     char lumpName[16];			// The name(id) of the file to find it in the table
 } arcf_entry_t;
 
-typedef struct _Keystates
+typedef struct Keystates
 {
 	bool isUp;
 	bool isDown;
@@ -61,21 +66,21 @@ typedef struct _Keystates
     bool isExit;
 } keystates_t;
 
-typedef struct _ReactionTimer
+typedef struct ReactionTimer
 {
 	uint32_t 		currentTime;
 	uint32_t 		lastTime;
 	unsigned int 	reactionTime;
 } rtimer_t;
 
-typedef struct _ObjSprite
+typedef struct ObjSprite
 {
 	int				srcX;
 	int				srcY;
 	int				currentSprite;
 } obj_sprite_t;
 
-typedef struct _ObjTransform
+typedef struct ObjTransform
 {
 	float			logX;
 	float			logY;
@@ -83,7 +88,7 @@ typedef struct _ObjTransform
 	int				hitboxH;
 } obj_tform_t;
 
-typedef struct _ObjectManager
+typedef struct ObjectManager
 {
 	obj_sprite_t	sprites[MAX_OBJECTS];
 	rtimer_t		animTimer[MAX_OBJECTS];
@@ -93,7 +98,7 @@ typedef struct _ObjectManager
 	int				objCount;
 } obj_manager_t;
 
-typedef struct _Tile
+typedef struct Tile
 {
 	int				srcX;
 	int				srcY;
@@ -101,14 +106,14 @@ typedef struct _Tile
 	int				posY;
 } tile_t;
 
-typedef struct _Location
+typedef struct Map
 {
 	tile_t* 		locationTiles;
 	uint32_t		rows;
 	uint32_t		columns;
-} location_t;
+} map_t;
 
-typedef struct _EntitySprite
+typedef struct EntitySprite
 {
 	int				srcX;
 	int				srcY;
@@ -118,20 +123,20 @@ typedef struct _EntitySprite
 	enum ENTITY_DIR	direction;
 } e_sprite_t;
 
-typedef struct _EntityTransform
+typedef struct EntityTransform
 {
 	float 	logX, logY;			// Logical coordinates
 	int		hitboxW, hitboxH;
 	int		flip;
 } e_tform_t;
 
-typedef struct _EntityVel
+typedef struct EntityVel
 {
 	float 	gravityAccel;
 	float 	currentSpeed;
 } e_vel_t;
 
-typedef struct _EntityAI
+typedef struct EntityAI
 {
 	float	targetDist;
 	float 	targetX;
@@ -141,7 +146,7 @@ typedef struct _EntityAI
 	bool 	isCollisionOnRight;
 } e_ai_t;
 
-typedef struct _EntityManager
+typedef struct EntityManager
 {
 	rtimer_t			destructTimer[MAX_ENTITIES];
 	rtimer_t			aiTimer[MAX_ENTITIES];

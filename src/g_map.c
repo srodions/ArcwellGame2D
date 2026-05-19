@@ -1,8 +1,9 @@
+#include "g_map.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <assert.h>
-#include "l_location.h"
 #include "s_system.h"
 #include "l_arcloader.h"
 #include "typedefs.h"
@@ -11,7 +12,7 @@
  * This new function is not compatible with Android platform
  * TODO: Use SDL I/O methods in future
  */
-location_t* L_LocationInit(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable, obj_manager_t* pObjManager)
+map_t* G_MapInit(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable, obj_manager_t* pObjManager)
 {
 	// LOADING DATA
 	uint32_t currentFileSize = 0;
@@ -24,7 +25,7 @@ location_t* L_LocationInit(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* 
 	const int totalTiles = rows * columns;
 	char* mapData = (char*)(mapDataHeader + 1);
 
-	location_t* location = (location_t*) malloc(sizeof(location_t));
+	map_t* location = (map_t*) malloc(sizeof(map_t));
 	location->rows = rows;
 	location->columns = columns;
 	location->locationTiles = (tile_t*) malloc(totalTiles * sizeof(tile_t));
@@ -57,7 +58,7 @@ location_t* L_LocationInit(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* 
 			default: 	srcX = 1024; 					srcY = 1024; break;
 			}
 
-			location->locationTiles[y * columns + x] = L_TileInit(srcX, srcY, tempX, tempY);
+			location->locationTiles[y * columns + x] = G_TileInit(srcX, srcY, tempX, tempY);
 			tempX += TILE_SPRITE_SIZE * TILE_SPRITE_SCALE;
 		}
 
@@ -69,25 +70,44 @@ location_t* L_LocationInit(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* 
 	return location;
 }
 
-void L_ObjectInit(obj_manager_t* pObjManager, enum OBJ_ID id, int bsx, int bsy, int btx, int bty, bool isAnim)
+
+/*
+ * TODO: Load all of the objects from the arc file
+ */
+void G_ObjInit(obj_manager_t* pObjManager, enum OBJ_ID id, int bsx, int bsy, int btx, int bty, bool isAnim)
 {
-	assert(pObjManager->objCount <= MAX_OBJECTS);
+	int objCount = pObjManager->objCount;
+	assert(objCount <= MAX_OBJECTS);
 
-	pObjManager->animTimer[pObjManager->objCount].reactionTime = ANIM_TIME;
-	pObjManager->isAnimated[pObjManager->objCount] = isAnim;
+	pObjManager->animTimer[objCount].reactionTime = ANIM_TIME;
+	pObjManager->isAnimated[objCount] = isAnim;
 
-	pObjManager->transforms[pObjManager->objCount].logX = (float) btx * TILE_SPRITE_SIZE * TILE_SPRITE_SCALE;
-	pObjManager->transforms[pObjManager->objCount].logY = (float) bty * TILE_SPRITE_SIZE * TILE_SPRITE_SCALE;
+	pObjManager->transforms[objCount].logX = (float) btx * TILE_SPRITE_SIZE * TILE_SPRITE_SCALE;
+	pObjManager->transforms[objCount].logY = (float) bty * TILE_SPRITE_SIZE * TILE_SPRITE_SCALE;
 
-	pObjManager->sprites[pObjManager->objCount].currentSprite = 0;
-	pObjManager->sprites[pObjManager->objCount].srcX = bsx * TILE_SPRITE_SIZE;
-	pObjManager->sprites[pObjManager->objCount].srcY = bsy * TILE_SPRITE_SIZE;
-	pObjManager->id[pObjManager->objCount] = id;
+	pObjManager->sprites[objCount].currentSprite = 0;
+	pObjManager->sprites[objCount].srcX = bsx * TILE_SPRITE_SIZE;
+	pObjManager->sprites[objCount].srcY = bsy * TILE_SPRITE_SIZE;
+	pObjManager->id[objCount] = id;
 
 	++pObjManager->objCount;
 }
 
-tile_t L_TileInit(int srcX, int srcY, int posX, int posY)
+void G_ObjSetter(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable, obj_manager_t* pObjManager)
+{
+	uint32_t objEntrySize = 0;
+	arcf_objheader_t* header = (arcf_objheader_t*) L_LoadLump(arcFile, "TORCH_1", pHeader, pTable, &objEntrySize);
+	int si = header->spriteIndex;
+	int bsx = header->bySpriteX;
+	int bsy = header->bySpriteY;
+	int btx = header->byTileX;
+	int bty = header->byTileY;
+	bool isAnim = header->isAnimated;
+
+	G_ObjInit(pObjManager, si, bsx, bsy, btx, bty, isAnim);
+}
+
+tile_t G_TileInit(int srcX, int srcY, int posX, int posY)
 {
 	tile_t tile = {
 		// Source tile

@@ -3,7 +3,7 @@
 #include "e_entity.h"
 #include "typedefs.h"
 
-void R_RenderLocation(location_t* pLocation, e_manager_t* pEntManager)
+void R_RenderLocation(map_t* pLocation, e_manager_t* pEntManager)
 {
 	int entitySpriteSize = ENTITY_SPRITE_SIZE * ENTITY_SPRITE_SCALE;
 	const float screenXCenter = (float)(LOGICAL_WIDTH / 2 - entitySpriteSize / 2);
@@ -159,7 +159,14 @@ void R_RenderDebugStats(gamestate_t* pGameState, e_manager_t* pEntManager)
 	if (pGameState->deltaTime > 0)
 		pGameState->currentFPS = (int)(1.0 / pGameState->deltaTime);
 
-	S_RenderDebugStats(pGameState, pEntManager);
+	char textBuffer[64];
+	snprintf(
+		textBuffer, sizeof(textBuffer), "FPS: %d | Entities: %d | x: %d | y: %d",
+		pGameState->currentFPS, pEntManager->entitiesCount,
+		(int) pEntManager->transforms[0].logX, (int) pEntManager->transforms[0].logY
+	);
+
+	S_RenderText(textBuffer, 100, 100, 255, 255, 255, 255);
 }
 
 

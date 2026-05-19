@@ -2,13 +2,13 @@
 #define E_ENTITY_H_
 
 #include <stdio.h>
+#include "g_constants.h"
 
-typedef struct _EntityManager e_manager_t;
-typedef struct _ARCF_Header arcf_header_t;
-typedef struct _ARCF_Entry arcf_entry_t;
-typedef struct _Location location_t;
-typedef struct _GameState gamestate_t;
-enum ENTITY_ID;
+typedef struct EntityManager e_manager_t;
+typedef struct ARCF_Header arcf_header_t;
+typedef struct ARCF_Entry arcf_entry_t;
+typedef struct Map map_t;
+typedef struct GameState gamestate_t;
 
 void E_EntitySpritesInit(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable);
 void E_EntityInit(e_manager_t* pEntManager, int posX, int posY, float speed, enum ENTITY_ID id);

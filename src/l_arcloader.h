@@ -3,10 +3,10 @@
 
 #include <stdint.h>
 
-typedef struct _ARCF_Header arcf_header_t;
-typedef struct _ARCF_MapEntryHeader arcf_mapheader_t;
-typedef struct _ARCF_ObjEntryHeader arcf_objheader_t;
-typedef struct _ARCF_Entry arcf_entry_t;
+typedef struct ARCF_Header arcf_header_t;
+typedef struct ARCF_MapEntryHeader arcf_mapheader_t;
+typedef struct ARCF_ObjEntryHeader arcf_objheader_t;
+typedef struct ARCF_Entry arcf_entry_t;
 
 arcf_header_t* L_LoadHeader(FILE* arcFile);
 arcf_entry_t* L_LoadLumpsTable(FILE* arcFile, arcf_header_t* pHeader);

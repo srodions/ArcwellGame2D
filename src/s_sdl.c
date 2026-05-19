@@ -1,3 +1,5 @@
+#if defined(SDL2_X64_WINDOWS)
+
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
@@ -6,14 +8,13 @@
 #include <stdbool.h>
 #include <assert.h>
 #include "s_system.h"
-#include "cJSON.h"
+#include "g_map.h"
 #include "h_keyboard.h"
-#include "l_location.h"
 #include "p_physics.h"
 #include "l_arcloader.h"
 #include "typedefs.h"
 
-typedef struct _Keymap
+typedef struct Keymap
 {
     SDL_Scancode up;
     SDL_Scancode down;
@@ -26,7 +27,7 @@ typedef struct _Keymap
     SDL_Scancode exit;
 } keymap_t;
 
-typedef struct _Font
+typedef struct Font
 {
 	TTF_Font* file;
 	SDL_Surface* textSurface;
@@ -37,15 +38,15 @@ typedef struct _Font
 } font_t;
 
 // INPUT
-SDL_Scancode _input_keyScancode;
-keymap_t _keyMap;
+SDL_Scancode input_keyScancode;
+keymap_t keyMap;
 // RENDERER
 SDL_Window* pWindow;
 SDL_Renderer* pRenderer;
 font_t font;
 // TEXTURES
-SDL_Texture* entity_sprites[MAX_ENTITY_SPRITES];
-SDL_Texture* obj_sprites[MAX_OBJ_SPRITES];
+SDL_Texture* entity_sprites[MAX_SPRITES];
+SDL_Texture* obj_sprites[MAX_SPRITES];
 SDL_Texture* tilemap_sprite;
 
 /*
@@ -79,15 +80,15 @@ bool S_IsTimeToReact(rtimer_t* pReactionTimer)
  */
 void S_InitKeymap()
 {
-    _keyMap.up = SDL_SCANCODE_W;
-    _keyMap.down = SDL_SCANCODE_S;
-    _keyMap.left = SDL_SCANCODE_A;
-    _keyMap.right = SDL_SCANCODE_D;
-    _keyMap.space = SDL_SCANCODE_SPACE;
-    _keyMap.use = SDL_SCANCODE_E;
-    _keyMap.debug = SDL_SCANCODE_T;
-    _keyMap.remove = SDL_SCANCODE_R;
-    _keyMap.exit = SDL_SCANCODE_ESCAPE;
+    keyMap.up = SDL_SCANCODE_W;
+    keyMap.down = SDL_SCANCODE_S;
+    keyMap.left = SDL_SCANCODE_A;
+    keyMap.right = SDL_SCANCODE_D;
+    keyMap.space = SDL_SCANCODE_SPACE;
+    keyMap.use = SDL_SCANCODE_E;
+    keyMap.debug = SDL_SCANCODE_T;
+    keyMap.remove = SDL_SCANCODE_R;
+    keyMap.exit = SDL_SCANCODE_ESCAPE;
 }
 
 /*
@@ -96,25 +97,25 @@ void S_InitKeymap()
  */
 void S_HandleKeyboardInput(enum KBD_KEY_STATE keyState, keymap_t* keyMap, keystates_t* keyStates)
 {
-	if (_input_keyScancode == keyMap->up)
+	if (input_keyScancode == keyMap->up)
 		keyStates->isUp = keyState;
-	else if (_input_keyScancode == keyMap->down)
+	else if (input_keyScancode == keyMap->down)
 		keyStates->isDown = keyState;
 
-	if (_input_keyScancode == keyMap->left)
+	if (input_keyScancode == keyMap->left)
 		keyStates->isLeft = keyState;
-	else if (_input_keyScancode == keyMap->right)
+	else if (input_keyScancode == keyMap->right)
 		keyStates->isRight = keyState;
 
-	if (_input_keyScancode == keyMap->exit)
+	if (input_keyScancode == keyMap->exit)
 		keyStates->isExit = keyState;
-	if (_input_keyScancode == keyMap->space)
+	if (input_keyScancode == keyMap->space)
 		keyStates->isSpace = keyState;
-	if (_input_keyScancode == keyMap->use)
+	if (input_keyScancode == keyMap->use)
 		keyStates->isUse = keyState;
-	if (_input_keyScancode == keyMap->debug)
+	if (input_keyScancode == keyMap->debug)
 		keyStates->isDebug = keyState;
-	if (_input_keyScancode == keyMap->remove)
+	if (input_keyScancode == keyMap->remove)
 		keyStates->isRemove = keyState;
 }
 
@@ -134,59 +135,13 @@ void S_HandleEvents(gamestate_t *pGameState, e_manager_t* pEntManager, keystates
 		pGameState->isRunning = false;
 		break;
 	case SDL_KEYDOWN:
-		_input_keyScancode = event.key.keysym.scancode;
-		S_HandleKeyboardInput(KEY_STATE_DOWN, &_keyMap, keyStates);
+		input_keyScancode = event.key.keysym.scancode;
+		S_HandleKeyboardInput(KEY_STATE_DOWN, &keyMap, keyStates);
 		break;
 	case SDL_KEYUP:
-		_input_keyScancode = event.key.keysym.scancode;
-		S_HandleKeyboardInput(KEY_STATE_UP, &_keyMap, keyStates);
+		input_keyScancode = event.key.keysym.scancode;
+		S_HandleKeyboardInput(KEY_STATE_UP, &keyMap, keyStates);
 		break;
-	}
-}
-
-void S_DestCollisionCheck(e_manager_t* pEntManager, int i, int j, float screenXCenter, float dt)
-{
-	SDL_Rect a, b, result;
-
-	// Calculating collision from the center of the screen if opposite entity is player
-	a.x = (int) (j > 0 ? pEntManager->transforms[i].logX + screenXCenter : (pEntManager->transforms[i].logX + screenXCenter));
-	a.y = (int) pEntManager->transforms[i].logY;
-	a.w = pEntManager->transforms[i].hitboxW;
-	a.h = pEntManager->transforms[i].hitboxH;
-	// Calculating collision from the center of the screen if opposite entity is player
-	b.x = (int) (i > 0 ? pEntManager->transforms[j].logX + screenXCenter : (pEntManager->transforms[j].logX + screenXCenter));
-	b.y = (int) pEntManager->transforms[j].logY;
-	b.w = pEntManager->transforms[j].hitboxW;
-	b.h = pEntManager->transforms[j].hitboxH;
-
-	if (SDL_IntersectRect(&a, &b, &result))
-	{
-		if (result.w >= result.h)
-		{
-			if (a.y + a.h / 2 < b.y + b.h / 2) 	// Top edge collision
-			{
-				pEntManager->transforms[i].logY -= knockback_strength * dt;
-				pEntManager->transforms[j].logY += knockback_strength * dt;
-			}
-			else								// Bottom edge collision
-			{
-				pEntManager->transforms[i].logY += knockback_strength * dt;
-				pEntManager->transforms[j].logY -= knockback_strength * dt;
-			}
-		}
-		else
-		{
-			if (a.x + a.w / 2 < b.x + b.w / 2)	// Left edge collision
-			{
-				pEntManager->transforms[i].logX -= knockback_strength * dt;
-				pEntManager->transforms[j].logX += knockback_strength * dt;
-			}
-			else								// Right edge collision
-			{
-				pEntManager->transforms[i].logX += knockback_strength * dt;
-				pEntManager->transforms[j].logX -= knockback_strength * dt;
-			}
-		}
 	}
 }
 
@@ -268,126 +223,68 @@ int S_RendererInit()
 	return 0;
 }
 
-void S_FontInit()
+void S_FontInit(const char* filePath, int size)
 {
-	font.file = TTF_OpenFont("res/font/x12y16pxMaruMonica.ttf", 40);
-	font.textColor.r = 255;
-	font.textColor.g = 255;
-	font.textColor.b = 255;
-	font.textColor.a = 255;
+	if (font.file != NULL)
+		TTF_CloseFont(font.file);
+
+	font.file = TTF_OpenFont(filePath, size);
 }
 
-void S_ARC_InitTextures(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable)
+SDL_Texture* loadTextureFromData(void* textureData, uint32_t currentTextureSize)
 {
-	uint32_t currentTextureSize = 0;
+	SDL_RWops* rw = SDL_RWFromMem(textureData, currentTextureSize);
+	SDL_Texture* output = IMG_LoadTexture_RW(pRenderer, rw, 1);
 
-	void* tileMapTextureData = L_LoadLump(arcFile, "TILES", pHeader, pTable, &currentTextureSize);
-	if (tileMapTextureData)
-	{
-		SDL_RWops* rw = SDL_RWFromMem(tileMapTextureData, currentTextureSize);
-		tilemap_sprite = IMG_LoadTexture_RW(pRenderer, rw, 1);
-		free(tileMapTextureData);
-	}
-
-	void* playerTextureData = L_LoadLump(arcFile, "PLAYER", pHeader, pTable, &currentTextureSize);
-	if (playerTextureData)
-	{
-		SDL_RWops* rw = SDL_RWFromMem(playerTextureData, currentTextureSize);
-		entity_sprites[0] = IMG_LoadTexture_RW(pRenderer, rw, 1);
-		free(playerTextureData);
-	}
-
-	void* skeletonTextureData = L_LoadLump(arcFile, "SKELETON", pHeader, pTable, &currentTextureSize);
-	if (skeletonTextureData)
-	{
-		SDL_RWops* rw = SDL_RWFromMem(skeletonTextureData, currentTextureSize);
-		entity_sprites[1] = IMG_LoadTexture_RW(pRenderer, rw, 1);
-		free(skeletonTextureData);
-	}
-
-	void* torchTextureData = L_LoadLump(arcFile, "TORCH", pHeader, pTable, &currentTextureSize);
-	if (torchTextureData)
-	{
-		SDL_RWops* rw = SDL_RWFromMem(torchTextureData, currentTextureSize);
-		obj_sprites[0] = IMG_LoadTexture_RW(pRenderer, rw, 1);
-		free(torchTextureData);
-	}
-
-	void* decorationTextureData = L_LoadLump(arcFile, "DECORATION", pHeader, pTable, &currentTextureSize);
-	if (decorationTextureData)
-	{
-		SDL_RWops* rw = SDL_RWFromMem(decorationTextureData, currentTextureSize);
-		obj_sprites[1] = IMG_LoadTexture_RW(pRenderer, rw, 1);
-		free(decorationTextureData);
-	}
-
-	void* chestTextureData = L_LoadLump(arcFile, "CHEST", pHeader, pTable, &currentTextureSize);
-	if (chestTextureData)
-	{
-		SDL_RWops* rw = SDL_RWFromMem(chestTextureData, currentTextureSize);
-		obj_sprites[2] = IMG_LoadTexture_RW(pRenderer, rw, 1);
-		free(chestTextureData);
-	}
+	free(textureData);
+	return output;
 }
 
-void S_ObjectSetter(obj_manager_t* pObjManager, const char* jsonFilePath)
+void S_InitTilemapTextureFromData(void* textureData, uint32_t currentTextureSize)
 {
-	char* data = (char*) SDL_LoadFile(jsonFilePath, NULL);
+	if (!textureData) return;
 
-	cJSON *json = cJSON_Parse(data);
-
-	if (json == NULL)
-	{
-		const char* errorMsg = cJSON_GetErrorPtr();
-		if (errorMsg != NULL)
-			fprintf(stderr, "JSON Parse Error: %s\n", errorMsg);
-		SDL_free(data);
-		return;
-	}
-
-	cJSON* objects = cJSON_GetObjectItem(json, "objects");
-	cJSON* object = NULL;
-
-	cJSON_ArrayForEach(object, objects)
-	{
-		int spriteIndex = cJSON_GetObjectItem(object, "spriteIndex")->valueint;
-		int bsx = cJSON_GetObjectItem(object, "bySpriteX")->valueint;
-		int bsy = cJSON_GetObjectItem(object, "bySpriteY")->valueint;
-	    int btx = cJSON_GetObjectItem(object, "byTileX")->valueint;
-	    int bty = cJSON_GetObjectItem(object, "byTileY")->valueint;
-	    bool isAnim = cJSON_IsTrue(cJSON_GetObjectItem(object, "isAnimated"));
-
-	    L_ObjectInit(pObjManager, spriteIndex, bsx, bsy, btx, bty, isAnim);
-	}
-
-	if (data != NULL)
-		SDL_free(data);
+	tilemap_sprite = loadTextureFromData(textureData, currentTextureSize);
 }
 
-void S_RenderDebugStats(gamestate_t* pGameState, e_manager_t* pEntManager)
+void S_InitEntityTextureFromData(void* textureData, uint32_t currentTextureSize, enum ENTITY_ID id)
 {
+	if (!textureData) return;
+
+	entity_sprites[id] = loadTextureFromData(textureData, currentTextureSize);
+}
+
+void S_InitObjTextureFromData(void* textureData, uint32_t currentTextureSize, enum OBJ_ID id)
+{
+	if (!textureData) return;
+
+	obj_sprites[id] = loadTextureFromData(textureData, currentTextureSize);
+}
+
+void S_RenderText(const char* text, int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+{
+	if (text == NULL) return;
+
 	if (font.textTexture != NULL)
 	{
 		SDL_DestroyTexture(font.textTexture);
 		font.textTexture = NULL;
 	}
 
-	char textBuffer[64];
-	snprintf(
-		textBuffer, sizeof(textBuffer), "FPS: %d | Entities: %d | x: %d | y: %d",
-		pGameState->currentFPS, pEntManager->entitiesCount,
-		(int) pEntManager->transforms[0].logX, (int) pEntManager->transforms[0].logY
-	);
-
-	SDL_Surface* tempSurface = TTF_RenderText_Blended(font.file, textBuffer, font.textColor);
+	SDL_Surface* tempSurface = TTF_RenderText_Blended(font.file, text, font.textColor);
 	if (tempSurface != NULL)
 	{
 		font.textTexture = SDL_CreateTextureFromSurface(pRenderer, tempSurface);
 
-		font.textRect.x = 100;
-		font.textRect.y = 100;
+		font.textRect.x = x;
+		font.textRect.y = y;
 		font.textRect.w = tempSurface->w;
 		font.textRect.h = tempSurface->h;
+
+		font.textColor.r = r;
+		font.textColor.g = g;
+		font.textColor.b = b;
+		font.textColor.a = a;
 
 		SDL_FreeSurface(tempSurface);
 	}
@@ -433,7 +330,7 @@ void S_RenderObject(obj_manager_t* pObjManager, int i, int screenX, int screenY)
 	);
 }
 
-void S_RenderLocation(location_t* pLocation, int ix, int iy, int screenX, int screenY)
+void S_RenderLocation(map_t* pLocation, int ix, int iy, int screenX, int screenY)
 {
 	SDL_Rect srcRect = {
 		.w = TILE_SPRITE_SIZE,
@@ -485,7 +382,7 @@ void S_Destruct(obj_manager_t* pObjManager, e_manager_t* pEntManager)
 		tilemap_sprite = NULL;
 	}
 
-	for (int i = 0; i < MAX_OBJ_SPRITES; ++i)
+	for (int i = 0; i < MAX_SPRITES; ++i)
 	{
 		if (obj_sprites[i] != NULL)
 		{
@@ -494,7 +391,7 @@ void S_Destruct(obj_manager_t* pObjManager, e_manager_t* pEntManager)
 		}
 	}
 
-	for (int i = 0; i < MAX_ENTITY_SPRITES; ++i)
+	for (int i = 0; i < MAX_SPRITES; ++i)
 	{
 		if (entity_sprites[i] != NULL)
 		{
@@ -513,5 +410,7 @@ void S_Destruct(obj_manager_t* pObjManager, e_manager_t* pEntManager)
 	IMG_Quit();
 	SDL_Quit();
 }
+
+#endif /* SDL2_X64_WINDOWS */
 
 

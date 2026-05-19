@@ -1,9 +1,9 @@
 #ifndef H_KEYBOARD_H_
 #define H_KEYBOARD_H_
 
-typedef struct _GameState gamestate_t;
-typedef struct _Keystates keystates_t;
-typedef struct _EntityManager e_manager_t;
+typedef struct GameState gamestate_t;
+typedef struct Keystates keystates_t;
+typedef struct EntityManager e_manager_t;
 
 extern keystates_t h_keyStates;
 
