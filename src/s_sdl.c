@@ -127,41 +127,51 @@ void S_HandleKeyboardInput(enum KBD_KEY_STATE keyState, keymap_t* keyMap, keysta
 void S_HandleEvents(gamestate_t *pGameState, e_manager_t* pEntManager, keystates_t* keyStates)
 {
 	SDL_Event event;
-	SDL_PollEvent(&event);
 
-	switch (event.type)
+	while (SDL_PollEvent(&event))
 	{
-	case SDL_QUIT:
-		pGameState->isRunning = false;
-		break;
-	case SDL_KEYDOWN:
-		input_keyScancode = event.key.keysym.scancode;
-		S_HandleKeyboardInput(KEY_STATE_DOWN, &keyMap, keyStates);
-		break;
-	case SDL_KEYUP:
-		input_keyScancode = event.key.keysym.scancode;
-		S_HandleKeyboardInput(KEY_STATE_UP, &keyMap, keyStates);
-		break;
+		switch (event.type)
+		{
+		case SDL_QUIT:
+			pGameState->isRunning = false;
+			break;
+		case SDL_KEYDOWN:
+			input_keyScancode = event.key.keysym.scancode;
+			S_HandleKeyboardInput(KEY_STATE_DOWN, &keyMap, keyStates);
+			break;
+		case SDL_KEYUP:
+			input_keyScancode = event.key.keysym.scancode;
+			S_HandleKeyboardInput(KEY_STATE_UP, &keyMap, keyStates);
+			break;
+		}
 	}
 }
 
-void S_FrameStart(int* frameStart)
+void S_FrameStart(uint64_t* frameStart)
 {
-    *frameStart = SDL_GetTicks();
+    *frameStart = SDL_GetPerformanceCounter();
     SDL_SetRenderDrawColor(pRenderer, 0, 0, 0, 255);
     SDL_RenderClear(pRenderer);
 }
 
-void S_FrameEnd(gamestate_t* pGameState, int* frameStart)
+void S_FrameEnd(gamestate_t* pGameState, uint64_t* frameStart)
 {
 	SDL_RenderPresent(pRenderer);
-    pGameState->deltaTime = (SDL_GetTicks() - (*frameStart)) / 1000.0;
 
-    if (pGameState->deltaTime < pGameState->targetFrameTime)
-    {
-        SDL_Delay((pGameState->targetFrameTime - pGameState->deltaTime) * 1000.0);
-        pGameState->deltaTime = pGameState->targetFrameTime;
-    }
+	Uint64 frameEnd = SDL_GetPerformanceCounter();
+	double counterElapsed = (double)(frameEnd - *frameStart) / SDL_GetPerformanceFrequency();
+
+	if (counterElapsed < pGameState->targetFrameTime)
+	{
+		Uint32 delayMs = (Uint32)((pGameState->targetFrameTime - counterElapsed) * 1000.0);
+		if (delayMs > 0) SDL_Delay(delayMs);
+
+		pGameState->deltaTime = pGameState->targetFrameTime;
+	}
+	else
+	{
+		pGameState->deltaTime = counterElapsed;
+	}
 }
 
 int S_LibInit()

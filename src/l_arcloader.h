@@ -5,7 +5,6 @@
 
 typedef struct ARCF_Header arcf_header_t;
 typedef struct ARCF_MapEntryHeader arcf_mapheader_t;
-typedef struct ARCF_ObjEntryHeader arcf_objheader_t;
 typedef struct ARCF_Entry arcf_entry_t;
 
 arcf_header_t* L_LoadHeader(FILE* arcFile);

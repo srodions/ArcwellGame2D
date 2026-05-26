@@ -96,15 +96,19 @@ void G_ObjInit(obj_manager_t* pObjManager, enum OBJ_ID id, int bsx, int bsy, int
 void G_ObjSetter(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable, obj_manager_t* pObjManager)
 {
 	uint32_t objEntrySize = 0;
-	arcf_objheader_t* header = (arcf_objheader_t*) L_LoadLump(arcFile, "TORCH_1", pHeader, pTable, &objEntrySize);
-	int si = header->spriteIndex;
-	int bsx = header->bySpriteX;
-	int bsy = header->bySpriteY;
-	int btx = header->byTileX;
-	int bty = header->byTileY;
-	bool isAnim = header->isAnimated;
+	arcf_objheader_t* objHeader = (arcf_objheader_t*) L_LoadLump(arcFile, "OBJECTS", pHeader, pTable, &objEntrySize);
 
-	G_ObjInit(pObjManager, si, bsx, bsy, btx, bty, isAnim);
+	for (int i = 0; i < objHeader->objCount; ++i)
+	{
+		int si = objHeader->items[i].spriteIndex;
+		int bsx = objHeader->items[i].bySpriteX;
+		int bsy = objHeader->items[i].bySpriteY;
+		int btx = objHeader->items[i].byTileX;
+		int bty = objHeader->items[i].byTileY;
+		bool isAnim = objHeader->items[i].isAnimated;
+
+		G_ObjInit(pObjManager, si, bsx, bsy, btx, bty, isAnim);
+	}
 }
 
 tile_t G_TileInit(int srcX, int srcY, int posX, int posY)

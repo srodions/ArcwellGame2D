@@ -35,8 +35,8 @@ void S_InitObjTextureFromData(void* textureData, uint32_t currentTextureSize, en
 void S_InitEntityTextureFromData(void* textureData, uint32_t currentTextureSize, enum ENTITY_ID id);
 
 // RENDERER
-void S_FrameStart(int* frameStart);
-void S_FrameEnd(gamestate_t* pGameState, int* frameStart);
+void S_FrameStart(uint64_t* frameStart);
+void S_FrameEnd(gamestate_t* pGameState, uint64_t* frameStart);
 void S_RenderText(const char* text, int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 void S_RenderObject(obj_manager_t* pObjManager, int i, int screenX, int screenY);
 void S_RenderLocation(map_t* pLocation, int ix, int iy, int screenX, int screenY);

@@ -76,7 +76,7 @@ void update()
 	E_UpdateEntity(&gameState, &entManager);
 }
 
-void render(int* frameStart)
+void render(uint64_t* frameStart)
 {
 	// Clear frame
 	S_FrameStart(frameStart);
@@ -91,7 +91,7 @@ void render(int* frameStart)
 
 void loop()
 {
-	int frameStart = 0;
+	uint64_t frameStart = 0;
 	while (gameState.isRunning)
 	{
 		update();

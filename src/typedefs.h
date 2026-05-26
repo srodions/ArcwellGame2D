@@ -36,7 +36,7 @@ typedef struct ARCF_MapEntryHeader
 	uint32_t mapColumns;
 } arcf_mapheader_t;
 
-typedef struct ARCF_ObjEntryHeader
+typedef struct _ARCF_ObjEntry
 {
 	uint32_t spriteIndex;
 	uint32_t bySpriteX;
@@ -44,6 +44,12 @@ typedef struct ARCF_ObjEntryHeader
 	uint32_t byTileX;
 	uint32_t byTileY;
 	bool isAnimated;
+} arcf_objentry_t;
+
+typedef struct _ARCF_ObjHeader
+{
+	uint32_t objCount;
+	arcf_objentry_t items[];
 } arcf_objheader_t;
 
 typedef struct ARCF_Entry
