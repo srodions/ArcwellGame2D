@@ -33,6 +33,7 @@
 									<listOptionValue builtIn="false" value="&quot;C:\lib\SDL2\x86_64-w64-mingw32\include\SDL2&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;C:\lib\SDL2_image\x86_64-w64-mingw32\include\SDL2&quot;"/>
 								</option>
+								<option id="gnu.c.compiler.option.dialect.std.1848557257" superClass="gnu.c.compiler.option.dialect.std" value="gnu.c.compiler.dialect.c99" valueType="enumerated"/>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1002509473" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.linker.mingw.exe.debug.182223013" name="MinGW C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.mingw.exe.debug">
@@ -122,4 +123,5 @@
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
 		</scannerConfigBuildInfo>
 	</storageModule>
+	<storageModule moduleId="refreshScope"/>
 </cproject>

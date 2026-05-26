@@ -22,7 +22,7 @@ typedef struct _ARCF_MapEntryHeader
 	uint32_t mapColumns;
 } arcf_mapheader_t;
 
-typedef struct _ARCF_ObjEntryHeader
+typedef struct _ARCF_ObjEntry
 {
 	uint32_t spriteIndex;
 	uint32_t bySpriteX;
@@ -30,6 +30,12 @@ typedef struct _ARCF_ObjEntryHeader
 	uint32_t byTileX;
 	uint32_t byTileY;
 	bool isAnimated;
+} arcf_objentry_t;
+
+typedef struct _ARCF_ObjHeader
+{
+	uint32_t objCount;
+	arcf_objentry_t items[];
 } arcf_objheader_t;
 
 typedef struct _ARCF_Entry
@@ -112,9 +118,16 @@ void packTexture(const char* filePath, const char* textureName, FILE* arcFile, u
 	printf("Texture '%s' (%ld bytes) packed at offset %u!\n", textureName, imgSize, *currentOffset);
 }
 
-void packObjectData(const char* name, uint32_t si, uint32_t bsx, uint32_t bsy, uint32_t btx, uint32_t bty, bool isAnim, FILE* arcFile, uint32_t* currentOffset, uint32_t* currentFilesCount)
+arcf_objheader_t* initObjectsHeader(uint32_t objCount)
 {
-	arcf_objheader_t objHeader = {
+	arcf_objheader_t* objHeader = (arcf_objheader_t*) malloc(sizeof(arcf_header_t) + sizeof(arcf_objentry_t) * objCount);
+	objHeader->objCount = 0;
+	return objHeader;
+}
+
+void fillObjectData(arcf_objheader_t* objHeader, uint32_t si, uint32_t bsx, uint32_t bsy, uint32_t btx, uint32_t bty, bool isAnim)
+{
+	arcf_objentry_t obj = {
 		.spriteIndex = si,
 		.bySpriteX = bsx,
 		.bySpriteY = bsy,
@@ -123,18 +136,28 @@ void packObjectData(const char* name, uint32_t si, uint32_t bsx, uint32_t bsy, u
 		.isAnimated = isAnim
 	};
 
+	objHeader->items[objHeader->objCount] = obj;
+	++(objHeader->objCount);
+}
+
+void packObjectsData(arcf_objheader_t* objHeader, FILE* arcFile, uint32_t* currentOffset, uint32_t* currentFilesCount)
+{
+	uint32_t objCount = objHeader->objCount;
+	uint32_t totalSize = sizeof(arcf_objheader_t) + sizeof(arcf_objentry_t) * objCount;
+
 	allEntries[*currentFilesCount].offsetToFile = *currentOffset;
-	allEntries[*currentFilesCount].lumpSize = sizeof(arcf_objheader_t);
+	allEntries[*currentFilesCount].lumpSize = totalSize;
 	memset(allEntries[*currentFilesCount].lumpName, 0, sizeof(allEntries[*currentFilesCount].lumpName));
-	strncpy(allEntries[*currentFilesCount].lumpName, name, 15);
+	strncpy(allEntries[*currentFilesCount].lumpName, "OBJECTS", 15);
 
 	fseek(arcFile, *currentOffset, SEEK_SET);
-	fwrite(&objHeader, 1, sizeof(arcf_objheader_t), arcFile);
+	fwrite(objHeader, 1, totalSize, arcFile);
 
-	*currentOffset += (uint32_t) sizeof(arcf_objheader_t);
+	*currentOffset += totalSize;
 	++(*currentFilesCount);
 
-	printf("Object '%s' (%lld bytes) packed at offset %u!\n", name, sizeof(arcf_objheader_t), *currentOffset);
+	printf("Objects data (%d bytes) packed at offset %u!\n", totalSize, *currentOffset);
+	free(objHeader);
 }
 
 void finishArchive(FILE* arcFile, uint32_t* currentOffset, uint32_t* currentFilesCount)
@@ -216,15 +239,21 @@ void printMap(arcf_mapheader_t* mapDataHeader)
 	}
 }
 
-void printObjectData(arcf_objheader_t* objData)
+void printObjectData(arcf_objheader_t* objHeader)
 {
-	printf("Object Data Preview:\n");
-	printf("spriteIndex: %d\n", objData->spriteIndex);
-	printf("byTileX: %d\n", objData->byTileX);
-	printf("byTileY: %d\n", objData->byTileY);
-	printf("bySpriteX: %d\n", objData->bySpriteX);
-	printf("bySpriteY: %d\n", objData->bySpriteY);
-	printf("isAnimated: %d\n", objData->isAnimated);
+	uint32_t objCount = objHeader->objCount;
+
+	printf("Objects Data Preview:\n");
+	for (int i = 0; i < objCount; ++i)
+	{
+		printf("spriteIndex: %d\n", objHeader->items[i].spriteIndex);
+		printf("bySpriteX: %d\n", objHeader->items[i].bySpriteX);
+		printf("bySpriteY: %d\n", objHeader->items[i].bySpriteY);
+		printf("byTileX: %d\n", objHeader->items[i].byTileX);
+		printf("byTileY: %d\n", objHeader->items[i].byTileY);
+		printf("isAnimated: %d\n", objHeader->items[i].isAnimated);
+		printf("===============\n");
+	}
 }
 
 void displayTexture(SDL_Renderer* pRenderer, void* textureData, uint32_t* currentFileSize, int width, int height)
@@ -278,25 +307,53 @@ int main()
 
 	FILE* arcFile = fopen("out/assets.arc", "wb");
 
-	packMap_Tomb(arcFile, 9, 39, &currentOffset, &currentFilesCount);
-	packObjectData("TORCH_1", 0, 0, 0, 3, 4, true, arcFile, &currentOffset, &currentFilesCount);
 	packTexture("in/player.png", "PLAYER", arcFile, &currentOffset, &currentFilesCount);
 	packTexture("in/skeleton.png", "SKELETON", arcFile, &currentOffset, &currentFilesCount);
 	packTexture("in/tiles.png", "TILES", arcFile, &currentOffset, &currentFilesCount);
 	packTexture("in/torch.png", "TORCH", arcFile, &currentOffset, &currentFilesCount);
 	packTexture("in/chest.png", "CHEST", arcFile, &currentOffset, &currentFilesCount);
 	packTexture("in/decoration.png", "DECORATION", arcFile, &currentOffset, &currentFilesCount);
+
+	packMap_Tomb(arcFile, 9, 39, &currentOffset, &currentFilesCount);
+
+	arcf_objheader_t* objs = initObjectsHeader(22);
+	// TORCH 1
+	fillObjectData(objs, 0, 0, 0, 3, 4, true);
+	// TORCH 2
+	fillObjectData(objs, 0, 0, 0, 11, 4, true);
+	// TORCH 3
+	fillObjectData(objs, 0, 0, 0, 19, 4, true);
+	// TORCH 4
+	fillObjectData(objs, 0, 0, 0, 27, 4, true);
+	// TORCH 5
+	fillObjectData(objs, 0, 0, 0, 35, 4, true);
+	// CHEST
+	fillObjectData(objs, 2, 0, 0, 11, 6, false);
+	// COLUMN 1
+	fillObjectData(objs, 1, 1, 1, 7, 6, false);
+	fillObjectData(objs, 1, 2, 1, 7, 5, false);
+	fillObjectData(objs, 1, 2, 1, 7, 4, false);
+	fillObjectData(objs, 1, 3, 1, 7, 3, false);
+	// COLUMN 2
+	fillObjectData(objs, 1, 1, 1, 15, 6, false);
+	fillObjectData(objs, 1, 2, 1, 15, 5, false);
+	fillObjectData(objs, 1, 2, 1, 15, 4, false);
+	fillObjectData(objs, 1, 3, 1, 15, 3, false);
+	// COLUMN 3
+	fillObjectData(objs, 1, 1, 1, 23, 6, false);
+	fillObjectData(objs, 1, 2, 1, 23, 5, false);
+	fillObjectData(objs, 1, 2, 1, 23, 4, false);
+	fillObjectData(objs, 1, 3, 1, 23, 3, false);
+	// COLUMN 4
+	fillObjectData(objs, 1, 1, 1, 31, 6, false);
+	fillObjectData(objs, 1, 2, 1, 31, 5, false);
+	fillObjectData(objs, 1, 2, 1, 31, 4, false);
+	fillObjectData(objs, 1, 3, 1, 31, 3, false);
+	packObjectsData(objs, arcFile, &currentOffset, &currentFilesCount);
+
 	finishArchive(arcFile, &currentOffset, &currentFilesCount);
 
 	fclose(arcFile);
-
-	arcf_mapheader_t* mapDataHeader = (arcf_mapheader_t*) loadLump("out/assets.arc", "TOMB", &currentFileSize);
-	printMap(mapDataHeader);
-	free(mapDataHeader);
-
-	arcf_objheader_t* objDataHeader = (arcf_objheader_t*) loadLump("out/assets.arc", "TORCH_1", &currentFileSize);
-	printObjectData(objDataHeader);
-	free(objDataHeader);
 
 	void* playerTextureData = loadLump("out/assets.arc", "PLAYER", &currentFileSize);
 	displayTexture(pRenderer, playerTextureData, &currentFileSize, 256 * SPRITE_SCALE, 32 * SPRITE_SCALE);
@@ -315,6 +372,14 @@ int main()
 
 	void* decorationTextureData = loadLump("out/assets.arc", "DECORATION", &currentFileSize);
 	displayTexture(pRenderer, decorationTextureData, &currentFileSize, 80 * SPRITE_SCALE, 32 * SPRITE_SCALE);
+
+	arcf_mapheader_t* mapDataHeader = (arcf_mapheader_t*) loadLump("out/assets.arc", "TOMB", &currentFileSize);
+	printMap(mapDataHeader);
+	free(mapDataHeader);
+
+	arcf_objheader_t* objDataHeader = (arcf_objheader_t*) loadLump("out/assets.arc", "OBJECTS", &currentFileSize);
+	printObjectData(objDataHeader);
+	free(objDataHeader);
 
 	SDL_DestroyRenderer(pRenderer);
 	SDL_DestroyWindow(pWindow);
