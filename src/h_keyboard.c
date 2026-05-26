@@ -54,13 +54,14 @@ void H_HandleKeyStates(gamestate_t* pGameState, e_manager_t* pEntManager)
 	if (h_keyStates.isUse && pEntManager->entitiesCount < MAX_ENTITIES)
 	{
 		E_EntityInit(pEntManager, rand() % LOGICAL_WIDTH + 880, FLOOR_DISTANCE, player_speed, SKELETON);
-		pEntManager->state[pEntManager->entitiesCount - 1] = STATE_SPAWNING;
-		pEntManager->ai[pEntManager->entitiesCount - 1] = AI_IDLE;
+		E_SetAi(pEntManager->entitiesCount - 1, pEntManager, AI_IDLE);
+		E_SetState(pEntManager->entitiesCount - 1, pEntManager, STATE_SPAWNING);
 		h_keyStates.isUse = false;
 	}
 	else if (h_keyStates.isRemove)
 	{
-		E_RemoveEntityFromLoadList(pEntManager->entitiesCount - 1, pEntManager);
+		if (pEntManager->entitiesCount > 1)
+			E_SetState(pEntManager->entitiesCount - 1, pEntManager, STATE_REMOVING);
 		h_keyStates.isRemove = false;
 	}
 }

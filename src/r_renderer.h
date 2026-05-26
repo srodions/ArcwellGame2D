@@ -9,8 +9,9 @@ typedef struct ObjectManager obj_manager_t;
 void R_RenderLocation(map_t* pLocation, e_manager_t* pEntManager);
 void R_RenderObject(obj_manager_t* pObjManager, e_manager_t* pEntManager);
 void R_RenderEntity(e_manager_t* pEntManager);
-void R_Anim_Spawn(e_manager_t* pEntManager, int i);
+void R_Anim(e_manager_t* pEntManager, int i, int framesCount, int row);
 void R_Anim_Walk(e_manager_t* pEntManager, int i);
+void R_Anim_Death(e_manager_t* pEntManager, int i, int framesCount, int row);
 void R_RenderDebugStats(gamestate_t* pGameState, e_manager_t* pEntManager);
 
 #endif /* R_RENDERER_H_ */

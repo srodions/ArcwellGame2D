@@ -89,10 +89,14 @@ void R_RenderEntity(e_manager_t* pEntManager)
 		switch (pEntManager->state[i])
 		{
 		case STATE_SPAWNING:
-			R_Anim_Spawn(pEntManager, i);
+			R_Anim(pEntManager, i, SPAWN_FRAMES_COUNT, 1);
 			break;
 		case STATE_REMOVING:
-			continue;
+			R_Anim_Death(pEntManager, i, DEATH_FRAMES_COUNT, 2);
+			break;
+		case STATE_ANGER:
+			R_Anim(pEntManager, i, ANGER_FRAMES_COUNT, 3);
+			break;
 		default:
 			R_Anim_Walk(pEntManager, i);
 			break;
@@ -124,7 +128,7 @@ void R_Anim_Walk(e_manager_t* pEntManager, int i)
 	}
 }
 
-void R_Anim_Spawn(e_manager_t* pEntManager, int i)
+void R_Anim(e_manager_t* pEntManager, int i, int framesCount, int row)
 {
 	pEntManager->isMoving[i] = false;
 
@@ -134,7 +138,7 @@ void R_Anim_Spawn(e_manager_t* pEntManager, int i)
 	{
 		++(pEntManager->sprites[i].currentSprite);
 
-		if (pEntManager->sprites[i].currentSprite >= SPAWN_FRAMES_COUNT)
+		if (pEntManager->sprites[i].currentSprite >= framesCount)
 		{
 			pEntManager->state[i] = STATE_NONE;
 			pEntManager->sprites[i].currentSprite = 0;
@@ -146,7 +150,30 @@ void R_Anim_Spawn(e_manager_t* pEntManager, int i)
 		}
 
 		pEntManager->sprites[i].srcX = ENTITY_SPRITE_SIZE * pEntManager->sprites[i].currentSprite;
-		pEntManager->sprites[i].srcY = ENTITY_SPRITE_SIZE;
+		pEntManager->sprites[i].srcY = ENTITY_SPRITE_SIZE * row;
+
+		S_ReactionTimerEnd(&pEntManager->animTimer[i]);
+	}
+}
+
+void R_Anim_Death(e_manager_t* pEntManager, int i, int framesCount, int row)
+{
+	pEntManager->isMoving[i] = false;
+
+	S_ReactionTimerStart(&pEntManager->animTimer[i]);
+
+	if (S_IsTimeToReact(&pEntManager->animTimer[i]))
+	{
+		++(pEntManager->sprites[i].currentSprite);
+
+		if (pEntManager->sprites[i].currentSprite >= framesCount)
+		{
+			S_ReactionTimerEnd(&pEntManager->animTimer[i]);
+			return;
+		}
+
+		pEntManager->sprites[i].srcX = ENTITY_SPRITE_SIZE * pEntManager->sprites[i].currentSprite;
+		pEntManager->sprites[i].srcY = ENTITY_SPRITE_SIZE * row;
 
 		S_ReactionTimerEnd(&pEntManager->animTimer[i]);
 	}

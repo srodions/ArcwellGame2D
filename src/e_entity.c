@@ -50,22 +50,16 @@ void E_UpdateEntity(gamestate_t* pGameState, e_manager_t* pEntManager)
 
 	for (int i = 0; i < pEntManager->entitiesCount; ++i)
 	{
-		if (pEntManager->state[i] == STATE_SPAWNING || pEntManager->state[i] == STATE_REMOVING)
-		{
-			pEntManager->transforms[i].flip = 0;
-			continue;
-		}
-
 		switch (pEntManager->sprites[i].direction)
 		{
 		case LEFT:
 			pEntManager->transforms[i].flip = 0;
-			if (pEntManager->isMoving[i])
+			if (pEntManager->isMoving[i] && pEntManager->state[i] == STATE_NONE)
 				pEntManager->transforms[i].logX -= pEntManager->velocities[i].currentSpeed * (float) dt;
 			break;
 		case RIGHT:
 			pEntManager->transforms[i].flip = 1;
-			if (pEntManager->isMoving[i])
+			if (pEntManager->isMoving[i] && pEntManager->state[i] == STATE_NONE)
 				pEntManager->transforms[i].logX += pEntManager->velocities[i].currentSpeed * (float) dt;
 			break;
 		}
@@ -135,6 +129,19 @@ void E_AI_Idle(e_manager_t* pEntManager)
 			S_ReactionTimerEnd(&pEntManager->aiTimer[i]);
 		}
 	}
+}
+
+void E_SetState(int index, e_manager_t* pEntManager, enum ENTITY_STATE state)
+{
+	pEntManager->sprites[index].currentSprite = 0;
+	pEntManager->sprites[index].srcX = 0;
+	pEntManager->sprites[index].srcY = 0;
+	pEntManager->state[index] = state;
+}
+
+void E_SetAi(int index, e_manager_t* pEntManager, enum ENTITY_AI ai)
+{
+	pEntManager->ai[index] = ai;
 }
 
 
