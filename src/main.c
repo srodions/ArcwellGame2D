@@ -15,6 +15,7 @@ gamestate_t gameState;
 map_t* map;
 obj_manager_t objManager;
 e_manager_t entManager;
+rtimer_t spawnTimer;
 
 int init()
 {
@@ -27,6 +28,7 @@ int init()
 
 	S_FontInit("res/font/x12y16pxMaruMonica.ttf", 40);
 	entManager.entitiesCount = 0;
+	spawnTimer.reactionTime = ENTITY_SPAWN_TIME;
 	objManager.objCount = 0;
 
 	FILE* arcFile = fopen("res/assets.arc", "rb");
@@ -68,11 +70,13 @@ void update()
 	H_HandleKeyStates(&gameState, &entManager);
 	// Update AI
 	E_AI_Idle(&entManager);
+	E_AI_Chase(&gameState, &entManager);
 	// Update physics
-	P_EntityFallJump(&entManager, &gameState);
+	P_EntityFall(&entManager, &gameState);
 	P_EntityWallCollisionCheck(map, &entManager, &gameState);
 	P_EntityToEntityCollisionCheck(&entManager, &gameState);
 	// Update transforms
+	E_SkeletonSpawn(&entManager, &spawnTimer);
 	E_UpdateEntity(&gameState, &entManager);
 }
 

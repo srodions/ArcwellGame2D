@@ -29,16 +29,10 @@ void H_HandleKeyStates(gamestate_t* pGameState, e_manager_t* pEntManager)
 	if (h_keyStates.isExit)
 		pGameState->isRunning = false;
 
-	pEntManager->isMoving[0] = h_keyStates.isLeft || h_keyStates.isRight;
+	pEntManager->isMoving[PLAYER] = h_keyStates.isLeft || h_keyStates.isRight;
 
 	if (h_keyStates.isUp || h_keyStates.isSpace)
-	{
-		if (!pEntManager->isFalling[0])
-		{
-			pEntManager->velocities[0].gravityAccel = jump_force;
-			pEntManager->isFalling[0] = true;
-		}
-	}
+		E_EntityJump(pGameState, pEntManager, PLAYER);
 
 	if (h_keyStates.isLeft)
 		pEntManager->sprites[0].direction = LEFT;
@@ -49,20 +43,6 @@ void H_HandleKeyStates(gamestate_t* pGameState, e_manager_t* pEntManager)
 	{
 		pGameState->isDebugMode = !pGameState->isDebugMode;
 		h_keyStates.isDebug = false;
-	}
-
-	if (h_keyStates.isUse && pEntManager->entitiesCount < MAX_ENTITIES)
-	{
-		E_EntityInit(pEntManager, rand() % LOGICAL_WIDTH + 880, FLOOR_DISTANCE, player_speed, SKELETON);
-		E_SetAi(pEntManager->entitiesCount - 1, pEntManager, AI_IDLE);
-		E_SetState(pEntManager->entitiesCount - 1, pEntManager, STATE_SPAWNING);
-		h_keyStates.isUse = false;
-	}
-	else if (h_keyStates.isRemove)
-	{
-		if (pEntManager->entitiesCount > 1)
-			E_SetState(pEntManager->entitiesCount - 1, pEntManager, STATE_REMOVING);
-		h_keyStates.isRemove = false;
 	}
 }
 

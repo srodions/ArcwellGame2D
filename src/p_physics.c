@@ -4,12 +4,13 @@
 #include "typedefs.h"
 
 float 	gravity = 2200.0f;
-float 	jump_force = -800.0f;
-float 	player_speed = 200.0f;
+float 	jump_force = -1000.0f;
+float	skeleton_speed = 125.0f;
+float 	player_speed = 180.0f;
 float 	camera_speed = 6.0f;
 float 	knockback_strength = 300.0f;
 
-void P_EntityFallJump(e_manager_t* pEntManager, gamestate_t* pGameState)
+void P_EntityFall(e_manager_t* pEntManager, gamestate_t* pGameState)
 {
 	double dt = pGameState->deltaTime;
 

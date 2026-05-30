@@ -32,9 +32,10 @@ void* L_LoadLump(FILE* arcFile, const char* lumpName, arcf_header_t* pHeader, ar
 	if (!arcFile) return NULL;
 
 	void* buffer = NULL;
-	for (uint32_t i = 0; i < pHeader->lumpsCount; ++i) {
-		if (strcmp(pTable[i].lumpName, lumpName) == 0) {
-
+	for (uint32_t i = 0; i < pHeader->lumpsCount; ++i)
+	{
+		if (strcmp(pTable[i].lumpName, lumpName) == 0)
+		{
 			buffer = malloc(pTable[i].lumpSize);
 			fseek(arcFile, pTable[i].offsetToFile, SEEK_SET);
 			fread(buffer, 1, pTable[i].lumpSize, arcFile);

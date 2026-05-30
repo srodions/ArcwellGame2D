@@ -1,4 +1,4 @@
-#if defined(SDL2_X64_WINDOWS)
+#if defined(SDL2_X64)
 
 #include <SDL.h>
 #include <SDL_image.h>
@@ -190,16 +190,6 @@ int S_LibInit()
  */
 int S_WindowInit(gamestate_t* pGameState)
 {
-	SDL_DisplayMode dMode;
-
-	if (SDL_GetDesktopDisplayMode(0, &dMode) == 0)
-	{
-		pGameState->screenW = dMode.w;
-		pGameState->screenH = dMode.h;
-		pGameState->targetFPS = dMode.refresh_rate;
-		pGameState->targetFrameTime = 1.0 / (double) pGameState->targetFPS;
-	}
-
 	pWindow = SDL_CreateWindow(
 		"Arcwell Game 2D ver 0.09",
 		SDL_WINDOWPOS_CENTERED,
@@ -208,6 +198,24 @@ int S_WindowInit(gamestate_t* pGameState)
 	);
 
 	if (!pWindow) return -1;
+
+	SDL_DisplayMode dMode;
+	int currentDisplayIndex = SDL_GetWindowDisplayIndex(pWindow);
+
+	if (SDL_GetDesktopDisplayMode(currentDisplayIndex, &dMode) == 0)
+	{
+		pGameState->screenW = dMode.w;
+		pGameState->screenH = dMode.h;
+		pGameState->targetFPS = dMode.refresh_rate > 0 ? dMode.refresh_rate : 60;
+		pGameState->targetFrameTime = 1.0 / (double) pGameState->targetFPS;
+	}
+	else
+	{
+		pGameState->screenW = 1920;
+		pGameState->screenH = 1080;
+		pGameState->targetFPS = 60;
+		pGameState->targetFrameTime = 1.0 / (double) pGameState->targetFPS;
+	}
 
 	return 0;
 }
@@ -421,6 +429,6 @@ void S_Destruct(obj_manager_t* pObjManager, e_manager_t* pEntManager)
 	SDL_Quit();
 }
 
-#endif /* SDL2_X64_WINDOWS */
+#endif /* SDL2_X64 */
 
 
