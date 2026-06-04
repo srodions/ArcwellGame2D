@@ -67,8 +67,8 @@ typedef struct Keystates
     bool isRight;
     bool isSpace;
     bool isUse;
+    bool isCancel;
     bool isDebug;
-    bool isRemove;
     bool isExit;
 } keystates_t;
 

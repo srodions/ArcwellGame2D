@@ -8,6 +8,7 @@
 
 typedef struct GameState gamestate_t;
 typedef struct Keymap keymap_t;
+typedef struct ButtonMap btnmap_t;
 typedef struct Keystates keystates_t;
 typedef struct EntityManager e_manager_t;
 typedef struct ReactionTimer rtimer_t;
@@ -17,7 +18,8 @@ typedef struct Map map_t;
 typedef struct ObjectManager obj_manager_t;
 
 // I/O
-void S_HandleKeyboardInput(enum KBD_KEY_STATE keyState, keymap_t* keyMap, keystates_t* keyStates);
+void S_HandleKeyboardInput(enum KEY_STATE keyState, keymap_t* keyMap, keystates_t* keyStates);
+void S_HandleGamepadInput(enum KEY_STATE keyState, btnmap_t* buttonMap, keystates_t* keyStates);
 void S_HandleEvents(gamestate_t *pGameState, e_manager_t* pEntManager, keystates_t* keyStates);
 void S_ReactionTimerStart(rtimer_t* pReactionTimer);
 void S_ReactionTimerEnd(rtimer_t* pReactionTimer);
@@ -29,6 +31,8 @@ int S_LibInit();
 int S_WindowInit(gamestate_t* pGameState);
 int S_RendererInit();
 void S_InitKeymap();
+void S_InitBtnMap();
+void* S_InitGamepad();
 void S_FontInit(const char* filePath, int size);
 void S_InitTilemapTextureFromData(void* textureData, uint32_t currentTextureSize);
 void S_InitObjTextureFromData(void* textureData, uint32_t currentTextureSize, enum OBJ_ID id);

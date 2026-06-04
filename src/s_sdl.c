@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <math.h>
 #include <assert.h>
 #include "s_system.h"
 #include "g_map.h"
@@ -23,9 +24,21 @@ typedef struct Keymap
     SDL_Scancode space;
     SDL_Scancode use;
     SDL_Scancode debug;
-    SDL_Scancode remove;
+    SDL_Scancode cancel;
     SDL_Scancode exit;
 } keymap_t;
+
+typedef struct ButtonMap
+{
+	Uint8 up;
+	Uint8 down;
+	Uint8 left;
+	Uint8 right;
+	Uint8 space;
+	Uint8 use;
+	Uint8 cancel;
+	Uint8 exit;
+} btnmap_t;
 
 typedef struct Font
 {
@@ -37,9 +50,13 @@ typedef struct Font
 	SDL_Rect textRect;
 } font_t;
 
-// INPUT
+// INPUT KEYBOARD
 SDL_Scancode input_keyScancode;
 keymap_t keyMap;
+// INPUT GAMEPAD
+SDL_GameController* gamepad = NULL;
+Uint8 input_button;
+btnmap_t btnMap;
 // RENDERER
 SDL_Window* pWindow;
 SDL_Renderer* pRenderer;
@@ -86,16 +103,39 @@ void S_InitKeymap()
     keyMap.right = SDL_SCANCODE_D;
     keyMap.space = SDL_SCANCODE_SPACE;
     keyMap.use = SDL_SCANCODE_E;
+    keyMap.cancel = SDL_SCANCODE_R;
     keyMap.debug = SDL_SCANCODE_T;
-    keyMap.remove = SDL_SCANCODE_R;
     keyMap.exit = SDL_SCANCODE_ESCAPE;
+}
+
+void S_InitBtnMap()
+{
+	btnMap.up = SDL_CONTROLLER_BUTTON_DPAD_UP;
+	btnMap.down = SDL_CONTROLLER_BUTTON_DPAD_DOWN;
+	btnMap.left = SDL_CONTROLLER_BUTTON_DPAD_LEFT;
+	btnMap.right = SDL_CONTROLLER_BUTTON_DPAD_RIGHT;
+	btnMap.space = SDL_CONTROLLER_BUTTON_A;
+	btnMap.use = SDL_CONTROLLER_BUTTON_Y;
+	btnMap.cancel = SDL_CONTROLLER_BUTTON_X;
+	btnMap.exit = SDL_CONTROLLER_BUTTON_BACK;
+}
+
+void* S_InitGamepad()
+{
+	for (int i = 0; i < SDL_NumJoysticks(); ++i)
+	{
+		if (SDL_IsGameController(i))
+			gamepad = SDL_GameControllerOpen(i);
+	}
+
+	return gamepad;
 }
 
 /*
  * This method handles keyboard input for setting keys' states true or false depending on
  * whether these keys pressed (down) or released (up).
  */
-void S_HandleKeyboardInput(enum KBD_KEY_STATE keyState, keymap_t* keyMap, keystates_t* keyStates)
+void S_HandleKeyboardInput(enum KEY_STATE keyState, keymap_t* keyMap, keystates_t* keyStates)
 {
 	if (input_keyScancode == keyMap->up)
 		keyStates->isUp = keyState;
@@ -115,8 +155,82 @@ void S_HandleKeyboardInput(enum KBD_KEY_STATE keyState, keymap_t* keyMap, keysta
 		keyStates->isUse = keyState;
 	if (input_keyScancode == keyMap->debug)
 		keyStates->isDebug = keyState;
-	if (input_keyScancode == keyMap->remove)
-		keyStates->isRemove = keyState;
+	if (input_keyScancode == keyMap->cancel)
+		keyStates->isCancel = keyState;
+}
+
+void S_HandleGamepadInput(enum KEY_STATE keyState, btnmap_t* buttonMap, keystates_t* keyStates)
+{
+	if (keyState != KEY_STATE_AXIS)
+	{
+		if (input_button == buttonMap->up)
+			keyStates->isUp = keyState;
+		else if (input_button == buttonMap->down)
+			keyStates->isDown = keyState;
+
+		if (input_button == buttonMap->left)
+			keyStates->isLeft = keyState;
+		else if (input_button == buttonMap->right)
+			keyStates->isRight = keyState;
+
+		if (input_button == buttonMap->exit)
+			keyStates->isExit = keyState;
+		if (input_button == buttonMap->space)
+			keyStates->isSpace = keyState;
+		if (input_button == buttonMap->use)
+			keyStates->isUse = keyState;
+		if (input_button == buttonMap->cancel)
+			keyStates->isCancel = keyState;
+	}
+	else
+	{
+		// GAMEPAD LEFT STICK HANDLING
+		if (gamepad && SDL_GameControllerGetAttached(gamepad))
+		{
+			Sint16 rawX = SDL_GameControllerGetAxis(gamepad, SDL_CONTROLLER_AXIS_LEFTX);
+			Sint16 rawY = SDL_GameControllerGetAxis(gamepad, SDL_CONTROLLER_AXIS_LEFTY);
+
+			// STICK HAS RETURNED TO CENTER ON X
+			if (abs(rawX) <= STICK_DEADZONE)
+			{
+				keyStates->isLeft = false;
+				keyStates->isRight = false;
+			}
+
+			// STICK HAS RETURNED TO CENTER ON Y
+			if (abs(rawY) <= STICK_DEADZONE)
+			{
+				keyStates->isUp = false;
+				keyStates->isDown = false;
+			}
+
+			// STICK ON LEFT
+			if (rawX < -STICK_DEADZONE)
+			{
+				keyStates->isRight = false;
+				keyStates->isLeft = true;
+			}
+			// STICK ON RIGHT
+			else if (rawX > STICK_DEADZONE)
+			{
+				keyStates->isLeft = false;
+				keyStates->isRight = true;
+			}
+
+			// STICK ON UP
+			if (rawY < -STICK_DEADZONE)
+			{
+				keyStates->isDown = false;
+				keyStates->isUp = true;
+			}
+			// STICK ON DOWN
+			else if (rawY > STICK_DEADZONE)
+			{
+				keyStates->isUp = false;
+				keyStates->isDown = true;
+			}
+		}
+	}
 }
 
 /*
@@ -127,6 +241,7 @@ void S_HandleKeyboardInput(enum KBD_KEY_STATE keyState, keymap_t* keyMap, keysta
 void S_HandleEvents(gamestate_t *pGameState, e_manager_t* pEntManager, keystates_t* keyStates)
 {
 	SDL_Event event;
+	gamepad = (SDL_GameController*) S_InitGamepad();
 
 	while (SDL_PollEvent(&event))
 	{
@@ -135,6 +250,7 @@ void S_HandleEvents(gamestate_t *pGameState, e_manager_t* pEntManager, keystates
 		case SDL_QUIT:
 			pGameState->isRunning = false;
 			break;
+		// KEYBOARD HANDLING
 		case SDL_KEYDOWN:
 			input_keyScancode = event.key.keysym.scancode;
 			S_HandleKeyboardInput(KEY_STATE_DOWN, &keyMap, keyStates);
@@ -142,6 +258,25 @@ void S_HandleEvents(gamestate_t *pGameState, e_manager_t* pEntManager, keystates
 		case SDL_KEYUP:
 			input_keyScancode = event.key.keysym.scancode;
 			S_HandleKeyboardInput(KEY_STATE_UP, &keyMap, keyStates);
+			break;
+		// GAMEPAD HANDLING
+		case SDL_CONTROLLERBUTTONDOWN:
+			input_button = event.cbutton.button;
+			S_HandleGamepadInput(KEY_STATE_DOWN, &btnMap, keyStates);
+			break;
+		case SDL_CONTROLLERBUTTONUP:
+			input_button = event.cbutton.button;
+			S_HandleGamepadInput(KEY_STATE_UP, &btnMap, keyStates);
+			break;
+		case SDL_CONTROLLERAXISMOTION:
+			S_HandleGamepadInput(KEY_STATE_AXIS, &btnMap, keyStates);
+			break;
+		case SDL_CONTROLLERDEVICEREMOVED:
+			if (gamepad && event.cdevice.which == SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(gamepad)))
+			{
+				SDL_GameControllerClose(gamepad);
+				gamepad = NULL;
+			}
 			break;
 		}
 	}
@@ -179,7 +314,7 @@ int S_LibInit()
 	if (IMG_Init(IMG_INIT_PNG) < 0 || TTF_Init() < 0)
 		return -1;
 
-	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0)
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_GAMECONTROLLER) < 0)
 		return -1;
 
 	return 0;
@@ -229,11 +364,11 @@ int S_WindowInit(gamestate_t* pGameState)
 int S_RendererInit()
 {
 	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest"); // Avoiding scale blur
-	pRenderer = SDL_CreateRenderer(pWindow, -1, SDL_RENDERER_ACCELERATED);
+	pRenderer = SDL_CreateRenderer(pWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
 	if (pRenderer == NULL)
 	{
-		pRenderer = SDL_CreateRenderer(pWindow, -1, SDL_RENDERER_SOFTWARE);
+		pRenderer = SDL_CreateRenderer(pWindow, -1, SDL_RENDERER_SOFTWARE | SDL_RENDERER_PRESENTVSYNC);
 		return -1;
 	}
 
@@ -374,8 +509,11 @@ void S_RenderLocation(map_t* pLocation, int ix, int iy, int screenX, int screenY
  * Destructor method to clean up all renderer textures, close files and quit the SDL
  * (Always need to be called in application crash or normal exit!!!)
  */
-void S_Destruct(obj_manager_t* pObjManager, e_manager_t* pEntManager)
+void S_Destruct()
 {
+	if (gamepad)
+		SDL_GameControllerClose(gamepad);
+
 	if (font.textTexture != NULL)
 	{
 		SDL_DestroyTexture(font.textTexture);

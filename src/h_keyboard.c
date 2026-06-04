@@ -16,7 +16,7 @@ void H_InitKeyStates()
 	h_keyStates.isSpace = false;
 	h_keyStates.isUse = false;
 	h_keyStates.isDebug = false;
-	h_keyStates.isRemove = false;
+	h_keyStates.isCancel = false;
 	h_keyStates.isExit = false;
 }
 
@@ -31,7 +31,7 @@ void H_HandleKeyStates(gamestate_t* pGameState, e_manager_t* pEntManager)
 
 	pEntManager->isMoving[PLAYER] = h_keyStates.isLeft || h_keyStates.isRight;
 
-	if (h_keyStates.isUp || h_keyStates.isSpace)
+	if (h_keyStates.isSpace)
 		E_EntityJump(pGameState, pEntManager, PLAYER);
 
 	if (h_keyStates.isLeft)

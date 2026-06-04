@@ -22,6 +22,7 @@ int init()
 	if (S_LibInit() < 0) return -1;
 
 	S_InitKeymap();
+	S_InitBtnMap();
 	gameState = G_GameInit();
 
 	if (S_WindowInit(&gameState) < 0 || S_RendererInit() < 0) return -1;
@@ -107,12 +108,12 @@ int main(int argc, char* argv[])
 {
 	if (init() < 0)
 	{
-		S_Destruct(&objManager, &entManager);
+		S_Destruct();
 		return -1;
 	}
 
 	loop();
-	S_Destruct(&objManager, &entManager);
+	S_Destruct();
 
 	return 0;
 }

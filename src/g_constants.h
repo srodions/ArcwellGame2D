@@ -32,10 +32,14 @@
 #define MAX_MAP_ROWS 			12
 #define MAX_LOCATIONS 			1
 
-enum KBD_KEY_STATE
+// I/O
+#define STICK_DEADZONE			8000
+
+enum KEY_STATE
 {
     KEY_STATE_UP,
-    KEY_STATE_DOWN
+    KEY_STATE_DOWN,
+	KEY_STATE_AXIS
 };
 
 enum ENTITY_DIR
