@@ -1,3 +1,4 @@
+
 #if defined(SDL2_X64)
 
 #include <SDL.h>
@@ -8,7 +9,7 @@
 #include <stdbool.h>
 #include <math.h>
 #include <assert.h>
-#include "s_system.h"
+#include "i_system.h"
 #include "g_map.h"
 #include "h_keyboard.h"
 #include "p_physics.h"
@@ -69,17 +70,17 @@ SDL_Texture* tilemap_sprite;
 /*
  * Starts the timer from current number of milliseconds since SDL library initialization.
  */
-void S_ReactionTimerStart(rtimer_t* pReactionTimer)
+void I_ReactionTimerStart(rtimer_t* pReactionTimer)
 {
 	pReactionTimer->currentTime = SDL_GetTicks();
 }
 
-void S_ReactionTimerEnd(rtimer_t* pReactionTimer)
+void I_ReactionTimerEnd(rtimer_t* pReactionTimer)
 {
 	pReactionTimer->lastTime = pReactionTimer->currentTime;
 }
 
-void S_ReactionTimerReset(rtimer_t* pReactionTimer)
+void I_ReactionTimerReset(rtimer_t* pReactionTimer)
 {
     pReactionTimer->lastTime = SDL_GetTicks();
 }
@@ -87,7 +88,7 @@ void S_ReactionTimerReset(rtimer_t* pReactionTimer)
 /*
  * Checks whether is delta time reached reaction time.
  */
-bool S_IsTimeToReact(rtimer_t* pReactionTimer)
+bool I_IsTimeToReact(rtimer_t* pReactionTimer)
 {
 	return pReactionTimer->currentTime - pReactionTimer->lastTime >= pReactionTimer->reactionTime;
 }
@@ -95,7 +96,7 @@ bool S_IsTimeToReact(rtimer_t* pReactionTimer)
 /*
  * This method initializes key map setup for controls.
  */
-void S_InitKeymap()
+void I_InitKeymap()
 {
     keyMap.up = SDL_SCANCODE_W;
     keyMap.down = SDL_SCANCODE_S;
@@ -108,7 +109,7 @@ void S_InitKeymap()
     keyMap.exit = SDL_SCANCODE_ESCAPE;
 }
 
-void S_InitBtnMap()
+void I_InitBtnMap()
 {
 	btnMap.up = SDL_CONTROLLER_BUTTON_DPAD_UP;
 	btnMap.down = SDL_CONTROLLER_BUTTON_DPAD_DOWN;
@@ -120,7 +121,7 @@ void S_InitBtnMap()
 	btnMap.exit = SDL_CONTROLLER_BUTTON_BACK;
 }
 
-void* S_InitGamepad()
+void* I_InitGamepad()
 {
 	for (int i = 0; i < SDL_NumJoysticks(); ++i)
 	{
@@ -135,7 +136,7 @@ void* S_InitGamepad()
  * This method handles keyboard input for setting keys' states true or false depending on
  * whether these keys pressed (down) or released (up).
  */
-void S_HandleKeyboardInput(enum KEY_STATE keyState, keymap_t* keyMap, keystates_t* keyStates)
+void I_HandleKeyboardInput(enum KEY_STATE keyState, keymap_t* keyMap, keystates_t* keyStates)
 {
 	if (input_keyScancode == keyMap->up)
 		keyStates->isUp = keyState;
@@ -159,7 +160,7 @@ void S_HandleKeyboardInput(enum KEY_STATE keyState, keymap_t* keyMap, keystates_
 		keyStates->isCancel = keyState;
 }
 
-void S_HandleGamepadInput(enum KEY_STATE keyState, btnmap_t* buttonMap, keystates_t* keyStates)
+void I_HandleGamepadInput(enum KEY_STATE keyState, btnmap_t* buttonMap, keystates_t* keyStates)
 {
 	if (keyState != KEY_STATE_AXIS)
 	{
@@ -238,10 +239,10 @@ void S_HandleGamepadInput(enum KEY_STATE keyState, btnmap_t* buttonMap, keystate
  * These events can be: application's quit button event, any key pressed event,
  * any key released event, etc.
  */
-void S_HandleEvents(gamestate_t *pGameState, e_manager_t* pEntManager, keystates_t* keyStates)
+void I_HandleEvents(gamestate_t *pGameState, e_manager_t* pEntManager, keystates_t* keyStates)
 {
 	SDL_Event event;
-	gamepad = (SDL_GameController*) S_InitGamepad();
+	gamepad = (SDL_GameController*) I_InitGamepad();
 
 	while (SDL_PollEvent(&event))
 	{
@@ -253,23 +254,23 @@ void S_HandleEvents(gamestate_t *pGameState, e_manager_t* pEntManager, keystates
 		// KEYBOARD HANDLING
 		case SDL_KEYDOWN:
 			input_keyScancode = event.key.keysym.scancode;
-			S_HandleKeyboardInput(KEY_STATE_DOWN, &keyMap, keyStates);
+			I_HandleKeyboardInput(KEY_STATE_DOWN, &keyMap, keyStates);
 			break;
 		case SDL_KEYUP:
 			input_keyScancode = event.key.keysym.scancode;
-			S_HandleKeyboardInput(KEY_STATE_UP, &keyMap, keyStates);
+			I_HandleKeyboardInput(KEY_STATE_UP, &keyMap, keyStates);
 			break;
 		// GAMEPAD HANDLING
 		case SDL_CONTROLLERBUTTONDOWN:
 			input_button = event.cbutton.button;
-			S_HandleGamepadInput(KEY_STATE_DOWN, &btnMap, keyStates);
+			I_HandleGamepadInput(KEY_STATE_DOWN, &btnMap, keyStates);
 			break;
 		case SDL_CONTROLLERBUTTONUP:
 			input_button = event.cbutton.button;
-			S_HandleGamepadInput(KEY_STATE_UP, &btnMap, keyStates);
+			I_HandleGamepadInput(KEY_STATE_UP, &btnMap, keyStates);
 			break;
 		case SDL_CONTROLLERAXISMOTION:
-			S_HandleGamepadInput(KEY_STATE_AXIS, &btnMap, keyStates);
+			I_HandleGamepadInput(KEY_STATE_AXIS, &btnMap, keyStates);
 			break;
 		case SDL_CONTROLLERDEVICEREMOVED:
 			if (gamepad && event.cdevice.which == SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(gamepad)))
@@ -282,14 +283,14 @@ void S_HandleEvents(gamestate_t *pGameState, e_manager_t* pEntManager, keystates
 	}
 }
 
-void S_FrameStart(uint64_t* frameStart)
+void I_FrameStart(uint64_t* frameStart)
 {
     *frameStart = SDL_GetPerformanceCounter();
     SDL_SetRenderDrawColor(pRenderer, 0, 0, 0, 255);
     SDL_RenderClear(pRenderer);
 }
 
-void S_FrameEnd(gamestate_t* pGameState, uint64_t* frameStart)
+void I_FrameEnd(gamestate_t* pGameState, uint64_t* frameStart)
 {
 	SDL_RenderPresent(pRenderer);
 
@@ -309,7 +310,7 @@ void S_FrameEnd(gamestate_t* pGameState, uint64_t* frameStart)
 	}
 }
 
-int S_LibInit()
+int I_LibInit()
 {
 	if (IMG_Init(IMG_INIT_PNG) < 0 || TTF_Init() < 0)
 		return -1;
@@ -323,7 +324,7 @@ int S_LibInit()
 /*
  * This method creates an SDL Windows application window of the game.
  */
-int S_WindowInit(gamestate_t* pGameState)
+int I_WindowInit(gamestate_t* pGameState)
 {
 	pWindow = SDL_CreateWindow(
 		"Arcwell Game 2D ver 0.09",
@@ -361,7 +362,7 @@ int S_WindowInit(gamestate_t* pGameState)
  * acceleration, then it will try to create it with software renderer, otherwise,
  * method will send an error message and return NULL, that need to be handled in main().
  */
-int S_RendererInit()
+int I_RendererInit()
 {
 	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest"); // Avoiding scale blur
 	pRenderer = SDL_CreateRenderer(pWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
@@ -376,7 +377,7 @@ int S_RendererInit()
 	return 0;
 }
 
-void S_FontInit(const char* filePath, int size)
+void I_FontInit(const char* filePath, int size)
 {
 	if (font.file != NULL)
 		TTF_CloseFont(font.file);
@@ -393,28 +394,28 @@ SDL_Texture* loadTextureFromData(void* textureData, uint32_t currentTextureSize)
 	return output;
 }
 
-void S_InitTilemapTextureFromData(void* textureData, uint32_t currentTextureSize)
+void I_InitTilemapTextureFromData(void* textureData, uint32_t currentTextureSize)
 {
 	if (!textureData) return;
 
 	tilemap_sprite = loadTextureFromData(textureData, currentTextureSize);
 }
 
-void S_InitEntityTextureFromData(void* textureData, uint32_t currentTextureSize, enum ENTITY_ID id)
+void I_InitEntityTextureFromData(void* textureData, uint32_t currentTextureSize, enum ENTITY_ID id)
 {
 	if (!textureData) return;
 
 	entity_sprites[id] = loadTextureFromData(textureData, currentTextureSize);
 }
 
-void S_InitObjTextureFromData(void* textureData, uint32_t currentTextureSize, enum OBJ_ID id)
+void I_InitObjTextureFromData(void* textureData, uint32_t currentTextureSize, enum OBJ_ID id)
 {
 	if (!textureData) return;
 
 	obj_sprites[id] = loadTextureFromData(textureData, currentTextureSize);
 }
 
-void S_RenderText(const char* text, int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+void I_RenderText(const char* text, int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
 	if (text == NULL) return;
 
@@ -446,7 +447,7 @@ void S_RenderText(const char* text, int x, int y, uint8_t r, uint8_t g, uint8_t 
 		SDL_RenderCopy(pRenderer, font.textTexture, NULL, &font.textRect);
 }
 
-void S_RenderEntity(e_manager_t* pEntManager, int i, int screenX, int screenY, int flip)
+void I_RenderEntity(e_manager_t* pEntManager, int i, int screenX, int screenY, int flip)
 {
 	SDL_Rect srcRect;
 	srcRect.w = ENTITY_SPRITE_SIZE;
@@ -463,7 +464,7 @@ void S_RenderEntity(e_manager_t* pEntManager, int i, int screenX, int screenY, i
 	SDL_RenderCopyEx(pRenderer, entity_sprites[pEntManager->id[i]], &srcRect, &destRect, 0.0, NULL, flip);
 }
 
-void S_RenderObject(obj_manager_t* pObjManager, int i, int screenX, int screenY)
+void I_RenderObject(obj_manager_t* pObjManager, int i, int screenX, int screenY)
 {
 	SDL_Rect srcRect;
 	srcRect.w = TILE_SPRITE_SIZE;
@@ -483,7 +484,7 @@ void S_RenderObject(obj_manager_t* pObjManager, int i, int screenX, int screenY)
 	);
 }
 
-void S_RenderLocation(map_t* pLocation, int ix, int iy, int screenX, int screenY)
+void I_RenderLocation(map_t* pLocation, int ix, int iy, int screenX, int screenY)
 {
 	SDL_Rect srcRect = {
 		.w = TILE_SPRITE_SIZE,
@@ -509,7 +510,7 @@ void S_RenderLocation(map_t* pLocation, int ix, int iy, int screenX, int screenY
  * Destructor method to clean up all renderer textures, close files and quit the SDL
  * (Always need to be called in application crash or normal exit!!!)
  */
-void S_Destruct()
+void I_Destruct()
 {
 	if (gamepad)
 		SDL_GameControllerClose(gamepad);

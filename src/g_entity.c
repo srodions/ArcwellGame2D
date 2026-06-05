@@ -1,16 +1,17 @@
+#include "g_entity.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <assert.h>
-#include "e_entity.h"
+#include "i_system.h"
 #include "p_physics.h"
-#include "s_system.h"
 #include "typedefs.h"
 
 /*
  * This function initializes entity (data-oriented style).
  */
-void E_EntityInit(e_manager_t* pEntManager, int posX, int posY, float speed, enum ENTITY_ID id)
+void G_EntityInit(e_manager_t* pEntManager, int posX, int posY, float speed, float knockback, int hp, int strength, enum ENTITY_ID id)
 {
 	int i = pEntManager->entitiesCount;
 	assert(i <= MAX_ENTITIES);
@@ -45,25 +46,25 @@ void E_EntityInit(e_manager_t* pEntManager, int posX, int posY, float speed, enu
 	++pEntManager->entitiesCount;
 }
 
-void E_SkeletonSpawn(e_manager_t* pEntManager, rtimer_t* timer)
+void G_SkeletonSpawn(e_manager_t* pEntManager, rtimer_t* timer)
 {
 	int i = pEntManager->entitiesCount;
 
-	S_ReactionTimerStart(timer);
+	I_ReactionTimerStart(timer);
 
-	if (S_IsTimeToReact(timer) && pEntManager->entitiesCount < MAX_ENTITIES)
+	if (I_IsTimeToReact(timer) && pEntManager->entitiesCount < MAX_ENTITIES)
 	{
-		S_ReactionTimerEnd(timer);
+		I_ReactionTimerEnd(timer);
 
 		int randomXPos = rand() % LOGICAL_WIDTH + LOGICAL_WIDTH / 2;
 
-		E_EntityInit(pEntManager, randomXPos, FLOOR_DISTANCE, skeleton_speed, SKELETON);
-		E_SetAi(i, pEntManager, AI_IDLE);
-		E_SetState(i, pEntManager, STATE_SPAWNING);
+		G_EntityInit(pEntManager, randomXPos, FLOOR_DISTANCE, skeleton_speed, attack_knockback, SKELETON_HP, SKELETON_STRENGTH, SKELETON);
+		G_SetAi(i, pEntManager, AI_IDLE);
+		G_SetState(i, pEntManager, STATE_SPAWNING);
 	}
 }
 
-void E_UpdateEntity(gamestate_t* pGameState, e_manager_t* pEntManager)
+void G_UpdateEntity(gamestate_t* pGameState, e_manager_t* pEntManager)
 {
 	double dt = pGameState->deltaTime;
 
@@ -85,14 +86,14 @@ void E_UpdateEntity(gamestate_t* pGameState, e_manager_t* pEntManager)
 	}
 }
 
-void E_MarkEntityToRemove(int index, e_manager_t* pEntManager)
+void G_MarkEntityToRemove(int index, e_manager_t* pEntManager)
 {
-	S_ReactionTimerStart(&pEntManager->destructTimer[index]);
+	I_ReactionTimerStart(&pEntManager->destructTimer[index]);
 
-	if (S_IsTimeToReact(&pEntManager->destructTimer[index]))
+	if (I_IsTimeToReact(&pEntManager->destructTimer[index]))
 	{
-		S_ReactionTimerEnd(&pEntManager->destructTimer[index]);
-		E_RemoveEntityFromLoadList(index, pEntManager);
+		I_ReactionTimerEnd(&pEntManager->destructTimer[index]);
+		G_RemoveEntityFromLoadList(index, pEntManager);
 	}
 }
 
@@ -100,7 +101,7 @@ void E_MarkEntityToRemove(int index, e_manager_t* pEntManager)
  * This function removes the entity by its index from all of the data arrays
  * and shifts all the data to the left from removed entity's index.
  */
-void E_RemoveEntityFromLoadList(int index, e_manager_t* pEntManager)
+void G_RemoveEntityFromLoadList(int index, e_manager_t* pEntManager)
 {
 	if (index <= 0 || index >= pEntManager->entitiesCount) return;
 
@@ -119,7 +120,7 @@ void E_RemoveEntityFromLoadList(int index, e_manager_t* pEntManager)
 	--pEntManager->entitiesCount;
 }
 
-void E_AI_Idle(e_manager_t* pEntManager)
+void G_AI_Idle(e_manager_t* pEntManager)
 {
 	for (int i = 1; i < pEntManager->entitiesCount; ++i)
 	{
@@ -127,9 +128,10 @@ void E_AI_Idle(e_manager_t* pEntManager)
 		|| pEntManager->state[i] == STATE_SPAWNING
 		|| pEntManager->state[i] == STATE_REMOVING) continue;
 
+		// WHEN IN THE SPOT DISTANCE
 		if (abs(pEntManager->transforms[PLAYER].logX - pEntManager->transforms[i].logX) <= SPOT_DISTANCE)
 		{
-			E_SetAi(i, pEntManager, AI_CHASING);
+			G_SetAi(i, pEntManager, AI_CHASING);
 			continue;
 		}
 
@@ -140,9 +142,9 @@ void E_AI_Idle(e_manager_t* pEntManager)
 		else if (pEntManager->aiParams[i].isCollisionOnRight)
 			pEntManager->sprites[i].direction = LEFT;
 
-		S_ReactionTimerStart(&pEntManager->aiTimer[i]);
+		I_ReactionTimerStart(&pEntManager->aiTimer[i]);
 
-		if (S_IsTimeToReact(&pEntManager->aiTimer[i]))
+		if (I_IsTimeToReact(&pEntManager->aiTimer[i]))
 		{
 			pEntManager->aiTimer[i].reactionTime = AI_IDLE_MIN_RENEW_TIME + rand() % AI_IDLE_MAX_RENEW_TIME;
 			pEntManager->aiParams[i].currentChoice = rand() % 100;
@@ -152,12 +154,12 @@ void E_AI_Idle(e_manager_t* pEntManager)
 			else
 				pEntManager->sprites[i].direction = RIGHT;
 
-			S_ReactionTimerEnd(&pEntManager->aiTimer[i]);
+			I_ReactionTimerEnd(&pEntManager->aiTimer[i]);
 		}
 	}
 }
 
-void E_AI_Chase(gamestate_t* pGameState, e_manager_t* pEntManager)
+void G_AI_Chase(gamestate_t* pGameState, e_manager_t* pEntManager)
 {
 	int entitySpriteSize = ENTITY_SPRITE_SIZE * ENTITY_SPRITE_SCALE;
 
@@ -167,20 +169,19 @@ void E_AI_Chase(gamestate_t* pGameState, e_manager_t* pEntManager)
 		|| pEntManager->state[i] == STATE_SPAWNING
 		|| pEntManager->state[i] == STATE_REMOVING) continue;
 
+		// WHEN OUT OF SPOT DISTANCE
 		if (abs(pEntManager->transforms[PLAYER].logX - pEntManager->transforms[i].logX) >= SPOT_DISTANCE)
 		{
-			E_SetAi(i, pEntManager, AI_IDLE);
+			G_SetAi(i, pEntManager, AI_IDLE);
 			continue;
 		}
 
-		S_ReactionTimerStart(&pEntManager->aiTimer[i]);
+		I_ReactionTimerStart(&pEntManager->aiTimer[i]);
 
-		if (S_IsTimeToReact(&pEntManager->aiTimer[i]))
+		if (I_IsTimeToReact(&pEntManager->aiTimer[i]))
 		{
-			if (i == rand() % MAX_ENTITIES) E_SetState(i, pEntManager, STATE_ANGER);
+			if (i == rand() % MAX_ENTITIES) G_SetState(i, pEntManager, STATE_ANGER);
 			pEntManager->aiTimer[i].reactionTime = AI_IDLE_MIN_RENEW_TIME + rand() % AI_IDLE_MAX_RENEW_TIME;
-
-			pEntManager->isMoving[i] = false;
 
 			if (pEntManager->transforms[i].logX - entitySpriteSize > pEntManager->transforms[PLAYER].logX) // ON RIGHT
 			{
@@ -192,19 +193,24 @@ void E_AI_Chase(gamestate_t* pGameState, e_manager_t* pEntManager)
 				pEntManager->isMoving[i] = true;
 				pEntManager->sprites[i].direction = RIGHT;
 			}
+			else
+			{
+				pEntManager->isMoving[i] = false;
+				G_SetState(i, pEntManager, STATE_ATTACK);
+			}
 
 			if (pEntManager->transforms[i].logY > pEntManager->transforms[PLAYER].logY) // ON TOP
 			{
 				pEntManager->isMoving[i] = true;
-				E_EntityJump(pGameState, pEntManager, i);
+				G_EntityJump(pGameState, pEntManager, i);
 			}
 
-			S_ReactionTimerEnd(&pEntManager->aiTimer[i]);
+			I_ReactionTimerEnd(&pEntManager->aiTimer[i]);
 		}
 	}
 }
 
-void E_EntityJump(gamestate_t* pGameState, e_manager_t* pEntManager, int index)
+void G_EntityJump(gamestate_t* pGameState, e_manager_t* pEntManager, int index)
 {
 	if (!pEntManager->isFalling[index])
 	{
@@ -213,7 +219,7 @@ void E_EntityJump(gamestate_t* pGameState, e_manager_t* pEntManager, int index)
 	}
 }
 
-void E_SetState(int index, e_manager_t* pEntManager, enum ENTITY_STATE state)
+void G_SetState(int index, e_manager_t* pEntManager, enum ENTITY_STATE state)
 {
 	pEntManager->sprites[index].currentSprite = 0;
 	pEntManager->sprites[index].srcX = 0;
@@ -221,7 +227,7 @@ void E_SetState(int index, e_manager_t* pEntManager, enum ENTITY_STATE state)
 	pEntManager->state[index] = state;
 }
 
-void E_SetAi(int index, e_manager_t* pEntManager, enum ENTITY_AI ai)
+void G_SetAi(int index, e_manager_t* pEntManager, enum ENTITY_AI ai)
 {
 	pEntManager->ai[index] = ai;
 }

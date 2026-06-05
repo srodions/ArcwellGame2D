@@ -1,8 +1,9 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include "h_keyboard.h"
+
+#include "g_entity.h"
 #include "p_physics.h"
-#include "e_entity.h"
 #include "typedefs.h"
 
 keystates_t h_keyStates;
@@ -32,7 +33,7 @@ void H_HandleKeyStates(gamestate_t* pGameState, e_manager_t* pEntManager)
 	pEntManager->isMoving[PLAYER] = h_keyStates.isLeft || h_keyStates.isRight;
 
 	if (h_keyStates.isSpace)
-		E_EntityJump(pGameState, pEntManager, PLAYER);
+		G_EntityJump(pGameState, pEntManager, PLAYER);
 
 	if (h_keyStates.isLeft)
 		pEntManager->sprites[0].direction = LEFT;

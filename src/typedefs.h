@@ -72,6 +72,13 @@ typedef struct Keystates
     bool isExit;
 } keystates_t;
 
+typedef struct EntityCombatParams
+{
+	float 			knockback;
+	int				strength;
+	int				hp;
+} e_cbt_prms_t;
+
 typedef struct ReactionTimer
 {
 	uint32_t 		currentTime;
@@ -161,6 +168,7 @@ typedef struct EntityManager
 	e_tform_t 			transforms[MAX_ENTITIES];
 	e_vel_t				velocities[MAX_ENTITIES];
 	e_ai_t				aiParams[MAX_ENTITIES];
+	e_cbt_prms_t		combatParams[MAX_ENTITIES];
 	enum ENTITY_STATE 	state[MAX_ENTITIES];
 	enum ENTITY_AI		ai[MAX_ENTITIES];
 	enum ENTITY_ID 		id[MAX_ENTITIES];

@@ -4,7 +4,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <assert.h>
-#include "s_system.h"
+
+#include "i_system.h"
 #include "l_arcloader.h"
 #include "typedefs.h"
 

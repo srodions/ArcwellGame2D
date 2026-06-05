@@ -1,6 +1,7 @@
 #include "r_renderer.h"
-#include "s_system.h"
-#include "e_entity.h"
+
+#include "g_entity.h"
+#include "i_system.h"
 #include "typedefs.h"
 
 void R_RenderLocation(map_t* pLocation, e_manager_t* pEntManager)
@@ -24,7 +25,7 @@ void R_RenderLocation(map_t* pLocation, e_manager_t* pEntManager)
 				continue;
 			}
 
-			S_RenderLocation(pLocation, x, y, screenX, screenY);
+			I_RenderLocation(pLocation, x, y, screenX, screenY);
 		}
 	}
 }
@@ -50,18 +51,18 @@ void R_RenderObject(obj_manager_t* pObjManager, e_manager_t* pEntManager)
 
 		if (pObjManager->isAnimated[i])
 		{
-			S_ReactionTimerStart(&pObjManager->animTimer[i]);
+			I_ReactionTimerStart(&pObjManager->animTimer[i]);
 
-			if (S_IsTimeToReact(&pObjManager->animTimer[i]))
+			if (I_IsTimeToReact(&pObjManager->animTimer[i]))
 			{
 				pObjManager->sprites[i].currentSprite = (pObjManager->sprites[i].currentSprite + 1) % OBJ_FRAMES_COUNT;
 				pObjManager->sprites[i].srcX = TILE_SPRITE_SIZE * pObjManager->sprites[i].currentSprite;
 
-				S_ReactionTimerEnd(&pObjManager->animTimer[i]);
+				I_ReactionTimerEnd(&pObjManager->animTimer[i]);
 			}
 		}
 
-		S_RenderObject(pObjManager, i, screenX, screenY);
+		I_RenderObject(pObjManager, i, screenX, screenY);
 	}
 }
 
@@ -81,10 +82,10 @@ void R_RenderEntity(e_manager_t* pEntManager)
 			|| screenY < 0
 			|| screenY > LOGICAL_HEIGHT)
 		{
-			E_MarkEntityToRemove(i, pEntManager);
+			G_MarkEntityToRemove(i, pEntManager);
 			continue;
 		}
-		else S_ReactionTimerReset(&pEntManager->destructTimer[i]);
+		else I_ReactionTimerReset(&pEntManager->destructTimer[i]);
 
 		switch (pEntManager->state[i])
 		{
@@ -97,12 +98,15 @@ void R_RenderEntity(e_manager_t* pEntManager)
 		case STATE_ANGER:
 			R_Anim(pEntManager, i, ANGER_FRAMES_COUNT, 3);
 			break;
+		case STATE_ATTACK:
+			R_Anim(pEntManager, i, ATTACK_FRAMES_COUNT, 4);
+			break;
 		default:
 			R_Anim_Walk(pEntManager, i);
 			break;
 		}
 
-		S_RenderEntity(pEntManager, i, screenX, screenY, pEntManager->transforms[i].flip);
+		I_RenderEntity(pEntManager, i, screenX, screenY, pEntManager->transforms[i].flip);
 	}
 }
 
@@ -110,15 +114,15 @@ void R_Anim_Walk(e_manager_t* pEntManager, int i)
 {
 	if (pEntManager->isMoving[i])
 	{
-		S_ReactionTimerStart(&pEntManager->animTimer[i]);
+		I_ReactionTimerStart(&pEntManager->animTimer[i]);
 
-		if (S_IsTimeToReact(&pEntManager->animTimer[i]))
+		if (I_IsTimeToReact(&pEntManager->animTimer[i]))
 		{
 			pEntManager->sprites[i].currentSprite = (pEntManager->sprites[i].currentSprite + 1) % WALK_FRAMES_COUNT;
 			pEntManager->sprites[i].srcX = ENTITY_SPRITE_SIZE * pEntManager->sprites[i].currentSprite;
 			pEntManager->sprites[i].srcY = 0;
 
-			S_ReactionTimerEnd(&pEntManager->animTimer[i]);
+			I_ReactionTimerEnd(&pEntManager->animTimer[i]);
 		}
 	}
 	else
@@ -132,9 +136,9 @@ void R_Anim(e_manager_t* pEntManager, int i, int framesCount, int row)
 {
 	pEntManager->isMoving[i] = false;
 
-	S_ReactionTimerStart(&pEntManager->animTimer[i]);
+	I_ReactionTimerStart(&pEntManager->animTimer[i]);
 
-	if (S_IsTimeToReact(&pEntManager->animTimer[i]))
+	if (I_IsTimeToReact(&pEntManager->animTimer[i]))
 	{
 		++(pEntManager->sprites[i].currentSprite);
 
@@ -145,14 +149,14 @@ void R_Anim(e_manager_t* pEntManager, int i, int framesCount, int row)
 			pEntManager->sprites[i].srcX = 0;
 			pEntManager->sprites[i].srcY = 0;
 
-			S_ReactionTimerEnd(&pEntManager->animTimer[i]);
+			I_ReactionTimerEnd(&pEntManager->animTimer[i]);
 			return;
 		}
 
 		pEntManager->sprites[i].srcX = ENTITY_SPRITE_SIZE * pEntManager->sprites[i].currentSprite;
 		pEntManager->sprites[i].srcY = ENTITY_SPRITE_SIZE * row;
 
-		S_ReactionTimerEnd(&pEntManager->animTimer[i]);
+		I_ReactionTimerEnd(&pEntManager->animTimer[i]);
 	}
 }
 
@@ -160,22 +164,22 @@ void R_Anim_Death(e_manager_t* pEntManager, int i, int framesCount, int row)
 {
 	pEntManager->isMoving[i] = false;
 
-	S_ReactionTimerStart(&pEntManager->animTimer[i]);
+	I_ReactionTimerStart(&pEntManager->animTimer[i]);
 
-	if (S_IsTimeToReact(&pEntManager->animTimer[i]))
+	if (I_IsTimeToReact(&pEntManager->animTimer[i]))
 	{
 		++(pEntManager->sprites[i].currentSprite);
 
 		if (pEntManager->sprites[i].currentSprite >= framesCount)
 		{
-			S_ReactionTimerEnd(&pEntManager->animTimer[i]);
+			I_ReactionTimerEnd(&pEntManager->animTimer[i]);
 			return;
 		}
 
 		pEntManager->sprites[i].srcX = ENTITY_SPRITE_SIZE * pEntManager->sprites[i].currentSprite;
 		pEntManager->sprites[i].srcY = ENTITY_SPRITE_SIZE * row;
 
-		S_ReactionTimerEnd(&pEntManager->animTimer[i]);
+		I_ReactionTimerEnd(&pEntManager->animTimer[i]);
 	}
 }
 
@@ -193,7 +197,7 @@ void R_RenderDebugStats(gamestate_t* pGameState, e_manager_t* pEntManager)
 		(int) pEntManager->transforms[0].logX, (int) pEntManager->transforms[0].logY
 	);
 
-	S_RenderText(textBuffer, 100, 100, 255, 255, 255, 255);
+	I_RenderText(textBuffer, 100, 100, 255, 255, 255, 255);
 }
 
 
