@@ -44,6 +44,10 @@ void G_EntityInit(e_manager_t* pEntManager, int posX, int posY, float speed, flo
 	pEntManager->aiParams[i].isCollisionOnLeft = false;
 	pEntManager->aiParams[i].isCollisionOnRight = false;
 	++pEntManager->entitiesCount;
+	// Combat 			TODO: Use this parameters in combat update
+	pEntManager->combatParams[i].knockback = knockback;
+	pEntManager->combatParams[i].hp = hp;
+	pEntManager->combatParams[i].strength = strength;
 }
 
 void G_SkeletonSpawn(e_manager_t* pEntManager, rtimer_t* timer)
@@ -115,6 +119,7 @@ void G_RemoveEntityFromLoadList(int index, e_manager_t* pEntManager)
 	    pEntManager->sprites[i] = pEntManager->sprites[i + 1];
 	    pEntManager->transforms[i] = pEntManager->transforms[i + 1];
 	    pEntManager->velocities[i] = pEntManager->velocities[i + 1];
+	    pEntManager->combatParams[i] = pEntManager->combatParams[i + 1];
 	}
 
 	--pEntManager->entitiesCount;
