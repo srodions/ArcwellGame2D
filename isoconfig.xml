@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<iso_project image_name="MyFirstPS1Game.bin" cue_name="MyFirstPS1Game.cue">
+    <track type="data">
+        <directory_tree>
+            <!-- mkpsxiso автоматически возьмет скомпилированный эльф из папки сборки -->
+            <file name="PSX.EXE" source="build/my_game.exe" type="data" />
+        </directory_tree>
+    </track>
+</iso_project>

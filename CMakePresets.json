@@ -1,0 +1,12 @@
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "default",
+      "displayName": "PS1 Configuration",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "toolchainFile": "$env{PSN00BSDK_LIBS}/cmake/sdk.cmake"
+    }
+  ]
+}
