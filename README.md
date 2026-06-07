@@ -2,4 +2,5 @@
 ## For now it's just a base for future PS1 port  
 To build: in project folder execute this command in cmd "mkdir build && cd build && cmake -G Ninja .. && cmake --build ."  
 -needed PSn00bSDK 0.24, Ninja and CMake installed!  
+-needed PSN00BSDK_LIBS evironment variable with value "C:/PSn00bSDK-0.24-win32/lib/libpsn00b"  
 -the SDK folder should be in the root C:\ directory (or you can edit that in CMakeLists.txt)
