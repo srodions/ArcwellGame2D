@@ -1,0 +1,2 @@
+BOOT = cdrom:\PSX.EXE;1
+TCB = 4
