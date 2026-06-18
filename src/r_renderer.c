@@ -99,7 +99,10 @@ void R_RenderEntity(e_manager_t* pEntManager)
 			R_Anim(pEntManager, i, ANGER_FRAMES_COUNT, 3);
 			break;
 		case STATE_ATTACK:
-			R_Anim(pEntManager, i, ATTACK_FRAMES_COUNT, 4);
+			R_Anim_Attack(pEntManager, i, ATTACK_FRAMES_COUNT, 4);
+			break;
+		case STATE_HURT:
+			// TODO: HURT ANIMATION
 			break;
 		default:
 			R_Anim_Walk(pEntManager, i);
@@ -107,6 +110,35 @@ void R_RenderEntity(e_manager_t* pEntManager)
 		}
 
 		I_RenderEntity(pEntManager, i, screenX, screenY, pEntManager->transforms[i].flip);
+	}
+}
+
+void R_Anim_Attack(e_manager_t* pEntManager, int i, int framesCount, int row)
+{
+	pEntManager->isMoving[i] = false;
+
+	I_ReactionTimerStart(&pEntManager->animTimer[i]);
+
+	if (I_IsTimeToReact(&pEntManager->animTimer[i]))
+	{
+		++(pEntManager->sprites[i].currentSprite);
+
+		if (pEntManager->sprites[i].currentSprite >= framesCount)
+		{
+			pEntManager->state[i] = STATE_NONE;
+			pEntManager->sprites[i].currentSprite = 0;
+			pEntManager->sprites[i].srcX = 0;
+			pEntManager->sprites[i].srcY = 0;
+			pEntManager->combatParams[i].hasDamaged = false;
+
+			I_ReactionTimerReset(&pEntManager->animTimer[i]);
+			return;
+		}
+
+		pEntManager->sprites[i].srcX = ENTITY_SPRITE_SIZE * pEntManager->sprites[i].currentSprite;
+		pEntManager->sprites[i].srcY = ENTITY_SPRITE_SIZE * row;
+
+		I_ReactionTimerEnd(&pEntManager->animTimer[i]);
 	}
 }
 
@@ -149,7 +181,7 @@ void R_Anim(e_manager_t* pEntManager, int i, int framesCount, int row)
 			pEntManager->sprites[i].srcX = 0;
 			pEntManager->sprites[i].srcY = 0;
 
-			I_ReactionTimerEnd(&pEntManager->animTimer[i]);
+			I_ReactionTimerReset(&pEntManager->animTimer[i]);
 			return;
 		}
 
@@ -172,7 +204,7 @@ void R_Anim_Death(e_manager_t* pEntManager, int i, int framesCount, int row)
 
 		if (pEntManager->sprites[i].currentSprite >= framesCount)
 		{
-			I_ReactionTimerEnd(&pEntManager->animTimer[i]);
+			I_ReactionTimerReset(&pEntManager->animTimer[i]);
 			return;
 		}
 

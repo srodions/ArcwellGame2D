@@ -60,7 +60,8 @@ int I_GameInit()
 	free(header);
 	free(table);
 
-	G_EntityInit(&entManager, 1050, FLOOR_DISTANCE, player_speed, attack_knockback, PLAYER_HP, PLAYER_STRENGTH, PLAYER); // Player spawn
+	G_EntityInit(&entManager, 1050, FLOOR_DISTANCE, player_speed, attack_knockback,
+				PLAYER_HP, PLAYER_STRENGTH, PLAYER_ATK_DIST, PLAYER_DMG_SPR, PLAYER); // Player spawn
 
 	return 0;
 }
@@ -70,14 +71,11 @@ void update()
 	// Handle player input
 	I_HandleEvents(&gameState, &entManager, &h_keyStates);
 	H_HandleKeyStates(&gameState, &entManager);
-	// Update AI
-	G_AI_Idle(&entManager);
-	G_AI_Chase(&gameState, &entManager);
 	// Update physics
 	P_EntityFall(&entManager, &gameState);
 	P_EntityWallCollisionCheck(map, &entManager, &gameState);
 	P_EntityToEntityCollisionCheck(&entManager, &gameState);
-	// Update transforms
+	// Update transforms/AI
 	G_SkeletonSpawn(&entManager, &spawnTimer);
 	G_UpdateEntity(&gameState, &entManager);
 }

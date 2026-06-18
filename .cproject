@@ -55,7 +55,7 @@
 									<listOptionValue builtIn="false" value="&quot;C:\lib\SDL_ttf\x86_64-w64-mingw32\lib&quot;"/>
 								</option>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="true" id="gnu.c.link.option.other.705481132" name="Other options (-Xlinker [option])" superClass="gnu.c.link.option.other" valueType="stringList"/>
-								<option id="gnu.c.link.option.ldflags.90329246" name="Linker flags" superClass="gnu.c.link.option.ldflags" value="-mwindows" valueType="string"/>
+								<option id="gnu.c.link.option.ldflags.90329246" name="Linker flags" superClass="gnu.c.link.option.ldflags" value="" valueType="string"/>
 								<option id="gnu.c.link.option.soname.1942625500" name="Shared object name (-Wl,-soname=)" superClass="gnu.c.link.option.soname" value="" valueType="string"/>
 								<option id="gnu.c.link.option.shared.1213710752" name="Shared (-shared)" superClass="gnu.c.link.option.shared" value="false" valueType="boolean"/>
 								<option id="gnu.c.link.option.implname.232086279" name="Import Library name (-Wl,--out-implib=)" superClass="gnu.c.link.option.implname" value="" valueType="string"/>

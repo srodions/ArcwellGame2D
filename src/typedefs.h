@@ -72,19 +72,22 @@ typedef struct Keystates
     bool isExit;
 } keystates_t;
 
-typedef struct EntityCombatParams
-{
-	float 			knockback;
-	int				strength;
-	int				hp;
-} e_cbt_prms_t;
-
 typedef struct ReactionTimer
 {
 	uint32_t 		currentTime;
 	uint32_t 		lastTime;
 	unsigned int 	reactionTime;
 } rtimer_t;
+
+typedef struct EntityCombatParams
+{
+	float 			knockback;
+	int				strength;
+	int				hp;
+	int				attackDist;
+	int				dmgSpriteIndex;
+	bool			hasDamaged;
+} e_cbt_prms_t;
 
 typedef struct ObjSprite
 {

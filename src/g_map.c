@@ -35,35 +35,25 @@ map_t* G_MapInit(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable, ob
 	int tempY = 0;
 	for (uint32_t y = 0; y < rows; ++y)
 	{
-		int srcX = 0;
-		int srcY = 0;
-		int tempX = 0;
+	    int tempX = 0;
 
-		for (uint32_t x = 0; x < columns; ++x)
-		{
-			char currentTile = mapData[y * columns + x];
+	    for (uint32_t x = 0; x < columns; ++x)
+	    {
+	        char tile = mapData[y * columns + x];
+	        int srcX = 1024, srcY = 1024;
 
-			switch (currentTile)
-			{
-			case 'A': 	srcX = 0; 						srcY = 0; break;
-			case 'B': 	srcX = TILE_SPRITE_SIZE; 		srcY = 0; break;
-			case 'C': 	srcX = TILE_SPRITE_SIZE * 2; 	srcY = 0; break;
-			case 'D': 	srcX = TILE_SPRITE_SIZE * 3; 	srcY = 0; break;
-			case 'E': 	srcX = TILE_SPRITE_SIZE * 4; 	srcY = 0; break;
-			case 'F': 	srcX = 0; 						srcY = TILE_SPRITE_SIZE; break;
-			case 'G': 	srcX = TILE_SPRITE_SIZE; 		srcY = TILE_SPRITE_SIZE; break;
-			case 'H': 	srcX = TILE_SPRITE_SIZE * 2; 	srcY = TILE_SPRITE_SIZE; break;
-			case 'I': 	srcX = TILE_SPRITE_SIZE * 3; 	srcY = TILE_SPRITE_SIZE; break;
-			case 'J': 	srcX = TILE_SPRITE_SIZE * 4; 	srcY = TILE_SPRITE_SIZE; break;
-			case '.':
-			default: 	srcX = 1024; 					srcY = 1024; break;
-			}
+	        if (tile >= 'A' && tile <= 'J')
+	        {
+	            int index = tile - 'A';          		// Getting tile index (0 for 'A', 1 for 'B', ...)
+	            srcX = (index % 5) * TILE_SPRITE_SIZE; 	// Offset on X (the row has 5 tiles)
+	            srcY = (index / 5) * TILE_SPRITE_SIZE; 	// Offset on Y (new line break after 5th tile)
+	        }
 
-			location->locationTiles[y * columns + x] = G_TileInit(srcX, srcY, tempX, tempY);
-			tempX += TILE_SPRITE_SIZE * TILE_SPRITE_SCALE;
-		}
+	        location->locationTiles[y * columns + x] = G_TileInit(srcX, srcY, tempX, tempY);
+	        tempX += TILE_SPRITE_SIZE * TILE_SPRITE_SCALE;
+	    }
 
-		tempY += TILE_SPRITE_SIZE * TILE_SPRITE_SCALE;
+	    tempY += TILE_SPRITE_SIZE * TILE_SPRITE_SCALE;
 	}
 
 	if (mapDataHeader != NULL) free(mapDataHeader);
