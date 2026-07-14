@@ -1,7 +1,8 @@
 Debug/
-
+Release/
 .settings/
-
 out/*
-
 !out/.gitkeep
+.cproject
+.project
+
