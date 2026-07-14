@@ -6,8 +6,8 @@
 
 #define SDL_MAIN_HANDLED
 #define SPRITE_SCALE 2
-#include <SDL_image.h>
-#include <SDL.h>
+#include <SDL2/SDL_image.h>
+#include <SDL2/SDL.h>
 
 typedef struct _ARCF_Header
 {
@@ -89,7 +89,7 @@ void packMap_Tomb(FILE* arcFile, uint32_t rows, uint32_t columns, uint32_t* curr
 	printf("Map (%d * %d) packed at offset %u!\n", rows, columns, *currentOffset);
 }
 
-void packTexture(const char* filePath, const char* textureName, FILE* arcFile, uint32_t* currentOffset, uint32_t* currentFilesCount)
+void packFile(const char* filePath, const char* fileName, FILE* arcFile, uint32_t* currentOffset, uint32_t* currentFilesCount)
 {
 	FILE* imgFile = fopen(filePath, "rb");
 	if (!imgFile) return;
@@ -106,7 +106,7 @@ void packTexture(const char* filePath, const char* textureName, FILE* arcFile, u
 	allEntries[*currentFilesCount].offsetToFile = *currentOffset;
 	allEntries[*currentFilesCount].lumpSize = (uint32_t)imgSize;
 	memset(allEntries[*currentFilesCount].lumpName, 0, sizeof(allEntries[*currentFilesCount].lumpName));
-	strncpy(allEntries[*currentFilesCount].lumpName, textureName, 15);
+	strncpy(allEntries[*currentFilesCount].lumpName, fileName, 15);
 
 	fseek(arcFile, *currentOffset, SEEK_SET);
 	fwrite(imgBytesBuffer, 1, imgSize, arcFile);
@@ -115,7 +115,7 @@ void packTexture(const char* filePath, const char* textureName, FILE* arcFile, u
 	++(*currentFilesCount);
 
 	free(imgBytesBuffer);
-	printf("Texture '%s' (%ld bytes) packed at offset %u!\n", textureName, imgSize, *currentOffset);
+	printf("File '%s' (%ld bytes) packed at offset %u!\n", fileName, imgSize, *currentOffset);
 }
 
 arcf_objheader_t* initObjectsHeader(uint32_t objCount)
@@ -307,12 +307,13 @@ int main()
 
 	FILE* arcFile = fopen("out/assets.arc", "wb");
 
-	packTexture("in/player.png", "PLAYER", arcFile, &currentOffset, &currentFilesCount);
-	packTexture("in/skeleton.png", "SKELETON", arcFile, &currentOffset, &currentFilesCount);
-	packTexture("in/tiles.png", "TILES", arcFile, &currentOffset, &currentFilesCount);
-	packTexture("in/torch.png", "TORCH", arcFile, &currentOffset, &currentFilesCount);
-	packTexture("in/chest.png", "CHEST", arcFile, &currentOffset, &currentFilesCount);
-	packTexture("in/decoration.png", "DECORATION", arcFile, &currentOffset, &currentFilesCount);
+	packFile("in/x12y16pxMaruMonica.ttf", "FONT", arcFile, &currentOffset, &currentFilesCount);
+	packFile("in/player.png", "PLAYER", arcFile, &currentOffset, &currentFilesCount);
+	packFile("in/skeleton.png", "SKELETON", arcFile, &currentOffset, &currentFilesCount);
+	packFile("in/tiles.png", "TILES", arcFile, &currentOffset, &currentFilesCount);
+	packFile("in/torch.png", "TORCH", arcFile, &currentOffset, &currentFilesCount);
+	packFile("in/chest.png", "CHEST", arcFile, &currentOffset, &currentFilesCount);
+	packFile("in/decoration.png", "DECORATION", arcFile, &currentOffset, &currentFilesCount);
 
 	packMap_Tomb(arcFile, 9, 39, &currentOffset, &currentFilesCount);
 
