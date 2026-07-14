@@ -33,7 +33,7 @@ int I_RendererInit();
 void I_InitKeymap();
 void I_InitBtnMap();
 void* I_InitGamepad();
-void I_FontInit(const char* filePath, int size);
+void I_InitFontFromData(void* fontData, uint32_t currentFontSize, int size);
 void I_InitTilemapTextureFromData(void* textureData, uint32_t currentTextureSize);
 void I_InitObjTextureFromData(void* textureData, uint32_t currentTextureSize, enum OBJ_ID id);
 void I_InitEntityTextureFromData(void* textureData, uint32_t currentTextureSize, enum ENTITY_ID id);

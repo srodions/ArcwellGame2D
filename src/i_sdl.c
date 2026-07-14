@@ -377,14 +377,6 @@ int I_RendererInit()
 	return 0;
 }
 
-void I_FontInit(const char* filePath, int size)
-{
-	if (font.file != NULL)
-		TTF_CloseFont(font.file);
-
-	font.file = TTF_OpenFont(filePath, size);
-}
-
 SDL_Texture* loadTextureFromData(void* textureData, uint32_t currentTextureSize)
 {
 	SDL_RWops* rw = SDL_RWFromMem(textureData, currentTextureSize);
@@ -392,6 +384,18 @@ SDL_Texture* loadTextureFromData(void* textureData, uint32_t currentTextureSize)
 
 	free(textureData);
 	return output;
+}
+
+void I_InitFontFromData(void* fontData, uint32_t currentFontSize, int size)
+{
+	if (!fontData) return;
+
+	if (font.file != NULL)
+		TTF_CloseFont(font.file);
+
+
+	SDL_RWops* rw = SDL_RWFromMem(fontData, currentFontSize);
+	font.file = TTF_OpenFontRW(rw, 1, size);
 }
 
 void I_InitTilemapTextureFromData(void* textureData, uint32_t currentTextureSize)

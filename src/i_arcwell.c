@@ -28,31 +28,32 @@ int I_GameInit()
 
 	if (I_WindowInit(&gameState) < 0 || I_RendererInit() < 0) return -1;
 
-	I_FontInit("res/font/x12y16pxMaruMonica.ttf", 40);
 	entManager.entitiesCount = 0;
 	spawnTimer.reactionTime = ENTITY_SPAWN_TIME;
 	objManager.objCount = 0;
 
-	FILE* arcFile = fopen("res/assets.arc", "rb");
+	FILE* arcFile = fopen("assets.arc", "rb");
 	if (!arcFile) return -1;
 	arcf_header_t* header = L_LoadHeader(arcFile);
 	if (!header) return -1;
 	arcf_entry_t* table = L_LoadLumpsTable(arcFile, header);
 	if (!table) return -1;
 
-	uint32_t currentTextureSize = 0;
-	void* tileMapTextureData = L_LoadLump(arcFile, "TILES", header, table, &currentTextureSize);
-	I_InitTilemapTextureFromData(tileMapTextureData, currentTextureSize);
-	void* playerTextureData = L_LoadLump(arcFile, "PLAYER", header, table, &currentTextureSize);
-	I_InitEntityTextureFromData(playerTextureData, currentTextureSize, PLAYER);
-	void* skeletonTextureData = L_LoadLump(arcFile, "SKELETON", header,  table, &currentTextureSize);
-	I_InitEntityTextureFromData(skeletonTextureData, currentTextureSize, SKELETON);
-	void* torchTextureData = L_LoadLump(arcFile, "TORCH", header, table, &currentTextureSize);
-	I_InitObjTextureFromData(torchTextureData, currentTextureSize, TORCH);
-	void* decorationTextureData = L_LoadLump(arcFile, "DECORATION", header, table, &currentTextureSize);
-	I_InitObjTextureFromData(decorationTextureData, currentTextureSize, DECORATION);
-	void* chestTextureData = L_LoadLump(arcFile, "CHEST", header, table, &currentTextureSize);
-	I_InitObjTextureFromData(chestTextureData, currentTextureSize, CHEST);
+	uint32_t currentDataSize = 0;
+	void* fontData = L_LoadLump(arcFile, "FONT", header, table, &currentDataSize);
+	I_InitFontFromData(fontData, currentDataSize, 40);
+	void* tileMapTextureData = L_LoadLump(arcFile, "TILES", header, table, &currentDataSize);
+	I_InitTilemapTextureFromData(tileMapTextureData, currentDataSize);
+	void* playerTextureData = L_LoadLump(arcFile, "PLAYER", header, table, &currentDataSize);
+	I_InitEntityTextureFromData(playerTextureData, currentDataSize, PLAYER);
+	void* skeletonTextureData = L_LoadLump(arcFile, "SKELETON", header,  table, &currentDataSize);
+	I_InitEntityTextureFromData(skeletonTextureData, currentDataSize, SKELETON);
+	void* torchTextureData = L_LoadLump(arcFile, "TORCH", header, table, &currentDataSize);
+	I_InitObjTextureFromData(torchTextureData, currentDataSize, TORCH);
+	void* decorationTextureData = L_LoadLump(arcFile, "DECORATION", header, table, &currentDataSize);
+	I_InitObjTextureFromData(decorationTextureData, currentDataSize, DECORATION);
+	void* chestTextureData = L_LoadLump(arcFile, "CHEST", header, table, &currentDataSize);
+	I_InitObjTextureFromData(chestTextureData, currentDataSize, CHEST);
 
 	map = G_MapInit(arcFile, header, table, &objManager);
 	G_ObjSetter(arcFile, header, table, &objManager);
