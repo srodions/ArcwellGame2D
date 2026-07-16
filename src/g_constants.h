@@ -10,6 +10,7 @@
 #define AI_CHASE_MIN_RENEW_TIME 400
 #define AI_CHASE_MAX_RENEW_TIME 800
 #define SPOT_DISTANCE			800
+#define MAX_CONFIGS				64
 
 // COMBAT
 #define SKELETON_STRENGTH		1
@@ -45,6 +46,9 @@
 
 // I/O
 #define STICK_DEADZONE			8000
+
+// DEBUG
+#define DEBUG_TEXT_LENGTH 64
 
 enum KEY_STATE
 {

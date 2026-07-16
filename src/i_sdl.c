@@ -294,12 +294,16 @@ void I_FrameEnd(gamestate_t* pGameState, uint64_t* frameStart)
 {
 	SDL_RenderPresent(pRenderer);
 
-	Uint64 frameEnd = SDL_GetPerformanceCounter();
-	double counterElapsed = (double)(frameEnd - *frameStart) / SDL_GetPerformanceFrequency();
+	uint64_t frameEnd = SDL_GetPerformanceCounter();
+	uint64_t elapsedCounters = frameEnd - *frameStart;
+	uint64_t freq = SDL_GetPerformanceFrequency();
+
+	fixed_t counterElapsed = (fixed_t)((elapsedCounters << FIXED_SHIFT) / freq);
 
 	if (counterElapsed < pGameState->targetFrameTime)
 	{
-		Uint32 delayMs = (Uint32)((pGameState->targetFrameTime - counterElapsed) * 1000.0);
+		fixed_t diff = pGameState->targetFrameTime - counterElapsed;
+		uint32_t delayMs = (uint32_t)((diff * 1000) >> FIXED_SHIFT);
 		if (delayMs > 0) SDL_Delay(delayMs);
 
 		pGameState->deltaTime = pGameState->targetFrameTime;
@@ -343,15 +347,15 @@ int I_WindowInit(gamestate_t* pGameState)
 		pGameState->screenW = dMode.w;
 		pGameState->screenH = dMode.h;
 		pGameState->targetFPS = dMode.refresh_rate > 0 ? dMode.refresh_rate : 60;
-		pGameState->targetFrameTime = 1.0 / (double) pGameState->targetFPS;
 	}
 	else
 	{
 		pGameState->screenW = 1920;
 		pGameState->screenH = 1080;
 		pGameState->targetFPS = 60;
-		pGameState->targetFrameTime = 1.0 / (double) pGameState->targetFPS;
 	}
+
+	pGameState->targetFrameTime = DOUBLE_TO_FIXED(1.0 / (double) pGameState->targetFPS);
 
 	return 0;
 }
@@ -392,7 +396,6 @@ void I_InitFontFromData(void* fontData, uint32_t currentFontSize, int size)
 
 	if (font.file != NULL)
 		TTF_CloseFont(font.file);
-
 
 	SDL_RWops* rw = SDL_RWFromMem(fontData, currentFontSize);
 	font.file = TTF_OpenFontRW(rw, 1, size);
@@ -450,6 +453,37 @@ void I_RenderText(const char* text, int x, int y, uint8_t r, uint8_t g, uint8_t 
 	if (font.textTexture != NULL)
 		SDL_RenderCopy(pRenderer, font.textTexture, NULL, &font.textRect);
 }
+
+/*
+ * TODO: Bitmap atlas text render
+ */
+/*
+void I_RenderText_Bitmap(const char* text, int x, int y)
+{
+    int currentX = x;
+    int spriteSize = 8;	// Size of every char in atlas
+
+    for (int i = 0; text[i] != '\0'; i++)
+    {
+        char character = text[i];
+
+        SDL_Rect srcRect;
+        srcRect.x = (character - 32) * spriteSize;
+        srcRect.y = 0;
+        srcRect.w = spriteSize;
+        srcRect.h = spriteSize;
+
+        SDL_Rect dstRect;
+        dstRect.x = currentX;
+        dstRect.y = y;
+        dstRect.w = spriteSize;
+        dstRect.h = spriteSize;
+
+        SDL_RenderCopy(pRenderer, g_FontTexture, &srcRect, &dstRect);
+        currentX += spriteSize;
+    }
+}
+*/
 
 void I_RenderEntity(e_manager_t* pEntManager, int i, int screenX, int screenY, int flip)
 {

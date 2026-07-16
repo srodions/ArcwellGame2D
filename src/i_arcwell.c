@@ -61,24 +61,30 @@ int I_GameInit()
 	free(header);
 	free(table);
 
-	G_EntityInit(&entManager, 1050, FLOOR_DISTANCE, player_speed, attack_knockback,
-				PLAYER_HP, PLAYER_STRENGTH, PLAYER_ATK_DIST, PLAYER_DMG_SPR, PLAYER); // Player spawn
+	G_CreatePlayerConfig();
+	G_CreateSkeletonConfig();
+	G_EntityInit(&entManager, PLAYER, 1050, FLOOR_DISTANCE, &configs[PLAYER]); // Player spawn
 
 	return 0;
 }
 
 void update()
 {
-	// Handle player input
+	// Handle window events
 	I_HandleEvents(&gameState, &entManager, &h_keyStates);
+	// Handle player input
 	H_HandleKeyStates(&gameState, &entManager);
-	// Update physics
-	P_EntityFall(&entManager, &gameState);
-	P_EntityWallCollisionCheck(map, &entManager, &gameState);
-	P_EntityToEntityCollisionCheck(&entManager, &gameState);
-	// Update transforms/AI
-	G_SkeletonSpawn(&entManager, &spawnTimer);
-	G_UpdateEntity(&gameState, &entManager);
+
+	if (!gameState.isPaused)
+	{
+		// Update physics
+		P_EntityFall(&entManager, &gameState);
+		P_EntityWallCollisionCheck(map, &entManager, &gameState);
+		P_EntityToEntityCollisionCheck(&entManager, &gameState);
+		// Update transforms/AI
+		G_SkeletonSpawn(&entManager, &spawnTimer);
+		G_UpdateEntity(&gameState, &entManager);
+	}
 }
 
 void render(uint64_t* frameStart)

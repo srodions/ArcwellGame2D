@@ -3,12 +3,15 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include "fixed_math.h"
 #include "g_constants.h"
 
 typedef struct GameState
 {
-	double 			targetFrameTime;
-	double 			deltaTime;
+	char 			debugText[DEBUG_TEXT_LENGTH];
+	fixed_t 		targetFrameTime;
+	fixed_t 		deltaTime;
+	fixed_t			fpsTimer;
 	unsigned int 	screenW;
 	unsigned int 	screenH;
 	int 			targetFPS;
@@ -19,7 +22,7 @@ typedef struct GameState
 } gamestate_t;
 
 typedef struct Rect {
-    float x, y;
+    int x, y;
     int w, h;
 } rect_t;
 
@@ -79,16 +82,6 @@ typedef struct ReactionTimer
 	unsigned int 	reactionTime;
 } rtimer_t;
 
-typedef struct EntityCombatParams
-{
-	float 			knockback;
-	int				strength;
-	int				hp;
-	int				attackDist;
-	int				dmgSpriteIndex;
-	bool			hasDamaged;
-} e_cbt_prms_t;
-
 typedef struct ObjSprite
 {
 	int				srcX;
@@ -98,8 +91,8 @@ typedef struct ObjSprite
 
 typedef struct ObjTransform
 {
-	float			logX;
-	float			logY;
+	fixed_t			logX;
+	fixed_t			logY;
 	int				hitboxW;
 	int				hitboxH;
 } obj_tform_t;
@@ -141,22 +134,22 @@ typedef struct EntitySprite
 
 typedef struct EntityTransform
 {
-	float 	logX, logY;			// Logical coordinates
+	fixed_t logX, logY;			// Logical coordinates
 	int		hitboxW, hitboxH;
 	int		flip;
 } e_tform_t;
 
 typedef struct EntityVel
 {
-	float 	gravityAccel;
-	float 	currentSpeed;
+	fixed_t 	gravityAccel;
+	fixed_t 	currentSpeed;
 } e_vel_t;
 
 typedef struct EntityAI
 {
-	float	targetDist;
-	float 	targetX;
-	float	targetY;
+	fixed_t	targetDist;
+	fixed_t targetX;
+	fixed_t	targetY;
 	int 	currentChoice;
 	bool 	isCollisionOnLeft;
 	bool 	isCollisionOnRight;
@@ -171,13 +164,39 @@ typedef struct EntityManager
 	e_tform_t 			transforms[MAX_ENTITIES];
 	e_vel_t				velocities[MAX_ENTITIES];
 	e_ai_t				aiParams[MAX_ENTITIES];
-	e_cbt_prms_t		combatParams[MAX_ENTITIES];
 	enum ENTITY_STATE 	state[MAX_ENTITIES];
 	enum ENTITY_AI		ai[MAX_ENTITIES];
 	enum ENTITY_ID 		id[MAX_ENTITIES];
+	int					hp[MAX_ENTITIES];
 	bool				isMoving[MAX_ENTITIES];
 	bool				isFalling[MAX_ENTITIES];
+	bool				hasDamaged[MAX_ENTITIES];
 	int					entitiesCount;
 } e_manager_t;
+
+typedef struct EntityConfig
+{
+	// FRAME COUNTS
+	int spawnFramesCount;
+	int deathFramesCount;
+	int walkFramesCount;
+	int angerFramesCount;
+	int attackFramesCount;
+	int hurtFramesCount;
+	// COMBAT
+	fixed_t 		knockback;
+	fixed_t			speed;
+	int				strength;
+	unsigned int	maxHp;
+	int				attackDist;
+	int				dmgSpriteIndex; // Index of the sprite on which damage will be taken by the victim
+	// ROWS
+	int spawnFramesRow;
+	int deathFramesRow;
+	int angerFramesRow;
+	int attackFramesRow;
+	int hurtFramesRow;
+	int walkFramesRow;
+} e_config_t;
 
 #endif /* TYPEDEFS_H_ */

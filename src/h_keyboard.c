@@ -30,20 +30,26 @@ void H_HandleKeyStates(gamestate_t* pGameState, e_manager_t* pEntManager)
 	if (h_keyStates.isExit)
 		pGameState->isRunning = false;
 
-	pEntManager->isMoving[PLAYER] = h_keyStates.isLeft || h_keyStates.isRight;
-
-	if (h_keyStates.isSpace)
-		G_EntityJump(pGameState, pEntManager, PLAYER);
-
-	if (h_keyStates.isLeft)
-		pEntManager->sprites[0].direction = LEFT;
-	else if (h_keyStates.isRight)
-		pEntManager->sprites[0].direction = RIGHT;
-
 	if (h_keyStates.isDebug)
 	{
 		pGameState->isDebugMode = !pGameState->isDebugMode;
 		h_keyStates.isDebug = false;
+	}
+
+	if (!pGameState->isPaused)
+	{
+		pEntManager->isMoving[PLAYER] = h_keyStates.isLeft || h_keyStates.isRight;
+
+		if (h_keyStates.isSpace)
+			G_EntityJump(pGameState, pEntManager, PLAYER);
+
+		if (h_keyStates.isLeft)
+			pEntManager->sprites[PLAYER].direction = LEFT;
+		else if (h_keyStates.isRight)
+			pEntManager->sprites[PLAYER].direction = RIGHT;
+
+		if (h_keyStates.isUse)
+			pEntManager->state[PLAYER] = STATE_ATTACK;
 	}
 }
 
