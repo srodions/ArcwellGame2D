@@ -234,6 +234,9 @@ void R_Anim_Death(e_manager_t* pEntManager, e_config_t* config, int i)
 		if (pEntManager->sprites[i].currentSprite >= config->deathFramesCount)
 		{
 			I_ReactionTimerReset(&pEntManager->animTimer[i]);
+			pEntManager->sprites[i].currentSprite = config->deathFramesCount - 1;
+			pEntManager->sprites[i].srcX = ENTITY_SPRITE_SIZE * pEntManager->sprites[i].currentSprite;
+			pEntManager->sprites[i].srcY = ENTITY_SPRITE_SIZE * config->deathFramesRow;
 			return;
 		}
 

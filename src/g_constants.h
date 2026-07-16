@@ -14,13 +14,13 @@
 
 // COMBAT
 #define SKELETON_STRENGTH		1
-#define SKELETON_HP				2
+#define SKELETON_HP				4
 #define	SKELETON_ATK_DIST		150
 #define SKELETON_DMG_SPR		3
 #define PLAYER_STRENGTH			2
 #define PLAYER_HP				6
 #define PLAYER_ATK_DIST			180
-#define PLAYER_DMG_SPR			0
+#define PLAYER_DMG_SPR			2
 
 // RENDERER
 #define LOGICAL_WIDTH 			1920
