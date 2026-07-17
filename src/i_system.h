@@ -28,7 +28,7 @@ void I_ReactionTimerStart(rtimer_t* pReactionTimer);
 void I_ReactionTimerEnd(rtimer_t* pReactionTimer);
 void I_ReactionTimerReset(rtimer_t* pReactionTimer);
 inputmask_t I_KeyMapToTrigger(int scancode);
-inputmask_t I_GamepadMapToTrigger(uint8_t BTN_CODE);
+inputmask_t I_GamepadMapToTrigger(uint8_t scancode);
 bool I_IsTimeToReact(rtimer_t* pReactionTimer);
 
 // INIT
