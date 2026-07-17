@@ -59,8 +59,8 @@ enum KEY_STATE
 
 enum ENTITY_DIR
 {
-	LEFT,
-	RIGHT
+	DIR_LEFT,
+	DIR_RIGHT
 };
 
 enum ENTITY_ID

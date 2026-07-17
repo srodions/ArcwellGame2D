@@ -11,34 +11,44 @@
 #include <assert.h>
 #include "i_system.h"
 #include "g_map.h"
-#include "h_keyboard.h"
+#include "h_input.h"
 #include "p_physics.h"
 #include "l_arcloader.h"
 #include "typedefs.h"
 
+// KEYBOARD
 typedef struct Keymap
 {
     SDL_Scancode up;
-    SDL_Scancode down;
     SDL_Scancode left;
+    SDL_Scancode down;
     SDL_Scancode right;
+    SDL_Scancode w;
+	SDL_Scancode a;
+	SDL_Scancode s;
+	SDL_Scancode d;
+    SDL_Scancode i;
+    SDL_Scancode j;
+    SDL_Scancode k;
+    SDL_Scancode l;
     SDL_Scancode space;
-    SDL_Scancode use;
-    SDL_Scancode debug;
-    SDL_Scancode cancel;
-    SDL_Scancode exit;
+    SDL_Scancode esc;
+    SDL_Scancode f3;
 } keymap_t;
 
+// JOYSTICK
 typedef struct ButtonMap
 {
 	Uint8 up;
-	Uint8 down;
 	Uint8 left;
+	Uint8 down;
 	Uint8 right;
-	Uint8 space;
-	Uint8 use;
-	Uint8 cancel;
-	Uint8 exit;
+	Uint8 y;
+	Uint8 x;
+	Uint8 a;
+	Uint8 b;
+	Uint8 back;
+	Uint8 start;
 } btnmap_t;
 
 typedef struct Font
@@ -52,11 +62,9 @@ typedef struct Font
 } font_t;
 
 // INPUT KEYBOARD
-SDL_Scancode input_keyScancode;
 keymap_t keyMap;
 // INPUT GAMEPAD
 SDL_GameController* gamepad = NULL;
-Uint8 input_button;
 btnmap_t btnMap;
 // RENDERER
 SDL_Window* pWindow;
@@ -98,68 +106,120 @@ bool I_IsTimeToReact(rtimer_t* pReactionTimer)
  */
 void I_InitKeymap()
 {
-    keyMap.up = SDL_SCANCODE_W;
-    keyMap.down = SDL_SCANCODE_S;
-    keyMap.left = SDL_SCANCODE_A;
-    keyMap.right = SDL_SCANCODE_D;
-    keyMap.space = SDL_SCANCODE_SPACE;
-    keyMap.use = SDL_SCANCODE_E;
-    keyMap.cancel = SDL_SCANCODE_R;
-    keyMap.debug = SDL_SCANCODE_T;
-    keyMap.exit = SDL_SCANCODE_ESCAPE;
+    keyMap.up 		= SDL_SCANCODE_UP;
+    keyMap.left 	= SDL_SCANCODE_LEFT;
+    keyMap.down 	= SDL_SCANCODE_DOWN;
+    keyMap.right 	= SDL_SCANCODE_RIGHT;
+    keyMap.w		= SDL_SCANCODE_W;
+	keyMap.a		= SDL_SCANCODE_A;
+	keyMap.s		= SDL_SCANCODE_S;
+	keyMap.d		= SDL_SCANCODE_D;
+	keyMap.i		= SDL_SCANCODE_I;
+	keyMap.j		= SDL_SCANCODE_J;
+	keyMap.k		= SDL_SCANCODE_K;
+	keyMap.l		= SDL_SCANCODE_L;
+	keyMap.space 	= SDL_SCANCODE_SPACE;
+    keyMap.esc 		= SDL_SCANCODE_ESCAPE;
+    keyMap.f3		= SDL_SCANCODE_F3;
 }
 
 void I_InitBtnMap()
 {
-	btnMap.up = SDL_CONTROLLER_BUTTON_DPAD_UP;
-	btnMap.down = SDL_CONTROLLER_BUTTON_DPAD_DOWN;
-	btnMap.left = SDL_CONTROLLER_BUTTON_DPAD_LEFT;
-	btnMap.right = SDL_CONTROLLER_BUTTON_DPAD_RIGHT;
-	btnMap.space = SDL_CONTROLLER_BUTTON_A;
-	btnMap.use = SDL_CONTROLLER_BUTTON_Y;
-	btnMap.cancel = SDL_CONTROLLER_BUTTON_X;
-	btnMap.exit = SDL_CONTROLLER_BUTTON_BACK;
+	btnMap.up 		= SDL_CONTROLLER_BUTTON_DPAD_UP;
+	btnMap.left 	= SDL_CONTROLLER_BUTTON_DPAD_LEFT;
+	btnMap.down 	= SDL_CONTROLLER_BUTTON_DPAD_DOWN;
+	btnMap.right 	= SDL_CONTROLLER_BUTTON_DPAD_RIGHT;
+	btnMap.y 		= SDL_CONTROLLER_BUTTON_Y;
+	btnMap.x 		= SDL_CONTROLLER_BUTTON_X;
+	btnMap.a 		= SDL_CONTROLLER_BUTTON_A;
+	btnMap.b 		= SDL_CONTROLLER_BUTTON_B;
+	btnMap.back 	= SDL_CONTROLLER_BUTTON_BACK;
+	btnMap.start	= SDL_CONTROLLER_BUTTON_START;
 }
 
-void* I_InitGamepad()
+inputmask_t I_KeyMapToTrigger(int scancode)
 {
-	for (int i = 0; i < SDL_NumJoysticks(); ++i)
+	if (scancode == keyMap.up    || scancode == keyMap.w)     return INPUT_UP;
+	if (scancode == keyMap.left  || scancode == keyMap.a)     return INPUT_LEFT;
+	if (scancode == keyMap.down  || scancode == keyMap.s)     return INPUT_DOWN;
+	if (scancode == keyMap.right || scancode == keyMap.d)     return INPUT_RIGHT;
+
+	if (scancode == keyMap.i)     return INPUT_SPEC_ATK;
+	if (scancode == keyMap.j)     return INPUT_USE;
+	if (scancode == keyMap.k)     return INPUT_JUMP;
+	if (scancode == keyMap.l)     return INPUT_ATTACK;
+
+	if (scancode == keyMap.esc)   return INPUT_EXIT;
+	if (scancode == keyMap.space) return INPUT_PAUSE;
+	if (scancode == keyMap.f3)    return INPUT_DEBUG;
+
+	return 0;
+}
+
+inputmask_t I_GamepadMapToTrigger(uint8_t scancode)
+{
+	if (scancode == btnMap.up)		return INPUT_UP;
+	if (scancode == btnMap.left)	return INPUT_LEFT;
+	if (scancode == btnMap.down)	return INPUT_DOWN;
+	if (scancode == btnMap.right)	return INPUT_RIGHT;
+
+	if (scancode == btnMap.y)     	return INPUT_SPEC_ATK;
+	if (scancode == btnMap.x)     	return INPUT_USE;
+	if (scancode == btnMap.a)     	return INPUT_JUMP;
+	if (scancode == btnMap.b)     	return INPUT_ATTACK;
+
+	if (scancode == btnMap.back)   	return INPUT_EXIT;
+	if (scancode == btnMap.start) 	return INPUT_PAUSE;
+
+	return 0;
+}
+
+void I_HandleGamepadAxis(uint16_t* nextFrameInput)
+{
+	if (!gamepad || !SDL_GameControllerGetAttached(gamepad)) return;
+
+	// Raw left stick axis
+	Sint16 rawX = SDL_GameControllerGetAxis(gamepad, SDL_CONTROLLER_AXIS_LEFTX);
+	Sint16 rawY = SDL_GameControllerGetAxis(gamepad, SDL_CONTROLLER_AXIS_LEFTY);
+
+	// Horizontal axis (left/right)
+	if (rawX < -STICK_DEADZONE)
 	{
-		if (SDL_IsGameController(i))
-			gamepad = SDL_GameControllerOpen(i);
+		*nextFrameInput |=  INPUT_LEFT;   // Left
+		*nextFrameInput &= ~INPUT_RIGHT;
+	}
+	else if (rawX > STICK_DEADZONE)
+	{
+		*nextFrameInput |=  INPUT_RIGHT;  // Right
+		*nextFrameInput &= ~INPUT_LEFT;
+	}
+	else
+	{
+		// Stick is in the deadzone, both directions are false
+		*nextFrameInput &= ~INPUT_LEFT;
+		*nextFrameInput &= ~INPUT_RIGHT;
 	}
 
-	return gamepad;
+	// Vertical axis (up/down)
+	if (rawY < -STICK_DEADZONE)
+	{
+		*nextFrameInput |=  INPUT_UP;
+		*nextFrameInput &= ~INPUT_DOWN;
+	}
+	else if (rawY > STICK_DEADZONE)
+	{
+		*nextFrameInput |=  INPUT_DOWN;
+		*nextFrameInput &= ~INPUT_UP;
+	}
+	else
+	{
+		// Stick is in the deadzone, both directions are false
+		*nextFrameInput &= ~INPUT_UP;
+		*nextFrameInput &= ~INPUT_DOWN;
+	}
 }
 
 /*
- * This method handles keyboard input for setting keys' states true or false depending on
- * whether these keys pressed (down) or released (up).
- */
-void I_HandleKeyboardInput(enum KEY_STATE keyState, keymap_t* keyMap, keystates_t* keyStates)
-{
-	if (input_keyScancode == keyMap->up)
-		keyStates->isUp = keyState;
-	else if (input_keyScancode == keyMap->down)
-		keyStates->isDown = keyState;
-
-	if (input_keyScancode == keyMap->left)
-		keyStates->isLeft = keyState;
-	else if (input_keyScancode == keyMap->right)
-		keyStates->isRight = keyState;
-
-	if (input_keyScancode == keyMap->exit)
-		keyStates->isExit = keyState;
-	if (input_keyScancode == keyMap->space)
-		keyStates->isSpace = keyState;
-	if (input_keyScancode == keyMap->use)
-		keyStates->isUse = keyState;
-	if (input_keyScancode == keyMap->debug)
-		keyStates->isDebug = keyState;
-	if (input_keyScancode == keyMap->cancel)
-		keyStates->isCancel = keyState;
-}
-
 void I_HandleGamepadInput(enum KEY_STATE keyState, btnmap_t* buttonMap, keystates_t* keyStates)
 {
 	if (keyState != KEY_STATE_AXIS)
@@ -233,16 +293,18 @@ void I_HandleGamepadInput(enum KEY_STATE keyState, btnmap_t* buttonMap, keystate
 		}
 	}
 }
+*/
 
 /*
  * This function handles events that come to the SDL window and stay in queue.
  * These events can be: application's quit button event, any key pressed event,
  * any key released event, etc.
  */
-void I_HandleEvents(gamestate_t *pGameState, e_manager_t* pEntManager, keystates_t* keyStates)
+void I_HandleEvents(gamestate_t *pGameState, e_manager_t* pEntManager, inputstate_t* input)
 {
 	SDL_Event event;
-	gamepad = (SDL_GameController*) I_InitGamepad();
+	input->previous = input->current;
+	uint16_t nextFrameInput = input->current;
 
 	while (SDL_PollEvent(&event))
 	{
@@ -253,34 +315,43 @@ void I_HandleEvents(gamestate_t *pGameState, e_manager_t* pEntManager, keystates
 			break;
 		// KEYBOARD HANDLING
 		case SDL_KEYDOWN:
-			input_keyScancode = event.key.keysym.scancode;
-			I_HandleKeyboardInput(KEY_STATE_DOWN, &keyMap, keyStates);
+			if (event.key.repeat == 0)
+				nextFrameInput |= I_KeyMapToTrigger(event.key.keysym.scancode);
 			break;
 		case SDL_KEYUP:
-			input_keyScancode = event.key.keysym.scancode;
-			I_HandleKeyboardInput(KEY_STATE_UP, &keyMap, keyStates);
+			nextFrameInput &= ~I_KeyMapToTrigger(event.key.keysym.scancode);
 			break;
+		case SDL_CONTROLLERDEVICEADDED:
+		    if (!gamepad)
+		    {
+		        gamepad = SDL_GameControllerOpen(event.cdevice.which);
+		        if (gamepad)
+		        	printf("[INPUT] Controller %s connected\n", SDL_GameControllerName(gamepad));
+		    }
+		    break;
+
+		case SDL_CONTROLLERDEVICEREMOVED:
+		    if (gamepad && event.cdevice.which == SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(gamepad)))
+		    {
+		    	printf("[INPUT] Controller %s disconnected\n", SDL_GameControllerName(gamepad));
+		        SDL_GameControllerClose(gamepad);
+		        gamepad = NULL;
+		    }
+		    break;
 		// GAMEPAD HANDLING
 		case SDL_CONTROLLERBUTTONDOWN:
-			input_button = event.cbutton.button;
-			I_HandleGamepadInput(KEY_STATE_DOWN, &btnMap, keyStates);
+			nextFrameInput |= I_GamepadMapToTrigger(event.cbutton.button);
 			break;
 		case SDL_CONTROLLERBUTTONUP:
-			input_button = event.cbutton.button;
-			I_HandleGamepadInput(KEY_STATE_UP, &btnMap, keyStates);
+			nextFrameInput &= ~I_GamepadMapToTrigger(event.cbutton.button);
 			break;
 		case SDL_CONTROLLERAXISMOTION:
-			I_HandleGamepadInput(KEY_STATE_AXIS, &btnMap, keyStates);
-			break;
-		case SDL_CONTROLLERDEVICEREMOVED:
-			if (gamepad && event.cdevice.which == SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(gamepad)))
-			{
-				SDL_GameControllerClose(gamepad);
-				gamepad = NULL;
-			}
+			I_HandleGamepadAxis(&nextFrameInput);
 			break;
 		}
 	}
+
+	input->current = nextFrameInput;
 }
 
 void I_FrameStart(uint64_t* frameStart)
@@ -422,32 +493,40 @@ void I_InitObjTextureFromData(void* textureData, uint32_t currentTextureSize, en
 	obj_sprites[id] = loadTextureFromData(textureData, currentTextureSize);
 }
 
-void I_RenderText(const char* text, int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+void I_RenderText(gamestate_t* pGameState, const char* text, int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
 	if (text == NULL) return;
 
-	if (font.textTexture != NULL)
+	pGameState->fpsTimer += pGameState->deltaTime;
+	fixed_t updateInterval = FIXED_ONE / 4;
+
+	if (pGameState->fpsTimer >= updateInterval)
 	{
-		SDL_DestroyTexture(font.textTexture);
-		font.textTexture = NULL;
-	}
+		pGameState->fpsTimer = 0;
 
-	SDL_Surface* tempSurface = TTF_RenderText_Blended(font.file, text, font.textColor);
-	if (tempSurface != NULL)
-	{
-		font.textTexture = SDL_CreateTextureFromSurface(pRenderer, tempSurface);
+		if (font.textTexture != NULL)
+		{
+			SDL_DestroyTexture(font.textTexture);
+			font.textTexture = NULL;
+		}
 
-		font.textRect.x = x;
-		font.textRect.y = y;
-		font.textRect.w = tempSurface->w;
-		font.textRect.h = tempSurface->h;
+		SDL_Surface* tempSurface = TTF_RenderText_Blended(font.file, text, font.textColor);
+		if (tempSurface != NULL)
+		{
+			font.textTexture = SDL_CreateTextureFromSurface(pRenderer, tempSurface);
 
-		font.textColor.r = r;
-		font.textColor.g = g;
-		font.textColor.b = b;
-		font.textColor.a = a;
+			font.textRect.x = x;
+			font.textRect.y = y;
+			font.textRect.w = tempSurface->w;
+			font.textRect.h = tempSurface->h;
 
-		SDL_FreeSurface(tempSurface);
+			font.textColor.r = r;
+			font.textColor.g = g;
+			font.textColor.b = b;
+			font.textColor.a = a;
+
+			SDL_FreeSurface(tempSurface);
+		}
 	}
 
 	if (font.textTexture != NULL)

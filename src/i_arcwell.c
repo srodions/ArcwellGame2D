@@ -7,7 +7,7 @@
 #include "l_arcloader.h"
 #include "g_gamestate.h"
 #include "g_map.h"
-#include "h_keyboard.h"
+#include "h_input.h"
 #include "i_system.h"
 #include "r_renderer.h"
 #include "typedefs.h"
@@ -17,6 +17,7 @@ map_t* map;
 obj_manager_t objManager;
 e_manager_t entManager;
 rtimer_t spawnTimer;
+inputstate_t input;
 
 int I_GameInit()
 {
@@ -24,6 +25,8 @@ int I_GameInit()
 
 	I_InitKeymap();
 	I_InitBtnMap();
+	input.current = 0;
+	input.previous = 0;
 	gameState = G_GameInit();
 
 	if (I_WindowInit(&gameState) < 0 || I_RendererInit() < 0) return -1;
@@ -71,9 +74,9 @@ int I_GameInit()
 void update()
 {
 	// Handle window events
-	I_HandleEvents(&gameState, &entManager, &h_keyStates);
+	I_HandleEvents(&gameState, &entManager, &input);
 	// Handle player input
-	H_HandleKeyStates(&gameState, &entManager);
+	H_HandleKeyStates(&gameState, &entManager, &input);
 
 	if (!gameState.isPaused)
 	{

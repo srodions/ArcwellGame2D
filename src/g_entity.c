@@ -76,7 +76,7 @@ void G_EntityInit(e_manager_t* pEntManager, enum ENTITY_ID id, int posX, int pos
 	pEntManager->sprites[i].srcW = ENTITY_SPRITE_SIZE;
 	pEntManager->sprites[i].srcH = ENTITY_SPRITE_SIZE;
 	// Sprite controls
-	pEntManager->sprites[i].direction = RIGHT;
+	pEntManager->sprites[i].direction = DIR_RIGHT;
 	pEntManager->sprites[i].currentSprite = 0;
 	pEntManager->transforms[i].logX = INT_TO_FIXED(posX);
 	pEntManager->transforms[i].logY = INT_TO_FIXED(posY);
@@ -168,12 +168,12 @@ void G_EntityDirection(gamestate_t* pGameState, e_manager_t* pEntManager, int i)
 
 	switch (pEntManager->sprites[i].direction)
 	{
-	case LEFT:
+	case DIR_LEFT:
 		pEntManager->transforms[i].flip = 0;
 		if (pEntManager->isMoving[i] && pEntManager->state[i] == STATE_NONE)
 			pEntManager->transforms[i].logX -= speed;
 		break;
-	case RIGHT:
+	case DIR_RIGHT:
 		pEntManager->transforms[i].flip = 1;
 		if (pEntManager->isMoving[i] && pEntManager->state[i] == STATE_NONE)
 			pEntManager->transforms[i].logX += speed;
@@ -233,9 +233,9 @@ void G_AI_Idle(e_manager_t* pEntManager, int i)
 	pEntManager->isMoving[i] = true;
 
 	if (pEntManager->aiParams[i].isCollisionOnLeft)
-		pEntManager->sprites[i].direction = RIGHT;
+		pEntManager->sprites[i].direction = DIR_RIGHT;
 	else if (pEntManager->aiParams[i].isCollisionOnRight)
-		pEntManager->sprites[i].direction = LEFT;
+		pEntManager->sprites[i].direction = DIR_LEFT;
 
 	I_ReactionTimerStart(&pEntManager->aiTimer[i]);
 
@@ -245,9 +245,9 @@ void G_AI_Idle(e_manager_t* pEntManager, int i)
 		pEntManager->aiParams[i].currentChoice = rand() % 100;
 
 		if (pEntManager->aiParams[i].currentChoice <= 50)
-			pEntManager->sprites[i].direction = LEFT;
+			pEntManager->sprites[i].direction = DIR_LEFT;
 		else
-			pEntManager->sprites[i].direction = RIGHT;
+			pEntManager->sprites[i].direction = DIR_RIGHT;
 
 		I_ReactionTimerEnd(&pEntManager->aiTimer[i]);
 	}
@@ -281,12 +281,12 @@ void G_AI_Chase(gamestate_t* pGameState, e_manager_t* pEntManager, int i)
 		if (pEntManager->transforms[i].logX - stopDist > pEntManager->transforms[PLAYER].logX) // ON RIGHT
 		{
 			pEntManager->isMoving[i] = true;
-			pEntManager->sprites[i].direction = LEFT;
+			pEntManager->sprites[i].direction = DIR_LEFT;
 		}
 		else if (pEntManager->transforms[i].logX + stopDist < pEntManager->transforms[PLAYER].logX) // ON LEFT
 		{
 			pEntManager->isMoving[i] = true;
-			pEntManager->sprites[i].direction = RIGHT;
+			pEntManager->sprites[i].direction = DIR_RIGHT;
 		}
 		else
 		{
@@ -307,7 +307,7 @@ void G_AI_Chase(gamestate_t* pGameState, e_manager_t* pEntManager, int i)
 void G_EntityAttack(e_manager_t* pEntManager, int attackerId, int victimId)
 {
 	if (pEntManager->state[attackerId] != STATE_ATTACK || (victimId == PLAYER && attackerId == PLAYER)
-		|| pEntManager->state[victimId] == STATE_REMOVING || pEntManager->state[victimId] == STATE_ATTACK) return;
+		|| pEntManager->state[victimId] == STATE_REMOVING) return;
 
 	int deltaX = FIXED_TO_INT(pEntManager->transforms[victimId].logX - pEntManager->transforms[attackerId].logX);
 	int deltaY = FIXED_TO_INT(pEntManager->transforms[victimId].logY - pEntManager->transforms[attackerId].logY);
@@ -326,8 +326,6 @@ void G_EntityAttack(e_manager_t* pEntManager, int attackerId, int victimId)
 		int directionY = (deltaY > 0) ? 1 : -1;
 		pEntManager->transforms[victimId].logX += INT_TO_FIXED(directionX * tileSize / 2);
 		pEntManager->transforms[victimId].logY += INT_TO_FIXED(directionY * tileSize / 2);
-
-		printf("Entity %d attacked by %d! HP: %d\n", victimId, attackerId, pEntManager->hp[victimId]);
 	}
 }
 

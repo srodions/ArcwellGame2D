@@ -21,10 +21,32 @@ typedef struct GameState
 	bool 			isDebugMode;
 } gamestate_t;
 
-typedef struct Rect {
+typedef struct Rect
+{
     int x, y;
     int w, h;
 } rect_t;
+
+typedef enum InputMask
+{
+	INPUT_UP	 	= (1 << 0),
+	INPUT_LEFT	 	= (1 << 1),
+	INPUT_DOWN	 	= (1 << 2),
+	INPUT_RIGHT  	= (1 << 3),
+	INPUT_SPEC_ATK 	= (1 << 4),
+	INPUT_USE	 	= (1 << 5),
+	INPUT_JUMP 	 	= (1 << 6),
+	INPUT_ATTACK 	= (1 << 7),
+	INPUT_PAUSE		= (1 << 8),
+	INPUT_EXIT		= (1 << 9),
+	INPUT_DEBUG		= (1 << 10)
+} inputmask_t;
+
+typedef struct InputState
+{
+    uint16_t current;
+    uint16_t previous;
+} inputstate_t;
 
 typedef struct ARCF_Header
 {
@@ -61,19 +83,6 @@ typedef struct ARCF_Entry
     uint32_t lumpSize;			// Size of current file in bytes
     char lumpName[16];			// The name(id) of the file to find it in the table
 } arcf_entry_t;
-
-typedef struct Keystates
-{
-	bool isUp;
-	bool isDown;
-    bool isLeft;
-    bool isRight;
-    bool isSpace;
-    bool isUse;
-    bool isCancel;
-    bool isDebug;
-    bool isExit;
-} keystates_t;
 
 typedef struct ReactionTimer
 {

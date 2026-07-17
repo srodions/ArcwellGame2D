@@ -252,26 +252,18 @@ void R_RenderDebugStats(gamestate_t* pGameState, e_manager_t* pEntManager)
 {
 	if (!pGameState->isDebugMode) return;
 
-	pGameState->fpsTimer += pGameState->deltaTime;
-	fixed_t updateInterval = FIXED_ONE / 4;
+	if (pGameState->deltaTime > 0)
+		pGameState->currentFPS = (int)(FIXED_ONE / pGameState->deltaTime);
 
-	if (pGameState->fpsTimer >= updateInterval)
-	{
-		pGameState->fpsTimer = 0;
-
-		if (pGameState->deltaTime > 0)
-			pGameState->currentFPS = (int)(FIXED_ONE / pGameState->deltaTime);
-
-		snprintf(
-			pGameState->debugText, sizeof(pGameState->debugText),
-			"FPS: %d | Entities: %d | x: %d | y: %d | HP: %d",
-			pGameState->currentFPS, pEntManager->entitiesCount,
-			FIXED_TO_INT(pEntManager->transforms[PLAYER].logX),
-			FIXED_TO_INT(pEntManager->transforms[PLAYER].logY),
-			pEntManager->hp[PLAYER]
-		);
-	}
+	snprintf(
+		pGameState->debugText, sizeof(pGameState->debugText),
+		"FPS: %d | Entities: %d | x: %d | y: %d | HP: %d",
+		pGameState->currentFPS, pEntManager->entitiesCount,
+		FIXED_TO_INT(pEntManager->transforms[PLAYER].logX),
+		FIXED_TO_INT(pEntManager->transforms[PLAYER].logY),
+		pEntManager->hp[PLAYER]
+	);
 
 	if (pGameState->debugText[0] != '\0')
-		I_RenderText(pGameState->debugText, 100, 100, 255, 255, 255, 255);
+		I_RenderText(pGameState, pGameState->debugText, 100, 100, 255, 255, 255, 255);
 }
