@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include "fixed_math.h"
 
-#define FLOOR_DISTANCE 512
+#define FLOOR_DISTANCE 80
 
 typedef struct GameState gamestate_t;
 typedef struct EntityManager e_manager_t;
@@ -15,9 +15,7 @@ extern fixed_t 	gravity;
 extern fixed_t 	jump_force;
 extern fixed_t 	player_speed;
 extern fixed_t 	skeleton_speed;
-extern fixed_t 	camera_speed;
 extern fixed_t 	knockback_strength;
-extern fixed_t	attack_knockback;
 
 void P_EntityFall(e_manager_t* pEntManager, gamestate_t* pGameState);
 void P_EntityWallCollisionCheck(map_t* pLocation, e_manager_t* pEntManager, gamestate_t* pGameState);

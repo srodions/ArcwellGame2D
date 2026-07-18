@@ -44,7 +44,7 @@ int I_GameInit()
 
 	uint32_t currentDataSize = 0;
 	void* fontData = L_LoadLump(arcFile, "FONT", header, table, &currentDataSize);
-	I_InitFontFromData(fontData, currentDataSize, 40);
+	I_InitFontFromData(fontData, currentDataSize, 16);
 	void* tileMapTextureData = L_LoadLump(arcFile, "TILES", header, table, &currentDataSize);
 	I_InitTilemapTextureFromData(tileMapTextureData, currentDataSize);
 	void* playerTextureData = L_LoadLump(arcFile, "PLAYER", header, table, &currentDataSize);
@@ -66,7 +66,7 @@ int I_GameInit()
 
 	G_CreatePlayerConfig();
 	G_CreateSkeletonConfig();
-	G_EntityInit(&entManager, PLAYER, 1050, FLOOR_DISTANCE, &configs[PLAYER]); // Player spawn
+	G_EntityInit(&entManager, PLAYER, 50, FLOOR_DISTANCE, &configs[PLAYER]); // Player spawn
 
 	return 0;
 }

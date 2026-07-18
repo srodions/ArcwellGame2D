@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "g_constants.h"
+#include "fixed_math.h"
 
 typedef struct GameState gamestate_t;
 typedef struct Keymap keymap_t;
@@ -46,9 +47,9 @@ void I_InitEntityTextureFromData(void* textureData, uint32_t currentTextureSize,
 void I_FrameStart(uint64_t* frameStart);
 void I_FrameEnd(gamestate_t* pGameState, uint64_t* frameStart);
 void I_RenderText(gamestate_t* pGameState, const char* text, int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
-void I_RenderObject(obj_manager_t* pObjManager, int i, int screenX, int screenY);
-void I_RenderLocation(map_t* pLocation, int ix, int iy, int screenX, int screenY);
-void I_RenderEntity(e_manager_t* pEntManager, int i, int screenX, int screenY, int flip);
+void I_RenderObject(obj_manager_t* pObjManager, int i, fixed_t screenX, fixed_t screenY);
+void I_RenderLocation(map_t* pLocation, int ix, int iy, fixed_t screenX, fixed_t screenY);
+void I_RenderEntity(e_manager_t* pEntManager, int i, fixed_t screenX, fixed_t screenY, int flip);
 
 // CLEAN
 void I_Destruct();

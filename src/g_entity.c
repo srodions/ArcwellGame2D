@@ -65,7 +65,6 @@ void G_CreateSkeletonConfig()
 void G_EntityInit(e_manager_t* pEntManager, enum ENTITY_ID id, int posX, int posY, e_config_t* config)
 {
 	int i = pEntManager->entitiesCount;
-	int hitboxXOffset = 64;
 
 	if (i >= MAX_ENTITIES) return;
 
@@ -82,8 +81,8 @@ void G_EntityInit(e_manager_t* pEntManager, enum ENTITY_ID id, int posX, int pos
 	pEntManager->transforms[i].logY = INT_TO_FIXED(posY);
 	pEntManager->transforms[i].flip = 0;
 	// Physics
-	pEntManager->transforms[i].hitboxW = ENTITY_SPRITE_SIZE * ENTITY_SPRITE_SCALE - hitboxXOffset;
-	pEntManager->transforms[i].hitboxH = ENTITY_SPRITE_SIZE * ENTITY_SPRITE_SCALE;
+	pEntManager->transforms[i].hitboxW = (ENTITY_SPRITE_SIZE * ENTITY_SPRITE_SCALE) - (ENTITY_SPRITE_SIZE / 2);
+	pEntManager->transforms[i].hitboxH = (ENTITY_SPRITE_SIZE * ENTITY_SPRITE_SCALE) - (ENTITY_SPRITE_SIZE / 2);
 	pEntManager->velocities[i].gravityAccel = DOUBLE_TO_FIXED(0.0);
 	pEntManager->velocities[i].currentSpeed = config->speed;
 	// Timers

@@ -7,13 +7,16 @@ void R_RenderLocation(map_t* pLocation, e_manager_t* pEntManager)
 {
 	const int entitySpriteSize = ENTITY_SPRITE_SIZE * ENTITY_SPRITE_SCALE;
 	const int screenXCenter = LOGICAL_WIDTH / 2 - entitySpriteSize / 2;
+	const fixed_t screenXCenterFixed = INT_TO_FIXED(screenXCenter);
 
 	for (uint32_t y = 0; y < pLocation->rows; ++y)
 	{
 		for (uint32_t x = 0; x < pLocation->columns; ++x)
 		{
-			int screenX = pLocation->locationTiles[y * pLocation->columns + x].posX - FIXED_TO_INT(pEntManager->transforms[PLAYER].logX) + screenXCenter;
-			int screenY = pLocation->locationTiles[y * pLocation->columns + x].posY;
+			fixed_t screenXFixed = INT_TO_FIXED(pLocation->locationTiles[y * pLocation->columns + x].posX) - pEntManager->transforms[PLAYER].logX + screenXCenterFixed;
+			fixed_t screenYFixed = INT_TO_FIXED(pLocation->locationTiles[y * pLocation->columns + x].posY);
+			int screenX = FIXED_TO_INT(screenXFixed);
+			int screenY = FIXED_TO_INT(screenYFixed);
 
 			// Tiles culling
 			if (screenX + TILE_SPRITE_SIZE * TILE_SPRITE_SCALE < 0
@@ -24,7 +27,7 @@ void R_RenderLocation(map_t* pLocation, e_manager_t* pEntManager)
 				continue;
 			}
 
-			I_RenderLocation(pLocation, x, y, screenX, screenY);
+			I_RenderLocation(pLocation, x, y, screenXFixed, screenYFixed);
 		}
 	}
 }
@@ -37,8 +40,10 @@ void R_RenderObject(obj_manager_t* pObjManager, e_manager_t* pEntManager)
 
 	for (int i = 0; i < pObjManager->objCount; ++i)
 	{
-		int screenX = FIXED_TO_INT(pObjManager->transforms[i].logX - pEntManager->transforms[PLAYER].logX + screenXCenterFixed); // Move relatively player
-		int screenY = FIXED_TO_INT(pObjManager->transforms[i].logY);
+		fixed_t screenXFixed = pObjManager->transforms[i].logX - pEntManager->transforms[PLAYER].logX + screenXCenterFixed; // Move relatively player
+		fixed_t screenYFixed = pObjManager->transforms[i].logY;
+		int screenX = FIXED_TO_INT(screenXFixed);
+		int screenY = FIXED_TO_INT(screenYFixed);
 
 		// Objects culling
 		if (screenX + TILE_SPRITE_SIZE * TILE_SPRITE_SCALE < 0
@@ -62,7 +67,7 @@ void R_RenderObject(obj_manager_t* pObjManager, e_manager_t* pEntManager)
 			}
 		}
 
-		I_RenderObject(pObjManager, i, screenX, screenY);
+		I_RenderObject(pObjManager, i, screenXFixed, screenYFixed);
 	}
 }
 
@@ -74,8 +79,10 @@ void R_RenderEntity(e_manager_t* pEntManager)
 
 	for (int i = 0; i < pEntManager->entitiesCount; ++i)
 	{
-		int screenX = i > 0 ? FIXED_TO_INT(pEntManager->transforms[i].logX - pEntManager->transforms[PLAYER].logX + screenXCenterFixed) : screenXCenter;
-		int screenY = FIXED_TO_INT(pEntManager->transforms[i].logY);
+		fixed_t screenXFixed = i > 0 ? pEntManager->transforms[i].logX - pEntManager->transforms[PLAYER].logX + screenXCenterFixed : screenXCenterFixed;
+		fixed_t screenYFixed = pEntManager->transforms[i].logY;
+		int screenX = FIXED_TO_INT(screenXFixed);
+		int screenY = FIXED_TO_INT(screenYFixed);
 
 		// Entity culling
 		if (screenX + entitySpriteSize < 0
@@ -110,7 +117,7 @@ void R_RenderEntity(e_manager_t* pEntManager)
 			break;
 		}
 
-		I_RenderEntity(pEntManager, i, screenX, screenY, pEntManager->transforms[i].flip);
+		I_RenderEntity(pEntManager, i, screenXFixed, screenYFixed, pEntManager->transforms[i].flip);
 	}
 }
 
@@ -265,5 +272,5 @@ void R_RenderDebugStats(gamestate_t* pGameState, e_manager_t* pEntManager)
 	);
 
 	if (pGameState->debugText[0] != '\0')
-		I_RenderText(pGameState, pGameState->debugText, 100, 100, 255, 255, 255, 255);
+		I_RenderText(pGameState, pGameState->debugText, 25, 10, 255, 255, 255, 255);
 }

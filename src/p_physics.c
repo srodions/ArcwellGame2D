@@ -5,13 +5,11 @@
 #include "fixed_math.h"
 #include "typedefs.h"
 
-fixed_t 	gravity 			= DOUBLE_TO_FIXED(2200.0);
-fixed_t 	jump_force 			= DOUBLE_TO_FIXED(-1000.0);
-fixed_t		skeleton_speed 		= DOUBLE_TO_FIXED(125.0);
-fixed_t 	player_speed 		= DOUBLE_TO_FIXED(180.0);
-fixed_t 	camera_speed 		= DOUBLE_TO_FIXED(6.0);
-fixed_t 	knockback_strength 	= DOUBLE_TO_FIXED(300.0);
-fixed_t		attack_knockback 	= DOUBLE_TO_FIXED(600.0);
+fixed_t 	gravity 			= DOUBLE_TO_FIXED(GRAVITY);
+fixed_t 	jump_force 			= DOUBLE_TO_FIXED(JUMP_FORCE);
+fixed_t		skeleton_speed 		= DOUBLE_TO_FIXED(SKELETON_SPEED);
+fixed_t 	player_speed 		= DOUBLE_TO_FIXED(PLAYER_SPEED);
+fixed_t 	knockback_strength 	= DOUBLE_TO_FIXED(KNOCKBACK_STRENGTH);
 
 void P_EntityFall(e_manager_t* pEntManager, gamestate_t* pGameState)
 {

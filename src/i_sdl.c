@@ -220,82 +220,6 @@ void I_HandleGamepadAxis(uint16_t* nextFrameInput)
 }
 
 /*
-void I_HandleGamepadInput(enum KEY_STATE keyState, btnmap_t* buttonMap, keystates_t* keyStates)
-{
-	if (keyState != KEY_STATE_AXIS)
-	{
-		if (input_button == buttonMap->up)
-			keyStates->isUp = keyState;
-		else if (input_button == buttonMap->down)
-			keyStates->isDown = keyState;
-
-		if (input_button == buttonMap->left)
-			keyStates->isLeft = keyState;
-		else if (input_button == buttonMap->right)
-			keyStates->isRight = keyState;
-
-		if (input_button == buttonMap->exit)
-			keyStates->isExit = keyState;
-		if (input_button == buttonMap->space)
-			keyStates->isSpace = keyState;
-		if (input_button == buttonMap->use)
-			keyStates->isUse = keyState;
-		if (input_button == buttonMap->cancel)
-			keyStates->isCancel = keyState;
-	}
-	else
-	{
-		// GAMEPAD LEFT STICK HANDLING
-		if (gamepad && SDL_GameControllerGetAttached(gamepad))
-		{
-			Sint16 rawX = SDL_GameControllerGetAxis(gamepad, SDL_CONTROLLER_AXIS_LEFTX);
-			Sint16 rawY = SDL_GameControllerGetAxis(gamepad, SDL_CONTROLLER_AXIS_LEFTY);
-
-			// STICK HAS RETURNED TO CENTER ON X
-			if (abs(rawX) <= STICK_DEADZONE)
-			{
-				keyStates->isLeft = false;
-				keyStates->isRight = false;
-			}
-
-			// STICK HAS RETURNED TO CENTER ON Y
-			if (abs(rawY) <= STICK_DEADZONE)
-			{
-				keyStates->isUp = false;
-				keyStates->isDown = false;
-			}
-
-			// STICK ON LEFT
-			if (rawX < -STICK_DEADZONE)
-			{
-				keyStates->isRight = false;
-				keyStates->isLeft = true;
-			}
-			// STICK ON RIGHT
-			else if (rawX > STICK_DEADZONE)
-			{
-				keyStates->isLeft = false;
-				keyStates->isRight = true;
-			}
-
-			// STICK ON UP
-			if (rawY < -STICK_DEADZONE)
-			{
-				keyStates->isDown = false;
-				keyStates->isUp = true;
-			}
-			// STICK ON DOWN
-			else if (rawY > STICK_DEADZONE)
-			{
-				keyStates->isUp = false;
-				keyStates->isDown = true;
-			}
-		}
-	}
-}
-*/
-
-/*
  * This function handles events that come to the SDL window and stay in queue.
  * These events can be: application's quit button event, any key pressed event,
  * any key released event, etc.
@@ -405,7 +329,7 @@ int I_WindowInit(gamestate_t* pGameState)
 		"Arcwell Game 2D ver 0.09",
 		SDL_WINDOWPOS_CENTERED,
 		SDL_WINDOWPOS_CENTERED,
-		0, 0, SDL_WINDOW_FULLSCREEN_DESKTOP
+		1280, 960, SDL_WINDOW_FULLSCREEN_DESKTOP
 	);
 
 	if (!pWindow) return -1;
@@ -448,6 +372,7 @@ int I_RendererInit()
 		return -1;
 	}
 
+	SDL_RenderSetIntegerScale(pRenderer, SDL_TRUE);
 	SDL_RenderSetLogicalSize(pRenderer, LOGICAL_WIDTH, LOGICAL_HEIGHT);
 	return 0;
 }
@@ -564,7 +489,7 @@ void I_RenderText_Bitmap(const char* text, int x, int y)
 }
 */
 
-void I_RenderEntity(e_manager_t* pEntManager, int i, int screenX, int screenY, int flip)
+void I_RenderEntity(e_manager_t* pEntManager, int i, fixed_t screenX, fixed_t screenY, int flip)
 {
 	SDL_Rect srcRect;
 	srcRect.w = ENTITY_SPRITE_SIZE;
@@ -572,16 +497,16 @@ void I_RenderEntity(e_manager_t* pEntManager, int i, int screenX, int screenY, i
 	srcRect.x = pEntManager->sprites[i].srcX;
 	srcRect.y = pEntManager->sprites[i].srcY;
 
-	SDL_Rect destRect;
+	SDL_FRect destRect;
 	destRect.w = ENTITY_SPRITE_SIZE * ENTITY_SPRITE_SCALE;
 	destRect.h = ENTITY_SPRITE_SIZE * ENTITY_SPRITE_SCALE;
-	destRect.x = screenX;
-	destRect.y = screenY;
+	destRect.x = FIXED_TO_DOUBLE(screenX);
+	destRect.y = FIXED_TO_DOUBLE(screenY);
 
-	SDL_RenderCopyEx(pRenderer, entity_sprites[pEntManager->id[i]], &srcRect, &destRect, 0.0, NULL, flip);
+	SDL_RenderCopyExF(pRenderer, entity_sprites[pEntManager->id[i]], &srcRect, &destRect, 0.0, NULL, flip);
 }
 
-void I_RenderObject(obj_manager_t* pObjManager, int i, int screenX, int screenY)
+void I_RenderObject(obj_manager_t* pObjManager, int i, fixed_t screenX, fixed_t screenY)
 {
 	SDL_Rect srcRect;
 	srcRect.w = TILE_SPRITE_SIZE;
@@ -589,19 +514,19 @@ void I_RenderObject(obj_manager_t* pObjManager, int i, int screenX, int screenY)
 	srcRect.x = pObjManager->sprites[i].srcX;
 	srcRect.y = pObjManager->sprites[i].srcY;
 
-	SDL_Rect destRect;
+	SDL_FRect destRect;
 	destRect.w = TILE_SPRITE_SIZE * TILE_SPRITE_SCALE;
 	destRect.h = TILE_SPRITE_SIZE * TILE_SPRITE_SCALE;
-	destRect.x = screenX;
-	destRect.y = screenY;
+	destRect.x = FIXED_TO_DOUBLE(screenX);
+	destRect.y = FIXED_TO_DOUBLE(screenY);
 
-	SDL_RenderCopy(
+	SDL_RenderCopyF(
 		pRenderer, obj_sprites[pObjManager->id[i]],
 		&srcRect, &destRect
 	);
 }
 
-void I_RenderLocation(map_t* pLocation, int ix, int iy, int screenX, int screenY)
+void I_RenderLocation(map_t* pLocation, int ix, int iy, fixed_t screenX, fixed_t screenY)
 {
 	SDL_Rect srcRect = {
 		.w = TILE_SPRITE_SIZE,
@@ -610,13 +535,13 @@ void I_RenderLocation(map_t* pLocation, int ix, int iy, int screenX, int screenY
 		.y = pLocation->locationTiles[iy * pLocation->columns + ix].srcY
 	};
 
-	SDL_Rect destRect;
+	SDL_FRect destRect;
 	destRect.w = TILE_SPRITE_SIZE * TILE_SPRITE_SCALE;
 	destRect.h = TILE_SPRITE_SIZE * TILE_SPRITE_SCALE;
-	destRect.x = screenX;
-	destRect.y = screenY;
+	destRect.x = FIXED_TO_DOUBLE(screenX);
+	destRect.y = FIXED_TO_DOUBLE(screenY);
 
-	SDL_RenderCopy(
+	SDL_RenderCopyF(
 		pRenderer, tilemap_sprite,
 		&srcRect,
 		&destRect
