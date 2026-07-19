@@ -84,6 +84,19 @@ typedef struct ARCF_Entry
     char lumpName[16];			// The name(id) of the file to find it in the table
 } arcf_entry_t;
 
+typedef struct ARCF_SpriteHeader
+{
+	uint32_t spriteW;
+	uint32_t spriteH;
+} arcf_spriteheader_t;
+
+typedef struct RenderAsset
+{
+    void* rawData;
+    arcf_spriteheader_t* header;
+    uint32_t* pixels;
+} renderasset_t;
+
 typedef struct ReactionTimer
 {
 	uint32_t 		currentTime;
@@ -129,6 +142,7 @@ typedef struct Map
 	tile_t* 		locationTiles;
 	uint32_t		rows;
 	uint32_t		columns;
+	enum MAP_ID		id;
 } map_t;
 
 typedef struct EntitySprite

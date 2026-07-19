@@ -100,4 +100,9 @@ enum OBJ_ID
 	CHEST
 };
 
+enum MAP_ID
+{
+	TOMB
+};
+
 #endif /* G_CONSTANTS_H_ */

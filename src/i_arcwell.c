@@ -41,22 +41,8 @@ int I_GameInit()
 	if (!header) return -1;
 	arcf_entry_t* table = L_LoadLumpsTable(arcFile, header);
 	if (!table) return -1;
-
-	uint32_t currentDataSize = 0;
-	void* fontData = L_LoadLump(arcFile, "FONT", header, table, &currentDataSize);
-	I_InitFontFromData(fontData, currentDataSize, 16);
-	void* tileMapTextureData = L_LoadLump(arcFile, "TILES", header, table, &currentDataSize);
-	I_InitTilemapTextureFromData(tileMapTextureData, currentDataSize);
-	void* playerTextureData = L_LoadLump(arcFile, "PLAYER", header, table, &currentDataSize);
-	I_InitEntityTextureFromData(playerTextureData, currentDataSize, PLAYER);
-	void* skeletonTextureData = L_LoadLump(arcFile, "SKELETON", header,  table, &currentDataSize);
-	I_InitEntityTextureFromData(skeletonTextureData, currentDataSize, SKELETON);
-	void* torchTextureData = L_LoadLump(arcFile, "TORCH", header, table, &currentDataSize);
-	I_InitObjTextureFromData(torchTextureData, currentDataSize, TORCH);
-	void* decorationTextureData = L_LoadLump(arcFile, "DECORATION", header, table, &currentDataSize);
-	I_InitObjTextureFromData(decorationTextureData, currentDataSize, DECORATION);
-	void* chestTextureData = L_LoadLump(arcFile, "CHEST", header, table, &currentDataSize);
-	I_InitObjTextureFromData(chestTextureData, currentDataSize, CHEST);
+	I_LoadFont(arcFile, header, table, 16);
+	R_LoadSpritesData(arcFile, header, table);
 
 	map = G_MapInit(arcFile, header, table, &objManager);
 	G_ObjSetter(arcFile, header, table, &objManager);
@@ -95,10 +81,8 @@ void render(uint64_t* frameStart)
 	// Clear frame
 	I_FrameStart(frameStart);
 	// Render
-	R_RenderLocation(map, &entManager);
-	R_RenderObject(&objManager, &entManager);
-	R_RenderEntity(&entManager);
-	R_RenderDebugStats(&gameState, &entManager);
+	I_RenderScene(map, &objManager, &entManager);
+	//R_RenderDebugStats(&gameState, &entManager);
 	// Push frame
 	I_FrameEnd(&gameState, frameStart);
 }

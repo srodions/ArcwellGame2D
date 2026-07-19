@@ -31,6 +31,7 @@ map_t* G_MapInit(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable, ob
 	location->rows = rows;
 	location->columns = columns;
 	location->locationTiles = (tile_t*) malloc(totalTiles * sizeof(tile_t));
+	location->id = TOMB;
 
 	// WORKING WITH DATA
 	int tempY = 0;
@@ -41,7 +42,7 @@ map_t* G_MapInit(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable, ob
 	    for (uint32_t x = 0; x < columns; ++x)
 	    {
 	        char tile = mapData[y * columns + x];
-	        int srcX = 1024, srcY = 1024;
+	        int srcX = -1, srcY = -1;
 
 	        if (tile >= 'A' && tile <= 'J')
 	        {

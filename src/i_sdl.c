@@ -10,6 +10,7 @@
 #include <math.h>
 #include <assert.h>
 #include "i_system.h"
+#include "r_renderer.h"
 #include "g_map.h"
 #include "h_input.h"
 #include "p_physics.h"
@@ -64,16 +65,14 @@ typedef struct Font
 // INPUT KEYBOARD
 keymap_t keyMap;
 // INPUT GAMEPAD
-SDL_GameController* gamepad = NULL;
+static SDL_GameController* gamepad = NULL;
 btnmap_t btnMap;
 // RENDERER
-SDL_Window* pWindow;
-SDL_Renderer* pRenderer;
+static SDL_Window* pWindow = NULL;
+static SDL_Renderer* pRenderer = NULL;
 font_t font;
 // TEXTURES
-SDL_Texture* entity_sprites[MAX_SPRITES];
-SDL_Texture* obj_sprites[MAX_SPRITES];
-SDL_Texture* tilemap_sprite;
+static SDL_Texture* streaming_texture = NULL;
 
 /*
  * Starts the timer from current number of milliseconds since SDL library initialization.
@@ -374,48 +373,30 @@ int I_RendererInit()
 
 	SDL_RenderSetIntegerScale(pRenderer, SDL_TRUE);
 	SDL_RenderSetLogicalSize(pRenderer, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+
+	streaming_texture = SDL_CreateTexture(
+		pRenderer,
+		SDL_PIXELFORMAT_ABGR8888, 		// 4 bytes on pixel (R,G,B,A)
+		SDL_TEXTUREACCESS_STREAMING,
+		LOGICAL_WIDTH,
+		LOGICAL_HEIGHT
+	);
+
 	return 0;
 }
 
-SDL_Texture* loadTextureFromData(void* textureData, uint32_t currentTextureSize)
+void I_LoadFont(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable, int size)
 {
-	SDL_RWops* rw = SDL_RWFromMem(textureData, currentTextureSize);
-	SDL_Texture* output = IMG_LoadTexture_RW(pRenderer, rw, 1);
+	uint32_t currentDataSize = 0;
+	void* fontData = L_LoadLump(arcFile, "FONT", pHeader, pTable, &currentDataSize);
 
-	free(textureData);
-	return output;
-}
-
-void I_InitFontFromData(void* fontData, uint32_t currentFontSize, int size)
-{
 	if (!fontData) return;
 
 	if (font.file != NULL)
 		TTF_CloseFont(font.file);
 
-	SDL_RWops* rw = SDL_RWFromMem(fontData, currentFontSize);
+	SDL_RWops* rw = SDL_RWFromMem(fontData, currentDataSize);
 	font.file = TTF_OpenFontRW(rw, 1, size);
-}
-
-void I_InitTilemapTextureFromData(void* textureData, uint32_t currentTextureSize)
-{
-	if (!textureData) return;
-
-	tilemap_sprite = loadTextureFromData(textureData, currentTextureSize);
-}
-
-void I_InitEntityTextureFromData(void* textureData, uint32_t currentTextureSize, enum ENTITY_ID id)
-{
-	if (!textureData) return;
-
-	entity_sprites[id] = loadTextureFromData(textureData, currentTextureSize);
-}
-
-void I_InitObjTextureFromData(void* textureData, uint32_t currentTextureSize, enum OBJ_ID id)
-{
-	if (!textureData) return;
-
-	obj_sprites[id] = loadTextureFromData(textureData, currentTextureSize);
 }
 
 void I_RenderText(gamestate_t* pGameState, const char* text, int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
@@ -489,63 +470,16 @@ void I_RenderText_Bitmap(const char* text, int x, int y)
 }
 */
 
-void I_RenderEntity(e_manager_t* pEntManager, int i, fixed_t screenX, fixed_t screenY, int flip)
+void I_RenderScene(map_t* pLocation, obj_manager_t* pObjManager, e_manager_t* pEntManager)
 {
-	SDL_Rect srcRect;
-	srcRect.w = ENTITY_SPRITE_SIZE;
-	srcRect.h = ENTITY_SPRITE_SIZE;
-	srcRect.x = pEntManager->sprites[i].srcX;
-	srcRect.y = pEntManager->sprites[i].srcY;
+	memset(r_screenBuffer, 0, sizeof(r_screenBuffer));
 
-	SDL_FRect destRect;
-	destRect.w = ENTITY_SPRITE_SIZE * ENTITY_SPRITE_SCALE;
-	destRect.h = ENTITY_SPRITE_SIZE * ENTITY_SPRITE_SCALE;
-	destRect.x = FIXED_TO_DOUBLE(screenX);
-	destRect.y = FIXED_TO_DOUBLE(screenY);
+	R_PushLocation(pLocation, pEntManager);
+	R_PushObject(pObjManager, pEntManager);
+	R_PushEntity(pEntManager);
 
-	SDL_RenderCopyExF(pRenderer, entity_sprites[pEntManager->id[i]], &srcRect, &destRect, 0.0, NULL, flip);
-}
-
-void I_RenderObject(obj_manager_t* pObjManager, int i, fixed_t screenX, fixed_t screenY)
-{
-	SDL_Rect srcRect;
-	srcRect.w = TILE_SPRITE_SIZE;
-	srcRect.h = TILE_SPRITE_SIZE;
-	srcRect.x = pObjManager->sprites[i].srcX;
-	srcRect.y = pObjManager->sprites[i].srcY;
-
-	SDL_FRect destRect;
-	destRect.w = TILE_SPRITE_SIZE * TILE_SPRITE_SCALE;
-	destRect.h = TILE_SPRITE_SIZE * TILE_SPRITE_SCALE;
-	destRect.x = FIXED_TO_DOUBLE(screenX);
-	destRect.y = FIXED_TO_DOUBLE(screenY);
-
-	SDL_RenderCopyF(
-		pRenderer, obj_sprites[pObjManager->id[i]],
-		&srcRect, &destRect
-	);
-}
-
-void I_RenderLocation(map_t* pLocation, int ix, int iy, fixed_t screenX, fixed_t screenY)
-{
-	SDL_Rect srcRect = {
-		.w = TILE_SPRITE_SIZE,
-		.h = TILE_SPRITE_SIZE,
-		.x = pLocation->locationTiles[iy * pLocation->columns + ix].srcX,
-		.y = pLocation->locationTiles[iy * pLocation->columns + ix].srcY
-	};
-
-	SDL_FRect destRect;
-	destRect.w = TILE_SPRITE_SIZE * TILE_SPRITE_SCALE;
-	destRect.h = TILE_SPRITE_SIZE * TILE_SPRITE_SCALE;
-	destRect.x = FIXED_TO_DOUBLE(screenX);
-	destRect.y = FIXED_TO_DOUBLE(screenY);
-
-	SDL_RenderCopyF(
-		pRenderer, tilemap_sprite,
-		&srcRect,
-		&destRect
-	);
+	SDL_UpdateTexture(streaming_texture, NULL, r_screenBuffer, LOGICAL_WIDTH * sizeof(uint32_t));
+	SDL_RenderCopy(pRenderer, streaming_texture, NULL, NULL);
 }
 
 /*
@@ -575,28 +509,37 @@ void I_Destruct()
 		font.file = NULL;
 	}
 
-	if (tilemap_sprite != NULL)
-	{
-		SDL_DestroyTexture(tilemap_sprite);
-		tilemap_sprite = NULL;
-	}
-
 	for (int i = 0; i < MAX_SPRITES; ++i)
 	{
-		if (obj_sprites[i] != NULL)
-		{
-			SDL_DestroyTexture(obj_sprites[i]);
-			obj_sprites[i] = NULL;
-		}
+	    if (r_objAssets[i].rawData != NULL)
+	    {
+	        free(r_objAssets[i].rawData);
+	        r_objAssets[i].rawData = NULL;
+	    }
+	    r_objAssets[i].header = NULL;
+	    r_objAssets[i].pixels = NULL;
+
+	    if (r_entAssets[i].rawData != NULL)
+	    {
+	        free(r_entAssets[i].rawData);
+	        r_entAssets[i].rawData = NULL;
+	    }
+	    r_entAssets[i].header = NULL;
+	    r_entAssets[i].pixels = NULL;
+
+	    if (r_mapAssets[i].rawData != NULL)
+	    {
+	        free(r_mapAssets[i].rawData);
+	        r_mapAssets[i].rawData = NULL;
+	    }
+	    r_mapAssets[i].header = NULL;
+	    r_mapAssets[i].pixels = NULL;
 	}
 
-	for (int i = 0; i < MAX_SPRITES; ++i)
+	if (streaming_texture != NULL)
 	{
-		if (entity_sprites[i] != NULL)
-		{
-			SDL_DestroyTexture(entity_sprites[i]);
-			entity_sprites[i] = NULL;
-		}
+		SDL_DestroyTexture(streaming_texture);
+		streaming_texture = NULL;
 	}
 
 	if (pRenderer != NULL)
