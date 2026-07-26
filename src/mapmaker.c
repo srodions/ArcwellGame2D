@@ -366,7 +366,7 @@ int main()
 
 	FILE* arcFile = fopen("out/assets.arc", "wb");
 
-	packFile("in/x12y16pxMaruMonica.ttf", "FONT", arcFile, &currentOffset, &currentFilesCount);
+	packSpriteFile("in/font_bitmap.png", "FONT", arcFile, &currentOffset, &currentFilesCount);
 	packSpriteFile("in/player.png", "PLAYER", arcFile, &currentOffset, &currentFilesCount);
 	packSpriteFile("in/skeleton.png", "SKELETON", arcFile, &currentOffset, &currentFilesCount);
 	packSpriteFile("in/tiles.png", "TILES", arcFile, &currentOffset, &currentFilesCount);
