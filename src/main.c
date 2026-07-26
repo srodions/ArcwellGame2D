@@ -1,4 +1,5 @@
 #include "arcfile_maker.h"
+#include <stdlib.h>
 
 int main()
 {
@@ -8,6 +9,7 @@ int main()
 	FILE* arcFile = fopen("out/assets.arc", "wb");
 
 	packSpriteFile("in/font_bitmap.png", "FONT", arcFile, &currentOffset, &currentFilesCount);
+	packSpriteFile("in/health_bar.png", "HEALTHBAR", arcFile, &currentOffset, &currentFilesCount);
 	packSpriteFile("in/player.png", "PLAYER", arcFile, &currentOffset, &currentFilesCount);
 	packSpriteFile("in/skeleton.png", "SKELETON", arcFile, &currentOffset, &currentFilesCount);
 	packSpriteFile("in/tiles.png", "TILES", arcFile, &currentOffset, &currentFilesCount);
