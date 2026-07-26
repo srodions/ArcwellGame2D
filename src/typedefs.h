@@ -121,11 +121,11 @@ typedef struct ObjTransform
 
 typedef struct ObjectManager
 {
-	obj_sprite_t	sprites[MAX_OBJECTS];
-	rtimer_t		animTimer[MAX_OBJECTS];
-	obj_tform_t		transforms[MAX_OBJECTS];
-	bool 			isAnimated[MAX_OBJECTS];
-	enum OBJ_ID		id[MAX_OBJECTS];
+	obj_sprite_t	sprites[MAX_OBJS];
+	rtimer_t		animTimer[MAX_OBJS];
+	obj_tform_t		transforms[MAX_OBJS];
+	bool 			isAnimated[MAX_OBJS];
+	enum OBJ_ID		id[MAX_OBJS];
 	int				objCount;
 } obj_manager_t;
 
@@ -190,7 +190,7 @@ typedef struct EntityManager
 	enum ENTITY_STATE 	state[MAX_ENTITIES];
 	enum ENTITY_AI		ai[MAX_ENTITIES];
 	enum ENTITY_ID 		id[MAX_ENTITIES];
-	int					hp[MAX_ENTITIES];
+	unsigned int		hp[MAX_ENTITIES];
 	bool				isMoving[MAX_ENTITIES];
 	bool				isFalling[MAX_ENTITIES];
 	bool				hasDamaged[MAX_ENTITIES];

@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <stdio.h>
 #include "g_gamestate.h"
 #include "typedefs.h"
 
@@ -15,4 +16,21 @@ gamestate_t G_GameInit()
     };
 
     return gameState;
+}
+
+void G_UpdateDebugStats(gamestate_t* pGameState, e_manager_t* pEntManager)
+{
+	if (!pGameState->isDebugMode) return;
+
+	if (pGameState->deltaTime > 0)
+		pGameState->currentFPS = (int)(FIXED_ONE / pGameState->deltaTime);
+
+	snprintf(
+		pGameState->debugText, sizeof(pGameState->debugText),
+		"FPS:%d Entities:%d x:%d y:%d HP:%d",
+		pGameState->currentFPS, pEntManager->entitiesCount,
+		FIXED_TO_INT(pEntManager->transforms[PLAYER].logX),
+		FIXED_TO_INT(pEntManager->transforms[PLAYER].logY),
+		pEntManager->hp[PLAYER]
+	);
 }

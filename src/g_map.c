@@ -47,15 +47,15 @@ map_t* G_MapInit(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable, ob
 	        if (tile >= 'A' && tile <= 'J')
 	        {
 	            int index = tile - 'A';          		// Getting tile index (0 for 'A', 1 for 'B', ...)
-	            srcX = (index % 5) * TILE_SPRITE_SIZE; 	// Offset on X (the row has 5 tiles)
-	            srcY = (index / 5) * TILE_SPRITE_SIZE; 	// Offset on Y (new line break after 5th tile)
+	            srcX = (index % 5) * TILE_SPR_SIZE; 	// Offset on X (the row has 5 tiles)
+	            srcY = (index / 5) * TILE_SPR_SIZE; 	// Offset on Y (new line break after 5th tile)
 	        }
 
 	        location->locationTiles[y * columns + x] = G_TileInit(srcX, srcY, tempX, tempY);
-	        tempX += TILE_SPRITE_SIZE * TILE_SPRITE_SCALE;
+	        tempX += TILE_SPR_SIZE;
 	    }
 
-	    tempY += TILE_SPRITE_SIZE * TILE_SPRITE_SCALE;
+	    tempY += TILE_SPR_SIZE;
 	}
 
 	if (mapDataHeader != NULL) free(mapDataHeader);
@@ -66,17 +66,17 @@ map_t* G_MapInit(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable, ob
 void G_ObjInit(obj_manager_t* pObjManager, enum OBJ_ID id, int bsx, int bsy, int btx, int bty, bool isAnim)
 {
 	int objCount = pObjManager->objCount;
-	assert(objCount <= MAX_OBJECTS);
+	assert(objCount <= MAX_OBJS);
 
 	pObjManager->animTimer[objCount].reactionTime = ANIM_TIME;
 	pObjManager->isAnimated[objCount] = isAnim;
 
-	pObjManager->transforms[objCount].logX = INT_TO_FIXED(btx * TILE_SPRITE_SIZE * TILE_SPRITE_SCALE);
-	pObjManager->transforms[objCount].logY = INT_TO_FIXED(bty * TILE_SPRITE_SIZE * TILE_SPRITE_SCALE);
+	pObjManager->transforms[objCount].logX = INT_TO_FIXED(btx * TILE_SPR_SIZE);
+	pObjManager->transforms[objCount].logY = INT_TO_FIXED(bty * TILE_SPR_SIZE);
 
 	pObjManager->sprites[objCount].currentSprite = 0;
-	pObjManager->sprites[objCount].srcX = bsx * TILE_SPRITE_SIZE;
-	pObjManager->sprites[objCount].srcY = bsy * TILE_SPRITE_SIZE;
+	pObjManager->sprites[objCount].srcX = bsx * TILE_SPR_SIZE;
+	pObjManager->sprites[objCount].srcY = bsy * TILE_SPR_SIZE;
 	pObjManager->id[objCount] = id;
 
 	++pObjManager->objCount;

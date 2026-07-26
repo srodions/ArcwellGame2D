@@ -39,12 +39,11 @@ void P_EntityFall(e_manager_t* pEntManager, gamestate_t* pGameState)
  */
 void P_EntityWallCollisionCheck(map_t* pLocation, e_manager_t* pEntManager, gamestate_t* pGameState)
 {
-	const int mapWidth = pLocation->columns * TILE_SPRITE_SIZE * TILE_SPRITE_SCALE;
-	const int entitySpriteSize = ENTITY_SPRITE_SIZE * ENTITY_SPRITE_SCALE;
+	const int mapWidth = pLocation->columns * TILE_SPR_SIZE;
 
-	const int screenXCenter = LOGICAL_WIDTH / 2 - entitySpriteSize / 2;
+	const int screenXCenter = SCR_LOGICAL_WIDTH / 2 - ENT_SPR_SIZE / 2;
 	const fixed_t screenXCenterFixed = INT_TO_FIXED(screenXCenter);
-	const int screenXEnd = mapWidth / 2 + screenXCenter / 2 + entitySpriteSize * 2;
+	const int screenXEnd = mapWidth / 2 + screenXCenter / 2 + ENT_SPR_SIZE * 2;
 	const fixed_t screenXEndFixed = INT_TO_FIXED(screenXEnd);
 
 	for (int i = 0; i < pEntManager->entitiesCount; ++i)
@@ -94,8 +93,7 @@ void P_EntityToEntityCollisionCheck(e_manager_t* pEntManager, gamestate_t* pGame
     if (eCount < 2) return;
 
     fixed_t dt = pGameState->deltaTime;
-    int entitySpriteSize = ENTITY_SPRITE_SIZE * ENTITY_SPRITE_SCALE;
-    const int screenXCenter = LOGICAL_WIDTH / 2 - entitySpriteSize / 2;
+    const int screenXCenter = SCR_LOGICAL_WIDTH / 2 - ENT_SPR_SIZE / 2;
 
     for (int i = 0; i < eCount; ++i)
     {

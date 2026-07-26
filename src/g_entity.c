@@ -26,7 +26,7 @@ void G_CreatePlayerConfig()
 		.knockback = knockback_strength,
 		.attackDist = PLAYER_ATK_DIST,
 		.dmgSpriteIndex = PLAYER_DMG_SPR,
-		.walkFramesCount = WALK_FRAMES_COUNT,
+		.walkFramesCount = PLAYER_WLK_FRMS_COUNT,
 		.walkFramesRow = 0,
 		.speed = player_speed
 	};
@@ -37,20 +37,20 @@ void G_CreatePlayerConfig()
 void G_CreateSkeletonConfig()
 {
 	e_config_t config = {
-		.spawnFramesCount = SPAWN_FRAMES_COUNT,
+		.spawnFramesCount = SKELETON_SPN_FRMS_COUNT,
 		.spawnFramesRow = 1,
-		.deathFramesCount = DEATH_FRAMES_COUNT,
+		.deathFramesCount = SKELETON_DTH_FRMS_COUNT,
 		.deathFramesRow = 2,
-		.angerFramesCount = ANGER_FRAMES_COUNT,
+		.angerFramesCount = SKELETON_ANG_FRMS_COUNT,
 		.angerFramesRow = 3,
-		.attackFramesCount = ATTACK_FRAMES_COUNT,
+		.attackFramesCount = SKELETON_ATK_FRMS_COUNT,
 		.attackFramesRow = 4,
 		.maxHp = SKELETON_HP,
 		.strength = SKELETON_STRENGTH,
 		.knockback = knockback_strength,
 		.attackDist = SKELETON_ATK_DIST,
 		.dmgSpriteIndex = SKELETON_DMG_SPR,
-		.walkFramesCount = WALK_FRAMES_COUNT,
+		.walkFramesCount = SKELETON_WLK_FRMS_COUNT,
 		.walkFramesRow = 0,
 		.speed = skeleton_speed
 	};
@@ -72,8 +72,8 @@ void G_EntityInit(e_manager_t* pEntManager, enum ENTITY_ID id, int posX, int pos
 	pEntManager->id[i] = id;
 	pEntManager->sprites[i].srcX = 0;
 	pEntManager->sprites[i].srcY = 0;
-	pEntManager->sprites[i].srcW = ENTITY_SPRITE_SIZE;
-	pEntManager->sprites[i].srcH = ENTITY_SPRITE_SIZE;
+	pEntManager->sprites[i].srcW = ENT_SPR_SIZE;
+	pEntManager->sprites[i].srcH = ENT_SPR_SIZE;
 	// Sprite controls
 	pEntManager->sprites[i].direction = DIR_RIGHT;
 	pEntManager->sprites[i].currentSprite = 0;
@@ -81,8 +81,8 @@ void G_EntityInit(e_manager_t* pEntManager, enum ENTITY_ID id, int posX, int pos
 	pEntManager->transforms[i].logY = INT_TO_FIXED(posY);
 	pEntManager->transforms[i].flip = 0;
 	// Physics
-	pEntManager->transforms[i].hitboxW = (ENTITY_SPRITE_SIZE * ENTITY_SPRITE_SCALE) - (ENTITY_SPRITE_SIZE / 2);
-	pEntManager->transforms[i].hitboxH = (ENTITY_SPRITE_SIZE * ENTITY_SPRITE_SCALE) - (ENTITY_SPRITE_SIZE / 2);
+	pEntManager->transforms[i].hitboxW = ENT_SPR_SIZE - (ENT_SPR_SIZE / 2);
+	pEntManager->transforms[i].hitboxH = ENT_SPR_SIZE - (ENT_SPR_SIZE / 2);
 	pEntManager->velocities[i].gravityAccel = DOUBLE_TO_FIXED(0.0);
 	pEntManager->velocities[i].currentSpeed = config->speed;
 	// Timers
@@ -112,7 +112,7 @@ void G_SkeletonSpawn(e_manager_t* pEntManager, rtimer_t* timer)
 	{
 		I_ReactionTimerEnd(timer);
 
-		int randomXPos = rand() % LOGICAL_WIDTH + LOGICAL_WIDTH / 2;
+		int randomXPos = rand() % SCR_LOGICAL_WIDTH + SCR_LOGICAL_WIDTH / 2;
 
 		G_EntityInit(pEntManager, SKELETON, randomXPos, FLOOR_DISTANCE, &configs[SKELETON]);
 		G_SetAi(i, pEntManager, AI_IDLE);
@@ -133,8 +133,7 @@ void G_EntityHPControl(gamestate_t* pGameState, e_manager_t* pEntManager, int i)
 
 void G_UpdateEntity(gamestate_t* pGameState, e_manager_t* pEntManager)
 {
-	const int entitySpriteSize = ENTITY_SPRITE_SIZE * ENTITY_SPRITE_SCALE;
-	const int screenXCenter = LOGICAL_WIDTH / 2 - entitySpriteSize / 2;
+	const int screenXCenter = SCR_LOGICAL_WIDTH / 2 - ENT_SPR_SIZE / 2;
 	const fixed_t screenXCenterFixed = INT_TO_FIXED(screenXCenter);
 
 	for (int i = 0; i < pEntManager->entitiesCount; ++i)
@@ -143,10 +142,10 @@ void G_UpdateEntity(gamestate_t* pGameState, e_manager_t* pEntManager)
 		int screenY = FIXED_TO_INT(pEntManager->transforms[i].logY);
 
 		// Entity culling
-		if (screenX + entitySpriteSize < 0
-			|| screenX > LOGICAL_WIDTH
+		if (screenX + ENT_SPR_SIZE < 0
+			|| screenX > SCR_LOGICAL_WIDTH
 			|| screenY < 0
-			|| screenY > LOGICAL_HEIGHT)
+			|| screenY > SCR_LOGICAL_HEIGHT)
 		{
 			continue;
 		}
@@ -306,11 +305,10 @@ void G_AI_Chase(gamestate_t* pGameState, e_manager_t* pEntManager, int i)
 void G_EntityAttack(e_manager_t* pEntManager, int attackerId, int victimId)
 {
 	if (pEntManager->state[attackerId] != STATE_ATTACK || (victimId == PLAYER && attackerId == PLAYER)
-		|| pEntManager->state[victimId] == STATE_REMOVING) return;
+		|| pEntManager->state[victimId] == STATE_REMOVING || pEntManager->hp[victimId] == 0) return;
 
 	int deltaX = FIXED_TO_INT(pEntManager->transforms[victimId].logX - pEntManager->transforms[attackerId].logX);
 	int deltaY = FIXED_TO_INT(pEntManager->transforms[victimId].logY - pEntManager->transforms[attackerId].logY);
-	int tileSize = TILE_SPRITE_SCALE * TILE_SPRITE_SIZE;
 
 	int distance = abs(deltaX) + abs(deltaY);
 
@@ -323,8 +321,8 @@ void G_EntityAttack(e_manager_t* pEntManager, int attackerId, int victimId)
 
 		int directionX = (deltaX > 0) ? 1 : -1;
 		int directionY = (deltaY > 0) ? 1 : -1;
-		pEntManager->transforms[victimId].logX += INT_TO_FIXED(directionX * tileSize / 2);
-		pEntManager->transforms[victimId].logY += INT_TO_FIXED(directionY * tileSize / 2);
+		pEntManager->transforms[victimId].logX += INT_TO_FIXED(directionX * TILE_SPR_SIZE / 2);
+		pEntManager->transforms[victimId].logY += INT_TO_FIXED(directionY * TILE_SPR_SIZE / 2);
 	}
 }
 

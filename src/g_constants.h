@@ -30,26 +30,27 @@
 #define PLAYER_DMG_SPR			2
 
 // RENDERER
-#define LOGICAL_WIDTH 			320
-#define LOGICAL_HEIGHT 			240
-#define WALK_FRAMES_COUNT 		8
-#define OBJ_FRAMES_COUNT 		5
-#define SPAWN_FRAMES_COUNT		10
-#define DEATH_FRAMES_COUNT		7
-#define ANGER_FRAMES_COUNT		11
-#define ATTACK_FRAMES_COUNT		9
+#define SCR_LOGICAL_WIDTH 		320
+#define SCR_LOGICAL_HEIGHT 		240
+#define TORCH_FRMS_COUNT 		5
+#define PLAYER_WLK_FRMS_COUNT	8
+#define SKELETON_WLK_FRMS_COUNT 8
+#define SKELETON_SPN_FRMS_COUNT 10
+#define SKELETON_DTH_FRMS_COUNT	7
+#define SKELETON_ANG_FRMS_COUNT	11
+#define SKELETON_ATK_FRMS_COUNT	9
 #define ANIM_TIME 				200
-#define TILE_SPRITE_SIZE 		16
-#define TILE_SPRITE_SCALE 		1
-#define ENTITY_SPRITE_SIZE 		32
-#define ENTITY_SPRITE_SCALE	 	1
+#define TILE_SPR_SIZE 			16
+#define ENT_SPR_SIZE 			32
+#define FONT_SPR_SIZE			8
+#define FONT_SPR_PER_ROW		16
 #define MAX_SPRITES				16
 
 // LOCATION
-#define MAX_OBJECTS 			32
+#define MAX_OBJS 				32
 #define MAX_MAP_COLUMNS 		64
 #define MAX_MAP_ROWS 			12
-#define MAX_LOCATIONS 			1
+#define MAX_MAPS 				1
 
 // I/O
 #define STICK_DEADZONE			8000
@@ -57,23 +58,10 @@
 // DEBUG
 #define DEBUG_TEXT_LENGTH 64
 
-enum KEY_STATE
-{
-    KEY_STATE_UP,
-    KEY_STATE_DOWN,
-	KEY_STATE_AXIS
-};
-
 enum ENTITY_DIR
 {
 	DIR_LEFT,
 	DIR_RIGHT
-};
-
-enum ENTITY_ID
-{
-	PLAYER,
-	SKELETON
 };
 
 enum ENTITY_STATE
@@ -93,6 +81,12 @@ enum ENTITY_AI
 	AI_CHASING
 };
 
+enum ENTITY_ID
+{
+	PLAYER,
+	SKELETON
+};
+
 enum OBJ_ID
 {
 	TORCH,
@@ -103,6 +97,12 @@ enum OBJ_ID
 enum MAP_ID
 {
 	TOMB
+};
+
+enum UI_ID
+{
+	FONT,
+	HEALTH_BAR
 };
 
 #endif /* G_CONSTANTS_H_ */

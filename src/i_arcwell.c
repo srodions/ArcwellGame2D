@@ -41,7 +41,6 @@ int I_GameInit()
 	if (!header) return -1;
 	arcf_entry_t* table = L_LoadLumpsTable(arcFile, header);
 	if (!table) return -1;
-	I_LoadFont(arcFile, header, table, 16);
 	R_LoadSpritesData(arcFile, header, table);
 
 	map = G_MapInit(arcFile, header, table, &objManager);
@@ -74,16 +73,17 @@ void update()
 		G_SkeletonSpawn(&entManager, &spawnTimer);
 		G_UpdateEntity(&gameState, &entManager);
 	}
+
+	G_UpdateDebugStats(&gameState, &entManager);
 }
 
 void render(uint64_t* frameStart)
 {
 	// Clear frame
 	I_FrameStart(frameStart);
-	// Render
-	I_RenderScene(map, &objManager, &entManager);
-	//R_RenderDebugStats(&gameState, &entManager);
-	// Push frame
+	// Push all the objects to the screen buffer
+	R_PushScene(&gameState, map, &objManager, &entManager);
+	// Render frame
 	I_FrameEnd(&gameState, frameStart);
 }
 

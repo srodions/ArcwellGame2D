@@ -52,16 +52,6 @@ typedef struct ButtonMap
 	Uint8 start;
 } btnmap_t;
 
-typedef struct Font
-{
-	TTF_Font* file;
-	SDL_Surface* textSurface;
-	SDL_Texture* textTexture;
-
-	SDL_Color textColor;
-	SDL_Rect textRect;
-} font_t;
-
 // INPUT KEYBOARD
 keymap_t keyMap;
 // INPUT GAMEPAD
@@ -70,7 +60,6 @@ btnmap_t btnMap;
 // RENDERER
 static SDL_Window* pWindow = NULL;
 static SDL_Renderer* pRenderer = NULL;
-font_t font;
 // TEXTURES
 static SDL_Texture* streaming_texture = NULL;
 
@@ -233,6 +222,7 @@ void I_HandleEvents(gamestate_t *pGameState, e_manager_t* pEntManager, inputstat
 	{
 		switch (event.type)
 		{
+		// WINDOW EVENT
 		case SDL_QUIT:
 			pGameState->isRunning = false;
 			break;
@@ -244,6 +234,7 @@ void I_HandleEvents(gamestate_t *pGameState, e_manager_t* pEntManager, inputstat
 		case SDL_KEYUP:
 			nextFrameInput &= ~I_KeyMapToTrigger(event.key.keysym.scancode);
 			break;
+		// GAMEPAD HANDLING
 		case SDL_CONTROLLERDEVICEADDED:
 		    if (!gamepad)
 		    {
@@ -261,7 +252,6 @@ void I_HandleEvents(gamestate_t *pGameState, e_manager_t* pEntManager, inputstat
 		        gamepad = NULL;
 		    }
 		    break;
-		// GAMEPAD HANDLING
 		case SDL_CONTROLLERBUTTONDOWN:
 			nextFrameInput |= I_GamepadMapToTrigger(event.cbutton.button);
 			break;
@@ -286,6 +276,8 @@ void I_FrameStart(uint64_t* frameStart)
 
 void I_FrameEnd(gamestate_t* pGameState, uint64_t* frameStart)
 {
+	SDL_UpdateTexture(streaming_texture, NULL, r_screenBuffer, SCR_LOGICAL_WIDTH * sizeof(uint32_t));
+	SDL_RenderCopy(pRenderer, streaming_texture, NULL, NULL);
 	SDL_RenderPresent(pRenderer);
 
 	uint64_t frameEnd = SDL_GetPerformanceCounter();
@@ -365,176 +357,41 @@ int I_RendererInit()
 	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest"); // Avoiding scale blur
 	pRenderer = SDL_CreateRenderer(pWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
+	// If accelerated renderer wasn't created - try to create software renderer
 	if (pRenderer == NULL)
 	{
+		printf("[RENDERER] Error creating GPU accelerated renderer: %s\n", SDL_GetError());
 		pRenderer = SDL_CreateRenderer(pWindow, -1, SDL_RENDERER_SOFTWARE | SDL_RENDERER_PRESENTVSYNC);
-		return -1;
+
+		if (pRenderer == NULL)
+			printf("[RENDERER] Error creating software renderer: %s\n", SDL_GetError());
+		else
+			printf("[RENDERER] Software renderer created\n");
 	}
+	else printf("[RENDERER] GPU accelerated renderer created\n");
 
 	SDL_RenderSetIntegerScale(pRenderer, SDL_TRUE);
-	SDL_RenderSetLogicalSize(pRenderer, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+	SDL_RenderSetLogicalSize(pRenderer, SCR_LOGICAL_WIDTH, SCR_LOGICAL_HEIGHT);
 
 	streaming_texture = SDL_CreateTexture(
 		pRenderer,
 		SDL_PIXELFORMAT_ABGR8888, 		// 4 bytes on pixel (R,G,B,A)
 		SDL_TEXTUREACCESS_STREAMING,
-		LOGICAL_WIDTH,
-		LOGICAL_HEIGHT
+		SCR_LOGICAL_WIDTH,
+		SCR_LOGICAL_HEIGHT
 	);
 
 	return 0;
-}
-
-void I_LoadFont(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable, int size)
-{
-	uint32_t currentDataSize = 0;
-	void* fontData = L_LoadLump(arcFile, "FONT", pHeader, pTable, &currentDataSize);
-
-	if (!fontData) return;
-
-	if (font.file != NULL)
-		TTF_CloseFont(font.file);
-
-	SDL_RWops* rw = SDL_RWFromMem(fontData, currentDataSize);
-	font.file = TTF_OpenFontRW(rw, 1, size);
-}
-
-void I_RenderText(gamestate_t* pGameState, const char* text, int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
-{
-	if (text == NULL) return;
-
-	pGameState->fpsTimer += pGameState->deltaTime;
-	fixed_t updateInterval = FIXED_ONE / 4;
-
-	if (pGameState->fpsTimer >= updateInterval)
-	{
-		pGameState->fpsTimer = 0;
-
-		if (font.textTexture != NULL)
-		{
-			SDL_DestroyTexture(font.textTexture);
-			font.textTexture = NULL;
-		}
-
-		SDL_Surface* tempSurface = TTF_RenderText_Blended(font.file, text, font.textColor);
-		if (tempSurface != NULL)
-		{
-			font.textTexture = SDL_CreateTextureFromSurface(pRenderer, tempSurface);
-
-			font.textRect.x = x;
-			font.textRect.y = y;
-			font.textRect.w = tempSurface->w;
-			font.textRect.h = tempSurface->h;
-
-			font.textColor.r = r;
-			font.textColor.g = g;
-			font.textColor.b = b;
-			font.textColor.a = a;
-
-			SDL_FreeSurface(tempSurface);
-		}
-	}
-
-	if (font.textTexture != NULL)
-		SDL_RenderCopy(pRenderer, font.textTexture, NULL, &font.textRect);
-}
-
-/*
- * TODO: Bitmap atlas text render
- */
-/*
-void I_RenderText_Bitmap(const char* text, int x, int y)
-{
-    int currentX = x;
-    int spriteSize = 8;	// Size of every char in atlas
-
-    for (int i = 0; text[i] != '\0'; i++)
-    {
-        char character = text[i];
-
-        SDL_Rect srcRect;
-        srcRect.x = (character - 32) * spriteSize;
-        srcRect.y = 0;
-        srcRect.w = spriteSize;
-        srcRect.h = spriteSize;
-
-        SDL_Rect dstRect;
-        dstRect.x = currentX;
-        dstRect.y = y;
-        dstRect.w = spriteSize;
-        dstRect.h = spriteSize;
-
-        SDL_RenderCopy(pRenderer, g_FontTexture, &srcRect, &dstRect);
-        currentX += spriteSize;
-    }
-}
-*/
-
-void I_RenderScene(map_t* pLocation, obj_manager_t* pObjManager, e_manager_t* pEntManager)
-{
-	memset(r_screenBuffer, 0, sizeof(r_screenBuffer));
-
-	R_PushLocation(pLocation, pEntManager);
-	R_PushObject(pObjManager, pEntManager);
-	R_PushEntity(pEntManager);
-
-	SDL_UpdateTexture(streaming_texture, NULL, r_screenBuffer, LOGICAL_WIDTH * sizeof(uint32_t));
-	SDL_RenderCopy(pRenderer, streaming_texture, NULL, NULL);
 }
 
 /*
  * Destructor method to clean up all renderer textures, close files and quit the SDL
  * (Always need to be called in application crash or normal exit!!!)
  */
-void I_Destruct()
+void I_SDL_Destruct()
 {
 	if (gamepad)
 		SDL_GameControllerClose(gamepad);
-
-	if (font.textTexture != NULL)
-	{
-		SDL_DestroyTexture(font.textTexture);
-		font.textTexture = NULL;
-	}
-
-	if (font.textSurface != NULL)
-	{
-		SDL_FreeSurface(font.textSurface);
-		font.textSurface = NULL;
-	}
-
-	if (font.file != NULL)
-	{
-		TTF_CloseFont(font.file);
-		font.file = NULL;
-	}
-
-	for (int i = 0; i < MAX_SPRITES; ++i)
-	{
-	    if (r_objAssets[i].rawData != NULL)
-	    {
-	        free(r_objAssets[i].rawData);
-	        r_objAssets[i].rawData = NULL;
-	    }
-	    r_objAssets[i].header = NULL;
-	    r_objAssets[i].pixels = NULL;
-
-	    if (r_entAssets[i].rawData != NULL)
-	    {
-	        free(r_entAssets[i].rawData);
-	        r_entAssets[i].rawData = NULL;
-	    }
-	    r_entAssets[i].header = NULL;
-	    r_entAssets[i].pixels = NULL;
-
-	    if (r_mapAssets[i].rawData != NULL)
-	    {
-	        free(r_mapAssets[i].rawData);
-	        r_mapAssets[i].rawData = NULL;
-	    }
-	    r_mapAssets[i].header = NULL;
-	    r_mapAssets[i].pixels = NULL;
-	}
 
 	if (streaming_texture != NULL)
 	{

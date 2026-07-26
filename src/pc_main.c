@@ -2,19 +2,22 @@
 
 #include "i_arcwell.h"
 #include "i_system.h"
+#include "r_renderer.h"
 #include "typedefs.h"
 
 int main(int argc, char* argv[])
 {
 	if (I_GameInit() < 0)
 	{
-		I_Destruct();
+		R_Destruct();
+		I_SDL_Destruct();
 		return -1;
 	}
 
 	I_Loop();
-	I_Destruct();
 
+	R_Destruct();
+	I_SDL_Destruct();
 	return 0;
 }
 
