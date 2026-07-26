@@ -29,6 +29,7 @@ void R_PushLocation(map_t* pLocation, e_manager_t* pEntManager);
 void R_PushObject(obj_manager_t* pObjManager, e_manager_t* pEntManager);
 void R_PushEntity(e_manager_t* pEntManager);
 void R_PushText(const char* text, int x, int y);
+void R_PushUI(gamestate_t* pGameState, e_manager_t* pEntManager);
 void R_PushScene(gamestate_t* pGameState, map_t* pLocation, obj_manager_t* pObjManager, e_manager_t* pEntManager);
 void R_Anim_Spawn(e_manager_t* pEntManager, e_config_t* config, int i);
 void R_Anim_Anger(e_manager_t* pEntManager, e_config_t* config, int i);

@@ -42,6 +42,10 @@ void R_LoadSpritesData(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTab
     r_uiAssets[FONT].rawData = L_LoadLump(arcFile, "FONT", pHeader, pTable, &currentDataSize);
     r_uiAssets[FONT].header = (arcf_spriteheader_t*) r_uiAssets[FONT].rawData;
     r_uiAssets[FONT].pixels = (uint32_t*) (r_uiAssets[FONT].header + 1);
+
+    r_uiAssets[HEALTH_BAR].rawData = L_LoadLump(arcFile, "HEALTHBAR", pHeader, pTable, &currentDataSize);
+    r_uiAssets[HEALTH_BAR].header = (arcf_spriteheader_t*) r_uiAssets[HEALTH_BAR].rawData;
+    r_uiAssets[HEALTH_BAR].pixels = (uint32_t*) (r_uiAssets[HEALTH_BAR].header + 1);
 }
 
 void R_MoveSpriteToBuffer(const uint32_t* pixels, int spriteW, int spriteH, int posX, int posY)
@@ -264,6 +268,20 @@ void R_PushText(const char* text, int x, int y)
 	}
 }
 
+void R_PushUI(gamestate_t* pGameState, e_manager_t* pEntManager)
+{
+	int yIndex = pEntManager->hp[PLAYER] * HP_BAR_SPR_H;
+	R_MoveAtlasSpriteToBuffer(r_uiAssets[HEALTH_BAR].pixels, HP_BAR_SPR_W, 20, 20, 0, yIndex, HP_BAR_SPR_W, HP_BAR_SPR_H, 0);
+
+	if (pGameState->isDebugMode)
+		R_PushText(pGameState->debugText, 20, 10);
+
+	if (pGameState->isPaused && pEntManager->hp[PLAYER] == 0)
+		R_PushText("GAME OVER", 116, 80);
+	else if (pGameState->isPaused)
+		R_PushText("PAUSE", 140, 80);
+}
+
 void R_PushScene(gamestate_t* pGameState, map_t* pLocation, obj_manager_t* pObjManager, e_manager_t* pEntManager)
 {
 	memset(r_screenBuffer, 0, sizeof(r_screenBuffer));	// Clears screen buffer
@@ -271,9 +289,7 @@ void R_PushScene(gamestate_t* pGameState, map_t* pLocation, obj_manager_t* pObjM
 	R_PushLocation(pLocation, pEntManager);
 	R_PushObject(pObjManager, pEntManager);
 	R_PushEntity(pEntManager);
-
-	if (pGameState->isDebugMode)
-		R_PushText(pGameState->debugText, 20, 10);
+	R_PushUI(pGameState, pEntManager);
 }
 
 void R_Anim_Attack(e_manager_t* pEntManager, e_config_t* config, int i)
@@ -288,10 +304,7 @@ void R_Anim_Attack(e_manager_t* pEntManager, e_config_t* config, int i)
 
 		if (pEntManager->sprites[i].currentSprite >= config->attackFramesCount)
 		{
-			pEntManager->state[i] = STATE_NONE;
-			pEntManager->sprites[i].currentSprite = 0;
-			pEntManager->sprites[i].srcX = 0;
-			pEntManager->sprites[i].srcY = 0;
+			G_SetState(i, pEntManager, STATE_NONE);
 			pEntManager->hasDamaged[i] = false;
 
 			I_ReactionTimerReset(&pEntManager->animTimer[i]);
@@ -339,11 +352,7 @@ void R_Anim_Spawn(e_manager_t* pEntManager, e_config_t* config, int i)
 
 		if (pEntManager->sprites[i].currentSprite >= config->spawnFramesCount)
 		{
-			pEntManager->state[i] = STATE_NONE;
-			pEntManager->sprites[i].currentSprite = 0;
-			pEntManager->sprites[i].srcX = 0;
-			pEntManager->sprites[i].srcY = 0;
-
+			G_SetState(i, pEntManager, STATE_NONE);
 			I_ReactionTimerReset(&pEntManager->animTimer[i]);
 			return;
 		}
@@ -367,11 +376,7 @@ void R_Anim_Anger(e_manager_t* pEntManager, e_config_t* config, int i)
 
 		if (pEntManager->sprites[i].currentSprite >= config->angerFramesCount)
 		{
-			pEntManager->state[i] = STATE_NONE;
-			pEntManager->sprites[i].currentSprite = 0;
-			pEntManager->sprites[i].srcX = 0;
-			pEntManager->sprites[i].srcY = 0;
-
+			G_SetState(i, pEntManager, STATE_NONE);
 			I_ReactionTimerReset(&pEntManager->animTimer[i]);
 			return;
 		}

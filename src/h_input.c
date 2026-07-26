@@ -45,7 +45,7 @@ void H_HandleKeyStates(gamestate_t* pGameState, e_manager_t* pEntManager, inputs
 			G_EntityJump(pGameState, pEntManager, PLAYER);
 
 		if (H_IsKeyJustPressed(input, INPUT_ATTACK))
-			pEntManager->state[PLAYER] = STATE_ATTACK;
+			G_SetState(PLAYER, pEntManager, STATE_ATTACK);
 	}
 }
 

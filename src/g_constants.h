@@ -34,6 +34,7 @@
 #define SCR_LOGICAL_HEIGHT 		240
 #define TORCH_FRMS_COUNT 		5
 #define PLAYER_WLK_FRMS_COUNT	8
+#define PLAYER_ATK_FRMS_COUNT	4
 #define SKELETON_WLK_FRMS_COUNT 8
 #define SKELETON_SPN_FRMS_COUNT 10
 #define SKELETON_DTH_FRMS_COUNT	7
@@ -45,6 +46,10 @@
 #define FONT_SPR_SIZE			8
 #define FONT_SPR_PER_ROW		16
 #define MAX_SPRITES				16
+
+// UI
+#define HP_BAR_SPR_W			64
+#define HP_BAR_SPR_H			32
 
 // LOCATION
 #define MAX_OBJS 				32

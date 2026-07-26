@@ -19,8 +19,8 @@ void G_CreatePlayerConfig()
 		.deathFramesRow = 0,
 		.angerFramesCount = 0,
 		.angerFramesRow = 0,
-		.attackFramesCount = 0,
-		.attackFramesRow = 0,
+		.attackFramesCount = PLAYER_ATK_FRMS_COUNT,
+		.attackFramesRow = 1,
 		.maxHp = PLAYER_HP,
 		.strength = PLAYER_STRENGTH,
 		.knockback = knockback_strength,
@@ -122,10 +122,10 @@ void G_SkeletonSpawn(e_manager_t* pEntManager, rtimer_t* timer)
 
 void G_EntityHPControl(gamestate_t* pGameState, e_manager_t* pEntManager, int i)
 {
-	if (pEntManager->hp[i] == 0)
+	if (pEntManager->hp[i] == 0 && pEntManager->state[i] != STATE_REMOVING)
 	{
 		if (i != PLAYER)
-			pEntManager->state[i] = STATE_REMOVING;
+			G_SetState(i, pEntManager, STATE_REMOVING);
 		else
 			pGameState->isPaused = true;
 	}
