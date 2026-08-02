@@ -3,7 +3,6 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
-#include <SDL2/SDL_ttf.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -302,10 +301,8 @@ void I_FrameEnd(gamestate_t* pGameState, uint64_t* frameStart)
 
 int I_LibInit()
 {
-	if (IMG_Init(IMG_INIT_PNG) < 0 || TTF_Init() < 0)
-		return -1;
-
-	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_GAMECONTROLLER) < 0)
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_GAMECONTROLLER) < 0
+	 || IMG_Init(IMG_INIT_PNG) < 0)
 		return -1;
 
 	return 0;
@@ -405,7 +402,6 @@ void I_SDL_Destruct()
 	if (pWindow != NULL)
 		SDL_DestroyWindow(pWindow);
 
-	TTF_Quit();
 	IMG_Quit();
 	SDL_Quit();
 }
