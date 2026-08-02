@@ -309,15 +309,16 @@ int I_LibInit()
 }
 
 /*
- * This method creates an SDL Windows application window of the game.
+ * This method creates an application window of the game based on the display settings.
+ * It takes display refresh rate for target FPS variable
  */
 int I_WindowInit(gamestate_t* pGameState)
 {
 	pWindow = SDL_CreateWindow(
-		"Arcwell Game 2D ver 0.09",
+		"Arcwell Game 2D | Alpha Build ver.0.1.1",
 		SDL_WINDOWPOS_CENTERED,
 		SDL_WINDOWPOS_CENTERED,
-		1280, 960, SDL_WINDOW_FULLSCREEN_DESKTOP
+		0, 0, SDL_WINDOW_FULLSCREEN_DESKTOP
 	);
 
 	if (!pWindow) return -1;
@@ -326,17 +327,9 @@ int I_WindowInit(gamestate_t* pGameState)
 	int currentDisplayIndex = SDL_GetWindowDisplayIndex(pWindow);
 
 	if (SDL_GetDesktopDisplayMode(currentDisplayIndex, &dMode) == 0)
-	{
-		pGameState->screenW = dMode.w;
-		pGameState->screenH = dMode.h;
-		pGameState->targetFPS = dMode.refresh_rate > 0 ? dMode.refresh_rate : 60;
-	}
+		pGameState->targetFPS = dMode.refresh_rate > 0 ? dMode.refresh_rate : 60; // If there is an error fetching refresh rate - target FPS = 60
 	else
-	{
-		pGameState->screenW = 1920;
-		pGameState->screenH = 1080;
-		pGameState->targetFPS = 60;
-	}
+		pGameState->targetFPS = 60; // Or if there is an error fetching screen mode, then target FPS is also 60
 
 	pGameState->targetFrameTime = DOUBLE_TO_FIXED(1.0 / (double) pGameState->targetFPS);
 
@@ -347,7 +340,9 @@ int I_WindowInit(gamestate_t* pGameState)
  * This method creates a renderer and checks had been the renderer actually created.
  * If the renderer is NULL when this method tried to create it with the graphics card
  * acceleration, then it will try to create it with software renderer, otherwise,
- * method will send an error message and return NULL, that need to be handled in main().
+ * method will send an error message and return -1. If streaming texture for screen
+ * buffer was not created, then method will return -1. If everything was created properly,
+ * then return 0.
  */
 int I_RendererInit()
 {
@@ -361,9 +356,11 @@ int I_RendererInit()
 		pRenderer = SDL_CreateRenderer(pWindow, -1, SDL_RENDERER_SOFTWARE | SDL_RENDERER_PRESENTVSYNC);
 
 		if (pRenderer == NULL)
+		{
 			printf("[RENDERER] Error creating software renderer: %s\n", SDL_GetError());
-		else
-			printf("[RENDERER] Software renderer created\n");
+			return -1;
+		}
+		else printf("[RENDERER] Software renderer created\n");
 	}
 	else printf("[RENDERER] GPU accelerated renderer created\n");
 
@@ -372,18 +369,24 @@ int I_RendererInit()
 
 	streaming_texture = SDL_CreateTexture(
 		pRenderer,
-		SDL_PIXELFORMAT_ABGR8888, 		// 4 bytes on pixel (R,G,B,A)
+		SDL_PIXELFORMAT_ABGR8888, 		// 4 bytes on pixel (A,B,G,R)
 		SDL_TEXTUREACCESS_STREAMING,
 		SCR_LOGICAL_WIDTH,
 		SCR_LOGICAL_HEIGHT
 	);
+
+	if (!streaming_texture)
+	{
+		printf("[RENDERER] Error creating streaming texture: %s\n", SDL_GetError());
+		return -1;
+	}
 
 	return 0;
 }
 
 /*
  * Destructor method to clean up all renderer textures, close files and quit the SDL
- * (Always need to be called in application crash or normal exit!!!)
+ * (!!!Always need to be called in application crash or normal exit!!!)
  */
 void I_SDL_Destruct()
 {

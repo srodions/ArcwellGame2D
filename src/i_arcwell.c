@@ -23,13 +23,14 @@ int I_GameInit()
 {
 	if (I_LibInit() < 0) return -1;
 
+	if (I_WindowInit(&gameState) < 0 || I_RendererInit() < 0) return -1;
+
 	I_InitKeymap();
 	I_InitBtnMap();
 	input.current = 0;
 	input.previous = 0;
 	gameState = G_GameInit();
 
-	if (I_WindowInit(&gameState) < 0 || I_RendererInit() < 0) return -1;
 
 	entManager.entitiesCount = 0;
 	spawnTimer.reactionTime = ENTITY_SPAWN_TIME;

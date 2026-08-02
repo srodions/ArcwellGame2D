@@ -12,8 +12,6 @@ typedef struct GameState
 	fixed_t 		targetFrameTime;
 	fixed_t 		deltaTime;
 	fixed_t			fpsTimer;
-	unsigned int 	screenW;
-	unsigned int 	screenH;
 	int 			targetFPS;
 	int 			currentFPS;
 	bool 			isRunning;

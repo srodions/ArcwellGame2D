@@ -7,12 +7,22 @@
 
 arcf_header_t* L_LoadHeader(FILE* arcFile)
 {
-	if (!arcFile) return NULL;
+	if (!arcFile)
+	{
+		printf("[ARC_LOADER] Error loading assets file: The file is not opened for reading\n");
+		return NULL;
+	}
 
 	arcf_header_t* pHeader = malloc(sizeof(arcf_header_t));
 	fread(pHeader, sizeof(arcf_header_t), 1, arcFile);
-	if (strncmp(pHeader->signature, "ARCF", 4) != 0) return NULL;
 
+	if (strncmp(pHeader->signature, "ARCF", 4) != 0)
+	{
+		printf("[ARC_LOADER] Error loading assets file: The file signature is not correct\n");
+		return NULL;
+	}
+
+	printf("[ARC_LOADER] Assets file loaded successfully\n");
 	return pHeader;
 }
 
