@@ -1,5 +1,6 @@
 #include "arcfile_maker.h"
 #include <string.h>
+#include <stddef.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -21,31 +22,41 @@ void packMap_Tomb(FILE* arcFile, uint32_t rows, uint32_t columns, uint32_t* curr
 	};
 
 	int maxRows = sizeof(design) / sizeof(design[0]);
+	int maxCols = 40;
 	if (rows > maxRows) rows = maxRows;
+	if (columns > maxCols) columns = maxCols;
 
 	const int totalTiles = rows * columns;
-	arcf_mapheader_t* mapDataHeader = (arcf_mapheader_t*) malloc(totalTiles + sizeof(arcf_mapheader_t));
+
+	arcf_mapheader_t* mapDataHeader = (arcf_mapheader_t*) malloc(sizeof(arcf_mapheader_t) + totalTiles);
 	mapDataHeader->mapRows = rows;
 	mapDataHeader->mapColumns = columns;
-	char* mapData = (char*)(mapDataHeader + 1);
+	mapDataHeader->tileAtlasIdx = 0;
+	char* mapData = mapDataHeader->data;
 
-	// Filling map data array string by string from design array
 	for(int y = 0; y < rows; y++)
 	    memcpy(&mapData[y * columns], design[y], columns);
 
-	allEntries[*currentFilesCount].offsetToFile = *currentOffset;
-	allEntries[*currentFilesCount].lumpSize = totalTiles + sizeof(arcf_mapheader_t);
+	uint32_t exactHeaderSize = offsetof(arcf_mapheader_t, data);
+	uint32_t totalLumpSize = exactHeaderSize + totalTiles;
+
+	uint32_t packedOffset = *currentOffset;
+
+	allEntries[*currentFilesCount].offsetToFile = packedOffset;
+	allEntries[*currentFilesCount].lumpSize = totalLumpSize;
+	memset(allEntries[*currentFilesCount].lumpName, 0, sizeof(allEntries[*currentFilesCount].lumpName));
 	snprintf(allEntries[*currentFilesCount].lumpName, 16, "TOMB");
 
-	fseek(arcFile, *currentOffset, SEEK_SET);
-	fwrite(mapDataHeader, sizeof(arcf_mapheader_t), 1, arcFile);
+	fseek(arcFile, packedOffset, SEEK_SET);
+	fwrite(mapDataHeader, exactHeaderSize, 1, arcFile);
 	fwrite(mapData, sizeof(char), totalTiles, arcFile);
 
-	*currentOffset += (sizeof(char) * totalTiles + sizeof(arcf_mapheader_t));
+	*currentOffset += totalLumpSize;
 	++(*currentFilesCount);
 
 	free(mapDataHeader);
-	printf("Map (%d * %d) packed at offset %u!\n", rows, columns, *currentOffset);
+
+	printf("Map (%u * %u) packed at offset %u! Size: %u bytes.\n", rows, columns, packedOffset, totalLumpSize);
 }
 
 void packFile(const char* filePath, const char* fileName, FILE* arcFile, uint32_t* currentOffset, uint32_t* currentFilesCount)
@@ -129,9 +140,47 @@ void packSpriteFile(const char* filePath, const char* fileName, FILE* arcFile, u
 
 arcf_objheader_t* initObjectsHeader(uint32_t objCount)
 {
-	arcf_objheader_t* objHeader = (arcf_objheader_t*) malloc(sizeof(arcf_header_t) + sizeof(arcf_objentry_t) * objCount);
+	arcf_objheader_t* objHeader = (arcf_objheader_t*) malloc(sizeof(arcf_objheader_t) + sizeof(arcf_objentry_t) * objCount);
 	objHeader->objCount = 0;
 	return objHeader;
+}
+
+arcf_entcfgheader_t* initEntHeader(uint32_t entCfgsCount)
+{
+	arcf_entcfgheader_t* entHeader = (arcf_entcfgheader_t*) malloc(sizeof(arcf_entcfgheader_t) + sizeof(e_config_t) * entCfgsCount);
+	entHeader->cfgCount = 0;
+	return entHeader;
+}
+
+void packNamesHeader(FILE* arcFile, uint32_t* currentOffset, uint32_t* currentFilesCount)
+{
+	arcf_namesentry_t* namesHeader = (arcf_namesentry_t*) malloc(sizeof(arcf_namesentry_t)); // + size of arcf_header because it will be after header
+	namesHeader->entCount = 2;
+	memset(namesHeader->entNames, 0, sizeof(namesHeader->entNames));
+	strncpy(namesHeader->entNames, "PLR SKLTN", 256);
+	namesHeader->mapCount = 1;
+	memset(namesHeader->mapNames, 0, sizeof(namesHeader->mapNames));
+	strncpy(namesHeader->mapNames, "TMBTLS", 256);
+	namesHeader->objCount = 3;
+	memset(namesHeader->objNames, 0, sizeof(namesHeader->objNames));
+	strncpy(namesHeader->objNames, "TRCH DCRTN CHST", 256);
+	namesHeader->uiCount = 2;
+	memset(namesHeader->uiNames, 0, sizeof(namesHeader->uiNames));
+	strncpy(namesHeader->uiNames, "FNT HLTHBR", 256);
+
+	allEntries[*currentFilesCount].offsetToFile = *currentOffset;
+	allEntries[*currentFilesCount].lumpSize = (uint32_t) sizeof(arcf_namesentry_t);
+	memset(allEntries[*currentFilesCount].lumpName, 0, sizeof(allEntries[*currentFilesCount].lumpName));
+	strncpy(allEntries[*currentFilesCount].lumpName, "SPRNAMES", 15);
+
+	fseek(arcFile, *currentOffset, SEEK_SET);
+	fwrite(namesHeader, 1, sizeof(arcf_namesentry_t), arcFile);
+
+	*currentOffset += (uint32_t) sizeof(arcf_namesentry_t);
+	++(*currentFilesCount);
+
+	free(namesHeader);
+	printf("Sprite names header (%ld bytes) packed at offset %u!\n", sizeof(arcf_namesentry_t), *currentOffset);
 }
 
 void fillObjectData(arcf_objheader_t* objHeader, uint32_t si, uint32_t bsx, uint32_t bsy, uint32_t btx, uint32_t bty, bool isAnim)
@@ -147,6 +196,38 @@ void fillObjectData(arcf_objheader_t* objHeader, uint32_t si, uint32_t bsx, uint
 
 	objHeader->items[objHeader->objCount] = obj;
 	++(objHeader->objCount);
+}
+
+void fillEntityData(arcf_entcfgheader_t* entHeader, int afc, int afr, int asi, int atd, int atfc, int atfr,
+int dfc, int dfr,int dmsi, int hfc, int hfr, int knck, int mhp, int pX, int pY, int sfc, int sfr, int spd,
+int str, int wfc, int wfr)				// That's awful for now
+{
+	e_config_t cfg = {
+		.angerFramesCount = afc,
+		.angerFramesRow = afr,
+		.atlasSprIdx = asi,
+		.attackDist = atd,
+		.attackFramesCount = atfc,
+		.attackFramesRow = atfr,
+		.deathFramesCount = dfc,
+		.deathFramesRow = dfr,
+		.dmgSpriteIndex = dmsi,
+		.hurtFramesCount = hfc,
+		.hurtFramesRow = hfr,
+		.knockback = knck,
+		.maxHp = mhp,
+		.posX = pX,
+		.posY = pY,
+		.spawnFramesCount = sfc,
+		.spawnFramesRow = sfr,
+		.speed = spd,
+		.strength = str,
+		.walkFramesCount = wfc,
+		.walkFramesRow = wfr
+	};
+
+	entHeader->items[entHeader->cfgCount] = cfg;
+	++(entHeader->cfgCount);
 }
 
 void packObjectsData(arcf_objheader_t* objHeader, FILE* arcFile, uint32_t* currentOffset, uint32_t* currentFilesCount)
@@ -167,6 +248,26 @@ void packObjectsData(arcf_objheader_t* objHeader, FILE* arcFile, uint32_t* curre
 
 	printf("Objects data (%d bytes) packed at offset %u!\n", totalSize, *currentOffset);
 	free(objHeader);
+}
+
+void packEntityData(arcf_entcfgheader_t* entHeader, FILE* arcFile, uint32_t* currentOffset, uint32_t* currentFilesCount)
+{
+	uint32_t entCount = entHeader->cfgCount;
+	uint32_t totalSize = sizeof(arcf_entcfgheader_t) + sizeof(e_config_t) * entCount;
+
+	allEntries[*currentFilesCount].offsetToFile = *currentOffset;
+	allEntries[*currentFilesCount].lumpSize = totalSize;
+	memset(allEntries[*currentFilesCount].lumpName, 0, sizeof(allEntries[*currentFilesCount].lumpName));
+	strncpy(allEntries[*currentFilesCount].lumpName, "ENTITIES", 15);
+
+	fseek(arcFile, *currentOffset, SEEK_SET);
+	fwrite(entHeader, 1, totalSize, arcFile);
+
+	*currentOffset += totalSize;
+	++(*currentFilesCount);
+
+	printf("Objects data (%d bytes) packed at offset %u!\n", totalSize, *currentOffset);
+	free(entHeader);
 }
 
 void finishArchive(FILE* arcFile, uint32_t* currentOffset, uint32_t* currentFilesCount)

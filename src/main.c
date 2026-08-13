@@ -8,16 +8,7 @@ int main()
 
 	FILE* arcFile = fopen("out/assets.arc", "wb");
 
-	packSpriteFile("in/font_bitmap.png", "FONT", arcFile, &currentOffset, &currentFilesCount);
-	packSpriteFile("in/health_bar.png", "HEALTHBAR", arcFile, &currentOffset, &currentFilesCount);
-	packSpriteFile("in/player.png", "PLAYER", arcFile, &currentOffset, &currentFilesCount);
-	packSpriteFile("in/skeleton.png", "SKELETON", arcFile, &currentOffset, &currentFilesCount);
-	packSpriteFile("in/tiles.png", "TILES", arcFile, &currentOffset, &currentFilesCount);
-	packSpriteFile("in/torch.png", "TORCH", arcFile, &currentOffset, &currentFilesCount);
-	packSpriteFile("in/chest.png", "CHEST", arcFile, &currentOffset, &currentFilesCount);
-	packSpriteFile("in/decoration.png", "DECORATION", arcFile, &currentOffset, &currentFilesCount);
-
-	packMap_Tomb(arcFile, 9, 39, &currentOffset, &currentFilesCount);
+	packNamesHeader(arcFile, &currentOffset, &currentFilesCount);
 
 	arcf_objheader_t* objs = initObjectsHeader(22);
 	// TORCH 1
@@ -53,6 +44,26 @@ int main()
 	fillObjectData(objs, 1, 2, 1, 31, 4, false);
 	fillObjectData(objs, 1, 3, 1, 31, 3, false);
 	packObjectsData(objs, arcFile, &currentOffset, &currentFilesCount);
+
+	arcf_entcfgheader_t* ents = initEntHeader(6);
+	fillEntityData(ents, 0, 0, 0, 24, 4, 1, 0, 0, 2, 0, 0, 20, 6, 100, 100, 0, 0, 20, 2, 8, 0);
+	fillEntityData(ents, 11, 3, 1, 24, 9, 4, 7, 2, 3, 0, 0, 20, 6, 180, 100, 11, 1, 16, 1, 8, 0);
+	fillEntityData(ents, 11, 3, 1, 24, 9, 4, 7, 2, 3, 0, 0, 20, 6, 220, 100, 11, 1, 16, 1, 8, 0);
+	fillEntityData(ents, 11, 3, 1, 24, 9, 4, 7, 2, 3, 0, 0, 20, 6, 240, 100, 11, 1, 16, 1, 8, 0);
+	fillEntityData(ents, 11, 3, 1, 24, 9, 4, 7, 2, 3, 0, 0, 20, 6, 270, 100, 11, 1, 16, 1, 8, 0);
+	fillEntityData(ents, 11, 3, 1, 24, 9, 4, 7, 2, 3, 0, 0, 20, 6, 280, 100, 11, 1, 16, 1, 8, 0);
+	packEntityData(ents, arcFile, &currentOffset, &currentFilesCount);
+
+	packMap_Tomb(arcFile, 9, 39, &currentOffset, &currentFilesCount);
+
+	packSpriteFile("in/font_bitmap.png", "FNT", arcFile, &currentOffset, &currentFilesCount);
+	packSpriteFile("in/health_bar.png", "HLTHBR", arcFile, &currentOffset, &currentFilesCount);
+	packSpriteFile("in/player.png", "PLR", arcFile, &currentOffset, &currentFilesCount);
+	packSpriteFile("in/skeleton.png", "SKLTN", arcFile, &currentOffset, &currentFilesCount);
+	packSpriteFile("in/tiles.png", "TMBTLS", arcFile, &currentOffset, &currentFilesCount);
+	packSpriteFile("in/torch.png", "TRCH", arcFile, &currentOffset, &currentFilesCount);
+	packSpriteFile("in/chest.png", "CHST", arcFile, &currentOffset, &currentFilesCount);
+	packSpriteFile("in/decoration.png", "DCRTN", arcFile, &currentOffset, &currentFilesCount);
 
 	finishArchive(arcFile, &currentOffset, &currentFilesCount);
 
