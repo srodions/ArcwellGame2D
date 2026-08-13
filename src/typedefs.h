@@ -57,6 +57,8 @@ typedef struct ARCF_MapEntryHeader
 {
 	uint32_t mapRows;
 	uint32_t mapColumns;
+	uint32_t tileAtlasIdx;
+	char	data[];
 } arcf_mapheader_t;
 
 typedef struct _ARCF_ObjEntry
@@ -79,7 +81,7 @@ typedef struct ARCF_Entry
 {
     uint32_t offsetToFile;		// Offset to current file in the table in bytes
     uint32_t lumpSize;			// Size of current file in bytes
-    char lumpName[16];			// The name(id) of the file to find it in the table
+    char 	lumpName[16];		// The name(id) of the file to find it in the table
 } arcf_entry_t;
 
 typedef struct ARCF_SpriteHeader
@@ -87,6 +89,18 @@ typedef struct ARCF_SpriteHeader
 	uint32_t spriteW;
 	uint32_t spriteH;
 } arcf_spriteheader_t;
+
+typedef struct ARCF_NamesEntry
+{
+	uint32_t objCount;		// Amount of objects in file
+	uint32_t entCount;		// ...
+	uint32_t mapCount;		// ....
+	uint32_t uiCount;		// .....
+	char	objNames[256];	// Lines with names
+	char	entNames[256];	// ...
+	char	mapNames[256];	// ....
+	char	uiNames[256];	// .....
+} arcf_namesentry_t;
 
 typedef struct RenderAsset
 {
@@ -119,11 +133,11 @@ typedef struct ObjTransform
 
 typedef struct ObjectManager
 {
-	obj_sprite_t	sprites[MAX_OBJS];
-	rtimer_t		animTimer[MAX_OBJS];
-	obj_tform_t		transforms[MAX_OBJS];
-	bool 			isAnimated[MAX_OBJS];
-	enum OBJ_ID		id[MAX_OBJS];
+	obj_sprite_t*	sprites;
+	rtimer_t*		animTimer;
+	obj_tform_t*	transforms;
+	bool*			isAnimated;
+	int*			sprIndex;
 	int				objCount;
 } obj_manager_t;
 
@@ -140,8 +154,14 @@ typedef struct Map
 	tile_t* 		locationTiles;
 	uint32_t		rows;
 	uint32_t		columns;
-	enum MAP_ID		id;
+	uint32_t		tileAtlasIdx;
 } map_t;
+
+typedef struct MapManager
+{
+	map_t*			maps;
+	int 			mapsCount;
+} map_manager_t;
 
 typedef struct EntitySprite
 {
@@ -187,7 +207,7 @@ typedef struct EntityManager
 	e_ai_t				aiParams[MAX_ENTITIES];
 	enum ENTITY_STATE 	state[MAX_ENTITIES];
 	enum ENTITY_AI		ai[MAX_ENTITIES];
-	enum ENTITY_ID 		id[MAX_ENTITIES];
+	int 				atlasSprIdx[MAX_ENTITIES];
 	unsigned int		hp[MAX_ENTITIES];
 	bool				isMoving[MAX_ENTITIES];
 	bool				isFalling[MAX_ENTITIES];
@@ -197,27 +217,43 @@ typedef struct EntityManager
 
 typedef struct EntityConfig
 {
+	uint32_t posX;
+	uint32_t posY;
+	uint32_t atlasSprIdx;
 	// FRAME COUNTS
-	int spawnFramesCount;
-	int deathFramesCount;
-	int walkFramesCount;
-	int angerFramesCount;
-	int attackFramesCount;
-	int hurtFramesCount;
+	uint32_t spawnFramesCount;
+	uint32_t deathFramesCount;
+	uint32_t walkFramesCount;
+	uint32_t angerFramesCount;
+	uint32_t attackFramesCount;
+	uint32_t hurtFramesCount;
 	// COMBAT
-	fixed_t 		knockback;
-	fixed_t			speed;
-	int				strength;
-	unsigned int	maxHp;
-	int				attackDist;
-	int				dmgSpriteIndex; // Index of the sprite on which damage will be taken by the victim
+	fixed_t  knockback;
+	fixed_t	 speed;
+	uint32_t strength;
+	uint32_t maxHp;
+	uint32_t attackDist;
+	uint32_t dmgSpriteIndex; // Index of the sprite on which damage will be taken by the victim
 	// ROWS
-	int spawnFramesRow;
-	int deathFramesRow;
-	int angerFramesRow;
-	int attackFramesRow;
-	int hurtFramesRow;
-	int walkFramesRow;
+	uint32_t spawnFramesRow;
+	uint32_t deathFramesRow;
+	uint32_t angerFramesRow;
+	uint32_t attackFramesRow;
+	uint32_t hurtFramesRow;
+	uint32_t walkFramesRow;
 } e_config_t;
+
+typedef struct _ARCF_EntCfgHeader
+{
+	uint32_t cfgCount;
+	e_config_t items[];
+} arcf_entcfgheader_t;
+
+typedef struct EntityCfgManager
+{
+	e_config_t* configs;
+	int 		cfgCount;
+	int			capacity;
+} e_cfgmanager_t;
 
 #endif /* TYPEDEFS_H_ */

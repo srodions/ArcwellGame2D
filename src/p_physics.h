@@ -10,6 +10,7 @@ typedef struct GameState gamestate_t;
 typedef struct EntityManager e_manager_t;
 typedef struct Map map_t;
 typedef struct Rect rect_t;
+typedef struct MapManager map_manager_t;
 
 extern fixed_t 	gravity;
 extern fixed_t 	jump_force;
@@ -18,7 +19,7 @@ extern fixed_t 	skeleton_speed;
 extern fixed_t 	knockback_strength;
 
 void P_EntityFall(e_manager_t* pEntManager, gamestate_t* pGameState);
-void P_EntityWallCollisionCheck(map_t* pLocation, e_manager_t* pEntManager, gamestate_t* pGameState);
+void P_EntityWallCollisionCheck(map_manager_t* pMapManager, int activeMapIdx, e_manager_t* pEntManager, gamestate_t* pGameState);
 void P_EntityToEntityCollisionCheck(e_manager_t* pEntManager, gamestate_t* pGameState);
 bool P_IntersectRect(const rect_t* a, const rect_t* b, rect_t* result);
 

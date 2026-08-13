@@ -3,73 +3,51 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 #include "i_system.h"
 #include "p_physics.h"
 #include "typedefs.h"
 #include "fixed_math.h"
+#include "l_arcloader.h"
 
-e_config_t configs[MAX_CONFIGS];
-
-void G_CreatePlayerConfig()
+void G_LoadEntityConfigs(e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager, FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable)
 {
-	e_config_t config = {
-		.spawnFramesCount = 0,
-		.spawnFramesRow = 0,
-		.deathFramesCount = 0,
-		.deathFramesRow = 0,
-		.angerFramesCount = 0,
-		.angerFramesRow = 0,
-		.attackFramesCount = PLAYER_ATK_FRMS_COUNT,
-		.attackFramesRow = 1,
-		.maxHp = PLAYER_HP,
-		.strength = PLAYER_STRENGTH,
-		.knockback = knockback_strength,
-		.attackDist = PLAYER_ATK_DIST,
-		.dmgSpriteIndex = PLAYER_DMG_SPR,
-		.walkFramesCount = PLAYER_WLK_FRMS_COUNT,
-		.walkFramesRow = 0,
-		.speed = player_speed
-	};
+	uint32_t cfgEntrySize = 0;
+	arcf_entcfgheader_t* entHeader = (arcf_entcfgheader_t*) L_LoadLump(arcFile, "ENTITIES", pHeader, pTable, &cfgEntrySize);
 
-	configs[PLAYER] = config;
-}
+	int cfgCount = entHeader->cfgCount;
+	int capacity = cfgCount * sizeof(e_config_t);
 
-void G_CreateSkeletonConfig()
-{
-	e_config_t config = {
-		.spawnFramesCount = SKELETON_SPN_FRMS_COUNT,
-		.spawnFramesRow = 1,
-		.deathFramesCount = SKELETON_DTH_FRMS_COUNT,
-		.deathFramesRow = 2,
-		.angerFramesCount = SKELETON_ANG_FRMS_COUNT,
-		.angerFramesRow = 3,
-		.attackFramesCount = SKELETON_ATK_FRMS_COUNT,
-		.attackFramesRow = 4,
-		.maxHp = SKELETON_HP,
-		.strength = SKELETON_STRENGTH,
-		.knockback = knockback_strength,
-		.attackDist = SKELETON_ATK_DIST,
-		.dmgSpriteIndex = SKELETON_DMG_SPR,
-		.walkFramesCount = SKELETON_WLK_FRMS_COUNT,
-		.walkFramesRow = 0,
-		.speed = skeleton_speed
-	};
+	pEntCfgManager->configs = (e_config_t*) malloc(capacity);
+	pEntCfgManager->cfgCount = cfgCount;
+	pEntCfgManager->capacity = capacity;
 
-	configs[SKELETON] = config;
+	memcpy(pEntCfgManager->configs, entHeader->items, capacity);
+
+	for (int i = 0; i < cfgCount; ++i)
+	{
+		int posX = entHeader->items[i].posX;
+		int posY = entHeader->items[i].posY;
+		int speed = entHeader->items[i].speed;
+		int maxHP = entHeader->items[i].maxHp;
+		int atlasSprIdx = entHeader->items[i].atlasSprIdx;
+
+		G_EntityInit(pEntManager, atlasSprIdx, posX, posY, speed, maxHP);
+	}
 }
 
 /*
  * This function initializes entity (data-oriented style).
  *
  */
-void G_EntityInit(e_manager_t* pEntManager, enum ENTITY_ID id, int posX, int posY, e_config_t* config)
+void G_EntityInit(e_manager_t* pEntManager, int atlasSprIdx, int posX, int posY, int speed, int maxHP)
 {
 	int i = pEntManager->entitiesCount;
 
 	if (i >= MAX_ENTITIES) return;
 
 	// Texture load
-	pEntManager->id[i] = id;
+	pEntManager->atlasSprIdx[i] = atlasSprIdx;
 	pEntManager->sprites[i].srcX = 0;
 	pEntManager->sprites[i].srcY = 0;
 	pEntManager->sprites[i].srcW = ENT_SPR_SIZE;
@@ -84,7 +62,7 @@ void G_EntityInit(e_manager_t* pEntManager, enum ENTITY_ID id, int posX, int pos
 	pEntManager->transforms[i].hitboxW = ENT_SPR_SIZE - (ENT_SPR_SIZE / 2);
 	pEntManager->transforms[i].hitboxH = ENT_SPR_SIZE - (ENT_SPR_SIZE / 2);
 	pEntManager->velocities[i].gravityAccel = DOUBLE_TO_FIXED(0.0);
-	pEntManager->velocities[i].currentSpeed = config->speed;
+	pEntManager->velocities[i].currentSpeed = INT_TO_FIXED(speed);
 	// Timers
 	pEntManager->destructTimer[i].reactionTime = ENTITY_DESTRUCT_TIME;
 	pEntManager->animTimer[i].reactionTime = ANIM_TIME;
@@ -98,25 +76,13 @@ void G_EntityInit(e_manager_t* pEntManager, enum ENTITY_ID id, int posX, int pos
 	pEntManager->aiParams[i].isCollisionOnRight = false;
 	++pEntManager->entitiesCount;
 	// Combat
-	pEntManager->hp[i] = config->maxHp;
+	pEntManager->hp[i] = maxHP;
 	pEntManager->hasDamaged[i] = false;
-}
 
-void G_SkeletonSpawn(e_manager_t* pEntManager, rtimer_t* timer)
-{
-	int i = pEntManager->entitiesCount;
-
-	I_ReactionTimerStart(timer);
-
-	if (I_IsTimeToReact(timer) && pEntManager->entitiesCount < MAX_ENTITIES)
+	if (i != PLAYER) 			// TODO: Maybe remove this in future
 	{
-		I_ReactionTimerEnd(timer);
-
-		int randomXPos = rand() % SCR_LOGICAL_WIDTH + SCR_LOGICAL_WIDTH / 2;
-
-		G_EntityInit(pEntManager, SKELETON, randomXPos, FLOOR_DISTANCE, &configs[SKELETON]);
-		G_SetAi(i, pEntManager, AI_IDLE);
 		G_SetState(i, pEntManager, STATE_SPAWNING);
+		G_SetAi(i, pEntManager, AI_IDLE);
 	}
 }
 
@@ -131,7 +97,7 @@ void G_EntityHPControl(gamestate_t* pGameState, e_manager_t* pEntManager, int i)
 	}
 }
 
-void G_UpdateEntity(gamestate_t* pGameState, e_manager_t* pEntManager)
+void G_UpdateEntity(gamestate_t* pGameState, e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager)
 {
 	const int screenXCenter = SCR_LOGICAL_WIDTH / 2 - ENT_SPR_SIZE / 2;
 	const fixed_t screenXCenterFixed = INT_TO_FIXED(screenXCenter);
@@ -152,9 +118,9 @@ void G_UpdateEntity(gamestate_t* pGameState, e_manager_t* pEntManager)
 
 		G_EntityDirection(pGameState, pEntManager, i);
 		G_AI_Idle(pEntManager, i);
-		G_AI_Chase(pGameState, pEntManager, i);
-		G_EntityAttack(pEntManager, i, PLAYER); // Entity attacks
-		G_EntityAttack(pEntManager, PLAYER, i); // Player attacks
+		G_AI_Chase(pGameState, pEntManager, pEntCfgManager, i);
+		G_EntityAttack(pEntManager, pEntCfgManager, i, PLAYER); // Entity attacks
+		G_EntityAttack(pEntManager, pEntCfgManager, PLAYER, i); // Player attacks
 		G_EntityHPControl(pGameState, pEntManager, i);
 	}
 }
@@ -251,7 +217,7 @@ void G_AI_Idle(e_manager_t* pEntManager, int i)
 	}
 }
 
-void G_AI_Chase(gamestate_t* pGameState, e_manager_t* pEntManager, int i)
+void G_AI_Chase(gamestate_t* pGameState, e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager, int i)
 {
 	if (pEntManager->ai[i] != AI_CHASING
 	|| pEntManager->state[i] == STATE_SPAWNING
@@ -264,7 +230,8 @@ void G_AI_Chase(gamestate_t* pGameState, e_manager_t* pEntManager, int i)
 		return;
 	}
 
-	fixed_t stopDist = INT_TO_FIXED(configs[pEntManager->id[i]].attackDist);
+	int chaserAttackDist = pEntCfgManager->configs[pEntManager->atlasSprIdx[i]].attackDist;
+	fixed_t stopDist = INT_TO_FIXED(chaserAttackDist);
 
 	I_ReactionTimerStart(&pEntManager->aiTimer[i]);
 
@@ -302,7 +269,7 @@ void G_AI_Chase(gamestate_t* pGameState, e_manager_t* pEntManager, int i)
 	}
 }
 
-void G_EntityAttack(e_manager_t* pEntManager, int attackerId, int victimId)
+void G_EntityAttack(e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager, int attackerId, int victimId)
 {
 	if (pEntManager->state[attackerId] != STATE_ATTACK || (victimId == PLAYER && attackerId == PLAYER)
 		|| pEntManager->state[victimId] == STATE_REMOVING || pEntManager->hp[victimId] == 0) return;
@@ -312,11 +279,13 @@ void G_EntityAttack(e_manager_t* pEntManager, int attackerId, int victimId)
 
 	int distance = abs(deltaX) + abs(deltaY);
 
-	if (distance <= configs[pEntManager->id[attackerId]].attackDist
+	e_config_t attackerCfg = pEntCfgManager->configs[pEntManager->atlasSprIdx[attackerId]];
+
+	if (distance <= attackerCfg.attackDist
 		&& !pEntManager->hasDamaged[attackerId]
-		&& pEntManager->sprites[attackerId].currentSprite >= configs[pEntManager->id[attackerId]].dmgSpriteIndex)
+		&& pEntManager->sprites[attackerId].currentSprite >= attackerCfg.dmgSpriteIndex)
 	{
-		pEntManager->hp[victimId] -= configs[pEntManager->id[attackerId]].strength;
+		pEntManager->hp[victimId] -= attackerCfg.strength;
 		pEntManager->hasDamaged[attackerId] = true;
 
 		int directionX = (deltaX > 0) ? 1 : -1;

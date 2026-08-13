@@ -11,6 +11,7 @@
 #define AI_CHASE_MAX_RENEW_TIME 800
 #define SPOT_DISTANCE			300
 #define MAX_CONFIGS				64
+#define PLAYER					0
 
 // PHYSICS
 #define GRAVITY					180.0
@@ -51,12 +52,6 @@
 #define HP_BAR_SPR_W			64
 #define HP_BAR_SPR_H			32
 
-// LOCATION
-#define MAX_OBJS 				32
-#define MAX_MAP_COLUMNS 		64
-#define MAX_MAP_ROWS 			12
-#define MAX_MAPS 				1
-
 // I/O
 #define STICK_DEADZONE			8000
 
@@ -84,24 +79,6 @@ enum ENTITY_AI
 	AI_NONE,
 	AI_IDLE,
 	AI_CHASING
-};
-
-enum ENTITY_ID
-{
-	PLAYER,
-	SKELETON
-};
-
-enum OBJ_ID
-{
-	TORCH,
-	DECORATION,
-	CHEST
-};
-
-enum MAP_ID
-{
-	TOMB
 };
 
 enum UI_ID

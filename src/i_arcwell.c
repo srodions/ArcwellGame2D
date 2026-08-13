@@ -13,11 +13,14 @@
 #include "typedefs.h"
 
 gamestate_t gameState;
-map_t* map;
 obj_manager_t objManager;
 e_manager_t entManager;
+e_cfgmanager_t entCfgManager;
+map_manager_t mapManager;
 rtimer_t spawnTimer;
 inputstate_t input;
+// Tables
+arcf_namesentry_t* sprNamesTable;
 
 int I_GameInit()
 {
@@ -27,14 +30,15 @@ int I_GameInit()
 
 	I_InitKeymap();
 	I_InitBtnMap();
+
 	input.current = 0;
 	input.previous = 0;
 	gameState = G_GameInit();
 
-
 	entManager.entitiesCount = 0;
-	spawnTimer.reactionTime = ENTITY_SPAWN_TIME;
 	objManager.objCount = 0;
+	mapManager.mapsCount = 0;
+	spawnTimer.reactionTime = ENTITY_SPAWN_TIME;
 
 	FILE* arcFile = fopen("assets.arc", "rb");
 	if (!arcFile) return -1;
@@ -42,17 +46,20 @@ int I_GameInit()
 	if (!header) return -1;
 	arcf_entry_t* table = L_LoadLumpsTable(arcFile, header);
 	if (!table) return -1;
-	R_LoadSpritesData(arcFile, header, table);
 
-	map = G_MapInit(arcFile, header, table, &objManager);
+	// Loads sprites names table
+	uint32_t currentDataSize = 0;
+	sprNamesTable = (arcf_namesentry_t*) L_LoadLump(arcFile, "SPRNAMES", header, table, &currentDataSize);
+	R_LoadSpritesData(arcFile, header, table, sprNamesTable);
+
+	mapManager.maps = (map_t*) malloc(sizeof(map_t));
+	G_MapSetter(&mapManager, arcFile, header, table, "TOMB");
 	G_ObjSetter(arcFile, header, table, &objManager);
+	G_LoadEntityConfigs(&entManager, &entCfgManager, arcFile, header, table);
+
 	fclose(arcFile);
 	free(header);
 	free(table);
-
-	G_CreatePlayerConfig();
-	G_CreateSkeletonConfig();
-	G_EntityInit(&entManager, PLAYER, 50, FLOOR_DISTANCE, &configs[PLAYER]); // Player spawn
 
 	return 0;
 }
@@ -68,11 +75,10 @@ void update()
 	{
 		// Update physics
 		P_EntityFall(&entManager, &gameState);
-		P_EntityWallCollisionCheck(map, &entManager, &gameState);
+		P_EntityWallCollisionCheck(&mapManager, 0, &entManager, &gameState);
 		P_EntityToEntityCollisionCheck(&entManager, &gameState);
 		// Update transforms/AI
-		G_SkeletonSpawn(&entManager, &spawnTimer);
-		G_UpdateEntity(&gameState, &entManager);
+		G_UpdateEntity(&gameState, &entManager, &entCfgManager);
 	}
 
 	G_UpdateDebugStats(&gameState, &entManager);
@@ -83,12 +89,12 @@ void render(uint64_t* frameStart)
 	// Clear frame
 	I_FrameStart(frameStart);
 	// Push all the objects to the screen buffer
-	R_PushScene(&gameState, map, &objManager, &entManager);
+	R_PushScene(&gameState, &mapManager, &objManager, &entManager, &entCfgManager);
 	// Render frame
 	I_FrameEnd(&gameState, frameStart);
 }
 
-void I_Loop()
+void I_GameLoop()
 {
 	uint64_t frameStart = 0;
 	while (gameState.isRunning)
@@ -96,6 +102,12 @@ void I_Loop()
 		update();
 		render(&frameStart);
 	}
+}
+
+void I_GameExit()
+{
+	R_Destruct(sprNamesTable);
+	I_SDL_Destruct();
 }
 
 

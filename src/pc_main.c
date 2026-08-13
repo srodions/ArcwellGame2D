@@ -9,15 +9,13 @@ int main(int argc, char* argv[])
 {
 	if (I_GameInit() < 0)
 	{
-		R_Destruct();
-		I_SDL_Destruct();
+		I_GameExit();
 		return -1;
 	}
 
-	I_Loop();
+	I_GameLoop();
+	I_GameExit();
 
-	R_Destruct();
-	I_SDL_Destruct();
 	return 0;
 }
 

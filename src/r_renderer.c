@@ -6,46 +6,75 @@
 #include <stdlib.h>
 
 uint32_t r_screenBuffer[SCR_LOGICAL_WIDTH * SCR_LOGICAL_HEIGHT];
-renderasset_t r_mapAssets[MAX_SPRITES];
-renderasset_t r_objAssets[MAX_SPRITES];
-renderasset_t r_entAssets[MAX_SPRITES];
-renderasset_t r_uiAssets[MAX_SPRITES];
+renderasset_t* r_mapAssets;
+renderasset_t* r_objAssets;
+renderasset_t* r_entAssets;
+renderasset_t* r_uiAssets;
 
-void R_LoadSpritesData(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable)
+void R_LoadSpritesData(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable, arcf_namesentry_t* pNamesHeader)
 {
     uint32_t currentDataSize = 0;
 
-    r_mapAssets[TOMB].rawData = L_LoadLump(arcFile, "TILES", pHeader, pTable, &currentDataSize);
-    r_mapAssets[TOMB].header  = (arcf_spriteheader_t*) r_mapAssets[TOMB].rawData;
-    r_mapAssets[TOMB].pixels  = (uint32_t*) (r_mapAssets[TOMB].header + 1);
+    r_objAssets = (renderasset_t*) malloc(pNamesHeader->objCount * sizeof(renderasset_t));
+    r_entAssets = (renderasset_t*) malloc(pNamesHeader->entCount * sizeof(renderasset_t));
+    r_mapAssets = (renderasset_t*) malloc(pNamesHeader->mapCount * sizeof(renderasset_t));
+    r_uiAssets = (renderasset_t*) malloc(pNamesHeader->uiCount * sizeof(renderasset_t));
 
-    r_entAssets[PLAYER].rawData = L_LoadLump(arcFile, "PLAYER", pHeader, pTable, &currentDataSize);
-    r_entAssets[PLAYER].header  = (arcf_spriteheader_t*) r_entAssets[PLAYER].rawData;
-    r_entAssets[PLAYER].pixels  = (uint32_t*) (r_entAssets[PLAYER].header + 1);
+    // OBJECTS
+    char *objName = strtok(pNamesHeader->objNames, " ");
 
-    r_entAssets[SKELETON].rawData = L_LoadLump(arcFile, "SKELETON", pHeader, pTable, &currentDataSize);
-    r_entAssets[SKELETON].header  = (arcf_spriteheader_t*) r_entAssets[SKELETON].rawData;
-    r_entAssets[SKELETON].pixels  = (uint32_t*) (r_entAssets[SKELETON].header + 1);
+    for (int i = 0; i < pNamesHeader->objCount; ++i)
+    {
+    	if (objName == NULL) break;
 
-    r_objAssets[TORCH].rawData = L_LoadLump(arcFile, "TORCH", pHeader, pTable, &currentDataSize);
-    r_objAssets[TORCH].header  = (arcf_spriteheader_t*) r_objAssets[TORCH].rawData;
-    r_objAssets[TORCH].pixels  = (uint32_t*) (r_objAssets[TORCH].header + 1);
+		r_objAssets[i].rawData = L_LoadLump(arcFile, objName, pHeader, pTable, &currentDataSize);
+		r_objAssets[i].header  = (arcf_spriteheader_t*) r_objAssets[i].rawData;
+		r_objAssets[i].pixels  = (uint32_t*) (r_objAssets[i].header + 1);
 
-    r_objAssets[DECORATION].rawData = L_LoadLump(arcFile, "DECORATION", pHeader, pTable, &currentDataSize);
-    r_objAssets[DECORATION].header  = (arcf_spriteheader_t*) r_objAssets[DECORATION].rawData;
-    r_objAssets[DECORATION].pixels  = (uint32_t*) (r_objAssets[DECORATION].header + 1);
+		objName = strtok(NULL, " ");
+    }
 
-    r_objAssets[CHEST].rawData = L_LoadLump(arcFile, "CHEST", pHeader, pTable, &currentDataSize);
-    r_objAssets[CHEST].header  = (arcf_spriteheader_t*) r_objAssets[CHEST].rawData;
-    r_objAssets[CHEST].pixels  = (uint32_t*) (r_objAssets[CHEST].header + 1);
+    // ENTITIES
+    char *entName = strtok(pNamesHeader->entNames, " ");
 
-    r_uiAssets[FONT].rawData = L_LoadLump(arcFile, "FONT", pHeader, pTable, &currentDataSize);
-    r_uiAssets[FONT].header = (arcf_spriteheader_t*) r_uiAssets[FONT].rawData;
-    r_uiAssets[FONT].pixels = (uint32_t*) (r_uiAssets[FONT].header + 1);
+    for (int i = 0; i < pNamesHeader->entCount; ++i)
+    {
+    	if (entName == NULL) break;
 
-    r_uiAssets[HEALTH_BAR].rawData = L_LoadLump(arcFile, "HEALTHBAR", pHeader, pTable, &currentDataSize);
-    r_uiAssets[HEALTH_BAR].header = (arcf_spriteheader_t*) r_uiAssets[HEALTH_BAR].rawData;
-    r_uiAssets[HEALTH_BAR].pixels = (uint32_t*) (r_uiAssets[HEALTH_BAR].header + 1);
+		r_entAssets[i].rawData = L_LoadLump(arcFile, entName, pHeader, pTable, &currentDataSize);
+		r_entAssets[i].header  = (arcf_spriteheader_t*) r_entAssets[i].rawData;
+		r_entAssets[i].pixels  = (uint32_t*) (r_entAssets[i].header + 1);
+
+		entName = strtok(NULL, " ");
+    }
+
+    // MAPS
+    char *mapName = strtok(pNamesHeader->mapNames, " ");
+
+    for (int i = 0; i < pNamesHeader->mapCount; ++i)
+	{
+    	if (mapName == NULL) break;
+
+		r_mapAssets[i].rawData = L_LoadLump(arcFile, mapName, pHeader, pTable, &currentDataSize);
+		r_mapAssets[i].header  = (arcf_spriteheader_t*) r_mapAssets[i].rawData;
+		r_mapAssets[i].pixels  = (uint32_t*) (r_mapAssets[i].header + 1);
+
+		mapName = strtok(NULL, " ");
+	}
+
+    // UIs
+    char *uiName = strtok(pNamesHeader->uiNames, " ");
+
+    for (int i = 0; i < pNamesHeader->uiCount; ++i)
+    {
+        if (uiName == NULL) break;
+
+        r_uiAssets[i].rawData = L_LoadLump(arcFile, uiName, pHeader, pTable, &currentDataSize);
+        r_uiAssets[i].header  = (arcf_spriteheader_t*) r_uiAssets[i].rawData;
+        r_uiAssets[i].pixels  = (uint32_t*) (r_uiAssets[i].header + 1);
+
+        uiName = strtok(NULL, " ");
+    }
 }
 
 void R_MoveSpriteToBuffer(const uint32_t* pixels, int spriteW, int spriteH, int posX, int posY)
@@ -103,27 +132,28 @@ void R_MoveAtlasSpriteToBuffer(const uint32_t* pixels, int atlasW, int posX, int
     }
 }
 
-void R_PushLocation(map_t* pLocation, e_manager_t* pEntManager)
+void R_PushLocation(map_manager_t* pMapManager, int activeMapIdx, e_manager_t* pEntManager)
 {
-	enum MAP_ID locationId = pLocation->id;
-
 	const int screenXCenter = SCR_LOGICAL_WIDTH / 2 - ENT_SPR_SIZE / 2;
 	const int screenYCenter = SCR_LOGICAL_HEIGHT / 2 - ENT_SPR_SIZE / 2;
 
 	int playerX = FIXED_TO_INT(pEntManager->transforms[PLAYER].logX);
 	int playerY = FIXED_TO_INT(pEntManager->transforms[PLAYER].logY);
 
-	for (uint32_t y = 0; y < pLocation->rows; ++y)
+	map_t currentMap = pMapManager->maps[activeMapIdx];
+	int atlasIdx = currentMap.tileAtlasIdx;
+
+	for (uint32_t y = 0; y < currentMap.rows; ++y)
 	{
-		for (uint32_t x = 0; x < pLocation->columns; ++x)
+		for (uint32_t x = 0; x < currentMap.columns; ++x)
 		{
-			int srcX = pLocation->locationTiles[y * pLocation->columns + x].srcX;
-			int srcY = pLocation->locationTiles[y * pLocation->columns + x].srcY;
+			int srcX = currentMap.locationTiles[y * currentMap.columns + x].srcX;
+			int srcY = currentMap.locationTiles[y * currentMap.columns + x].srcY;
 
 			if (srcX < 0 || srcY < 0) continue;
 
-			int screenX = pLocation->locationTiles[y * pLocation->columns + x].posX - playerX + screenXCenter;
-			int screenY = pLocation->locationTiles[y * pLocation->columns + x].posY - playerY + screenYCenter;
+			int screenX = currentMap.locationTiles[y * currentMap.columns + x].posX - playerX + screenXCenter;
+			int screenY = currentMap.locationTiles[y * currentMap.columns + x].posY - playerY + screenYCenter;
 
 			if (screenX + TILE_SPR_SIZE < 0
 				|| screenX >= SCR_LOGICAL_WIDTH
@@ -133,9 +163,9 @@ void R_PushLocation(map_t* pLocation, e_manager_t* pEntManager)
 				continue;
 			}
 
-			int atlasW = r_mapAssets[locationId].header->spriteW;
+			int atlasW = r_mapAssets[atlasIdx].header->spriteW;
 
-			R_MoveAtlasSpriteToBuffer(r_mapAssets[locationId].pixels, atlasW, screenX, screenY, srcX, srcY, TILE_SPR_SIZE, TILE_SPR_SIZE, 0);
+			R_MoveAtlasSpriteToBuffer(r_mapAssets[atlasIdx].pixels, atlasW, screenX, screenY, srcX, srcY, TILE_SPR_SIZE, TILE_SPR_SIZE, 0);
 		}
 	}
 }
@@ -149,7 +179,7 @@ void R_PushObject(obj_manager_t* pObjManager, e_manager_t* pEntManager)
 	{
 		int objX = FIXED_TO_INT(pObjManager->transforms[i].logX);
 		int objY = FIXED_TO_INT(pObjManager->transforms[i].logY);
-		int objId = pObjManager->id[i];
+		int sprIndex = pObjManager->sprIndex[i];
 
 		const int screenXCenter = SCR_LOGICAL_WIDTH / 2 - ENT_SPR_SIZE / 2;
 		const int screenYCenter = SCR_LOGICAL_HEIGHT / 2 - ENT_SPR_SIZE / 2;
@@ -181,13 +211,13 @@ void R_PushObject(obj_manager_t* pObjManager, e_manager_t* pEntManager)
 
 		int srcX = pObjManager->sprites[i].srcX;
 		int srcY = pObjManager->sprites[i].srcY;
-		int atlasW = r_objAssets[objId].header->spriteW;
+		int atlasW = r_objAssets[sprIndex].header->spriteW;
 
-		R_MoveAtlasSpriteToBuffer(r_objAssets[objId].pixels, atlasW, screenX, screenY, srcX, srcY, TILE_SPR_SIZE, TILE_SPR_SIZE, 0);
+		R_MoveAtlasSpriteToBuffer(r_objAssets[sprIndex].pixels, atlasW, screenX, screenY, srcX, srcY, TILE_SPR_SIZE, TILE_SPR_SIZE, 0);
 	}
 }
 
-void R_PushEntity(e_manager_t* pEntManager)
+void R_PushEntity(e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager)
 {
 	int playerX = FIXED_TO_INT(pEntManager->transforms[PLAYER].logX);
 	int playerY = FIXED_TO_INT(pEntManager->transforms[PLAYER].logY);
@@ -196,7 +226,7 @@ void R_PushEntity(e_manager_t* pEntManager)
 	{
 		int entityX = FIXED_TO_INT(pEntManager->transforms[i].logX);
 		int entityY = FIXED_TO_INT(pEntManager->transforms[i].logY);
-		int entityId = pEntManager->id[i];
+		int atlasIdx = pEntManager->atlasSprIdx[i];
 		int entityFlip = pEntManager->transforms[i].flip;
 
 		const int screenXCenter = SCR_LOGICAL_WIDTH / 2 - ENT_SPR_SIZE / 2;
@@ -219,30 +249,30 @@ void R_PushEntity(e_manager_t* pEntManager)
 		switch (pEntManager->state[i])
 		{
 		case STATE_SPAWNING:
-			R_Anim_Spawn(pEntManager, &configs[pEntManager->id[i]], i);
+			R_Anim_Spawn(pEntManager, pEntCfgManager, i);
 			break;
 		case STATE_REMOVING:
-			R_Anim_Death(pEntManager, &configs[pEntManager->id[i]], i);
+			R_Anim_Death(pEntManager, pEntCfgManager, i);
 			break;
 		case STATE_ANGER:
-			R_Anim_Anger(pEntManager, &configs[pEntManager->id[i]], i);
+			R_Anim_Anger(pEntManager, pEntCfgManager, i);
 			break;
 		case STATE_ATTACK:
-			R_Anim_Attack(pEntManager, &configs[pEntManager->id[i]], i);
+			R_Anim_Attack(pEntManager, pEntCfgManager, i);
 			break;
 		case STATE_HURT:
 			// TODO: HURT ANIMATION
 			break;
 		default:
-			R_Anim_Walk(pEntManager, &configs[pEntManager->id[i]], i);
+			R_Anim_Walk(pEntManager, pEntCfgManager, i);
 			break;
 		}
 
 		int srcX = pEntManager->sprites[i].srcX;
 		int srcY = pEntManager->sprites[i].srcY;
-		int atlasW = r_entAssets[entityId].header->spriteW;
+		int atlasW = r_entAssets[atlasIdx].header->spriteW;
 
-		R_MoveAtlasSpriteToBuffer(r_entAssets[entityId].pixels, atlasW, screenX, screenY, srcX, srcY, ENT_SPR_SIZE, ENT_SPR_SIZE, entityFlip);
+		R_MoveAtlasSpriteToBuffer(r_entAssets[atlasIdx].pixels, atlasW, screenX, screenY, srcX, srcY, ENT_SPR_SIZE, ENT_SPR_SIZE, entityFlip);
 	}
 }
 
@@ -282,17 +312,17 @@ void R_PushUI(gamestate_t* pGameState, e_manager_t* pEntManager)
 		R_PushText("PAUSE", 140, 80);
 }
 
-void R_PushScene(gamestate_t* pGameState, map_t* pLocation, obj_manager_t* pObjManager, e_manager_t* pEntManager)
+void R_PushScene(gamestate_t* pGameState, map_manager_t* pMapManager, obj_manager_t* pObjManager, e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager)
 {
 	memset(r_screenBuffer, 0, sizeof(r_screenBuffer));	// Clears screen buffer
 
-	R_PushLocation(pLocation, pEntManager);
+	R_PushLocation(pMapManager, 0, pEntManager);
 	R_PushObject(pObjManager, pEntManager);
-	R_PushEntity(pEntManager);
+	R_PushEntity(pEntManager, pEntCfgManager);
 	R_PushUI(pGameState, pEntManager);
 }
 
-void R_Anim_Attack(e_manager_t* pEntManager, e_config_t* config, int i)
+void R_Anim_Attack(e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager, int i)
 {
 	pEntManager->isMoving[i] = false;
 
@@ -302,7 +332,7 @@ void R_Anim_Attack(e_manager_t* pEntManager, e_config_t* config, int i)
 	{
 		++(pEntManager->sprites[i].currentSprite);
 
-		if (pEntManager->sprites[i].currentSprite >= config->attackFramesCount)
+		if (pEntManager->sprites[i].currentSprite >= pEntCfgManager->configs[i].attackFramesCount)
 		{
 			G_SetState(i, pEntManager, STATE_NONE);
 			pEntManager->hasDamaged[i] = false;
@@ -312,13 +342,13 @@ void R_Anim_Attack(e_manager_t* pEntManager, e_config_t* config, int i)
 		}
 
 		pEntManager->sprites[i].srcX = ENT_SPR_SIZE * pEntManager->sprites[i].currentSprite;
-		pEntManager->sprites[i].srcY = ENT_SPR_SIZE * config->attackFramesRow;
+		pEntManager->sprites[i].srcY = ENT_SPR_SIZE * pEntCfgManager->configs[i].attackFramesRow;
 
 		I_ReactionTimerEnd(&pEntManager->animTimer[i]);
 	}
 }
 
-void R_Anim_Walk(e_manager_t* pEntManager, e_config_t* config, int i)
+void R_Anim_Walk(e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager, int i)
 {
 	if (pEntManager->isMoving[i])
 	{
@@ -326,9 +356,9 @@ void R_Anim_Walk(e_manager_t* pEntManager, e_config_t* config, int i)
 
 		if (I_IsTimeToReact(&pEntManager->animTimer[i]))
 		{
-			pEntManager->sprites[i].currentSprite = (pEntManager->sprites[i].currentSprite + 1) % config->walkFramesCount;
+			pEntManager->sprites[i].currentSprite = (pEntManager->sprites[i].currentSprite + 1) % pEntCfgManager->configs[i].walkFramesCount;
 			pEntManager->sprites[i].srcX = ENT_SPR_SIZE * pEntManager->sprites[i].currentSprite;
-			pEntManager->sprites[i].srcY = ENT_SPR_SIZE * config->walkFramesRow;
+			pEntManager->sprites[i].srcY = ENT_SPR_SIZE * pEntCfgManager->configs[i].walkFramesRow;
 
 			I_ReactionTimerEnd(&pEntManager->animTimer[i]);
 		}
@@ -340,7 +370,7 @@ void R_Anim_Walk(e_manager_t* pEntManager, e_config_t* config, int i)
 	}
 }
 
-void R_Anim_Spawn(e_manager_t* pEntManager, e_config_t* config, int i)
+void R_Anim_Spawn(e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager, int i)
 {
 	pEntManager->isMoving[i] = false;
 
@@ -350,7 +380,7 @@ void R_Anim_Spawn(e_manager_t* pEntManager, e_config_t* config, int i)
 	{
 		++(pEntManager->sprites[i].currentSprite);
 
-		if (pEntManager->sprites[i].currentSprite >= config->spawnFramesCount)
+		if (pEntManager->sprites[i].currentSprite >= pEntCfgManager->configs[i].spawnFramesCount)
 		{
 			G_SetState(i, pEntManager, STATE_NONE);
 			I_ReactionTimerReset(&pEntManager->animTimer[i]);
@@ -358,13 +388,13 @@ void R_Anim_Spawn(e_manager_t* pEntManager, e_config_t* config, int i)
 		}
 
 		pEntManager->sprites[i].srcX = ENT_SPR_SIZE * pEntManager->sprites[i].currentSprite;
-		pEntManager->sprites[i].srcY = ENT_SPR_SIZE * config->spawnFramesRow;
+		pEntManager->sprites[i].srcY = ENT_SPR_SIZE * pEntCfgManager->configs[i].spawnFramesRow;
 
 		I_ReactionTimerEnd(&pEntManager->animTimer[i]);
 	}
 }
 
-void R_Anim_Anger(e_manager_t* pEntManager, e_config_t* config, int i)
+void R_Anim_Anger(e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager, int i)
 {
 	pEntManager->isMoving[i] = false;
 
@@ -374,7 +404,7 @@ void R_Anim_Anger(e_manager_t* pEntManager, e_config_t* config, int i)
 	{
 		++(pEntManager->sprites[i].currentSprite);
 
-		if (pEntManager->sprites[i].currentSprite >= config->angerFramesCount)
+		if (pEntManager->sprites[i].currentSprite >= pEntCfgManager->configs[i].angerFramesCount)
 		{
 			G_SetState(i, pEntManager, STATE_NONE);
 			I_ReactionTimerReset(&pEntManager->animTimer[i]);
@@ -382,13 +412,13 @@ void R_Anim_Anger(e_manager_t* pEntManager, e_config_t* config, int i)
 		}
 
 		pEntManager->sprites[i].srcX = ENT_SPR_SIZE * pEntManager->sprites[i].currentSprite;
-		pEntManager->sprites[i].srcY = ENT_SPR_SIZE * config->angerFramesRow;
+		pEntManager->sprites[i].srcY = ENT_SPR_SIZE * pEntCfgManager->configs[i].angerFramesRow;
 
 		I_ReactionTimerEnd(&pEntManager->animTimer[i]);
 	}
 }
 
-void R_Anim_Death(e_manager_t* pEntManager, e_config_t* config, int i)
+void R_Anim_Death(e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager, int i)
 {
 	pEntManager->isMoving[i] = false;
 
@@ -398,25 +428,25 @@ void R_Anim_Death(e_manager_t* pEntManager, e_config_t* config, int i)
 	{
 		++(pEntManager->sprites[i].currentSprite);
 
-		if (pEntManager->sprites[i].currentSprite >= config->deathFramesCount)
+		if (pEntManager->sprites[i].currentSprite >= pEntCfgManager->configs[i].deathFramesCount)
 		{
 			I_ReactionTimerReset(&pEntManager->animTimer[i]);
-			pEntManager->sprites[i].currentSprite = config->deathFramesCount - 1;
+			pEntManager->sprites[i].currentSprite = pEntCfgManager->configs[i].deathFramesCount - 1;
 			pEntManager->sprites[i].srcX = ENT_SPR_SIZE * pEntManager->sprites[i].currentSprite;
-			pEntManager->sprites[i].srcY = ENT_SPR_SIZE * config->deathFramesRow;
+			pEntManager->sprites[i].srcY = ENT_SPR_SIZE * pEntCfgManager->configs[i].deathFramesRow;
 			return;
 		}
 
 		pEntManager->sprites[i].srcX = ENT_SPR_SIZE * pEntManager->sprites[i].currentSprite;
-		pEntManager->sprites[i].srcY = ENT_SPR_SIZE * config->deathFramesRow;
+		pEntManager->sprites[i].srcY = ENT_SPR_SIZE * pEntCfgManager->configs[i].deathFramesRow;
 
 		I_ReactionTimerEnd(&pEntManager->animTimer[i]);
 	}
 }
 
-void R_Destruct()
+void R_Destruct(arcf_namesentry_t* sprNamesHeader)
 {
-	for (int i = 0; i < MAX_SPRITES; ++i)
+	for (int i = 0; i < sprNamesHeader->objCount; ++i)
 	{
 		if (r_objAssets[i].rawData != NULL)
 		{
@@ -425,7 +455,10 @@ void R_Destruct()
 		}
 		r_objAssets[i].header = NULL;
 		r_objAssets[i].pixels = NULL;
+	}
 
+	for (int i = 0; i < sprNamesHeader->entCount; ++i)
+	{
 		if (r_entAssets[i].rawData != NULL)
 		{
 			free(r_entAssets[i].rawData);
@@ -433,15 +466,10 @@ void R_Destruct()
 		}
 		r_entAssets[i].header = NULL;
 		r_entAssets[i].pixels = NULL;
+	}
 
-		if (r_mapAssets[i].rawData != NULL)
-		{
-			free(r_mapAssets[i].rawData);
-			r_mapAssets[i].rawData = NULL;
-		}
-		r_mapAssets[i].header = NULL;
-		r_mapAssets[i].pixels = NULL;
-
+	for (int i = 0; i < sprNamesHeader->uiCount; ++i)
+	{
 		if (r_uiAssets[i].rawData != NULL)
 		{
 			free(r_uiAssets[i].rawData);
@@ -449,5 +477,16 @@ void R_Destruct()
 		}
 		r_uiAssets[i].header = NULL;
 		r_uiAssets[i].pixels = NULL;
+	}
+
+	for (int i = 0; i < sprNamesHeader->mapCount; ++i)
+	{
+		if (r_mapAssets[i].rawData != NULL)
+		{
+			free(r_mapAssets[i].rawData);
+			r_mapAssets[i].rawData = NULL;
+		}
+		r_mapAssets[i].header = NULL;
+		r_mapAssets[i].pixels = NULL;
 	}
 }

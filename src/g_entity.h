@@ -13,23 +13,20 @@ typedef struct Map map_t;
 typedef struct GameState gamestate_t;
 typedef struct ReactionTimer rtimer_t;
 typedef struct EntityConfig e_config_t;
+typedef struct EntityCfgManager e_cfgmanager_t;
 
-extern e_config_t configs[MAX_CONFIGS];
-
-void G_CreatePlayerConfig();
-void G_CreateSkeletonConfig();
-void G_EntityInit(e_manager_t* pEntManager, enum ENTITY_ID id, int posX, int posY, e_config_t* config);
-void G_SkeletonSpawn(e_manager_t* pEntManager, rtimer_t* timer);
-void G_UpdateEntity(gamestate_t* pGameState, e_manager_t* pEntManager);
+void G_LoadEntityConfigs(e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager, FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable);
+void G_EntityInit(e_manager_t* pEntManager, int atlasSprIdx, int posX, int posY, int speed, int maxHP);
+void G_UpdateEntity(gamestate_t* pGameState, e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager);
 void G_EntityDirection(gamestate_t* pGameState, e_manager_t* pEntManager, int i);
 void G_EntityJump(gamestate_t* pGameState, e_manager_t* pEntManager, int index);
 void G_SetState(int index, e_manager_t* pEntManager, enum ENTITY_STATE state);
 void G_SetAi(int index, e_manager_t* pEntManager, enum ENTITY_AI ai);
 void G_MarkEntityToRemove(int index, e_manager_t* pEntManager);
 void G_RemoveEntityFromLoadList(int index, e_manager_t* pEntManager);
-void G_AI_Chase(gamestate_t* pGameState, e_manager_t* pEntManager, int i);
+void G_AI_Chase(gamestate_t* pGameState, e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager, int i);
 void G_AI_Idle(e_manager_t* pEntManager, int i);
-void G_EntityAttack(e_manager_t* pEntManager, int attackerId, int victimId);
+void G_EntityAttack(e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager, int attackerId, int victimId);
 void G_EntityHPControl(gamestate_t* pGameState, e_manager_t* pEntManager, int i);
 
 #endif /* G_ENTITY_H_ */

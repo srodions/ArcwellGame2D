@@ -37,9 +37,9 @@ void P_EntityFall(e_manager_t* pEntManager, gamestate_t* pGameState)
 /*
  * This method checks entity wall collision in all of directions (left, right)
  */
-void P_EntityWallCollisionCheck(map_t* pLocation, e_manager_t* pEntManager, gamestate_t* pGameState)
+void P_EntityWallCollisionCheck(map_manager_t* pMapManager, int activeMapIdx, e_manager_t* pEntManager, gamestate_t* pGameState)
 {
-	const int mapWidth = pLocation->columns * TILE_SPR_SIZE;
+	const int mapWidth = pMapManager->maps[activeMapIdx].columns * TILE_SPR_SIZE;
 
 	const int screenXCenter = SCR_LOGICAL_WIDTH / 2 - ENT_SPR_SIZE / 2;
 	const fixed_t screenXCenterFixed = INT_TO_FIXED(screenXCenter);

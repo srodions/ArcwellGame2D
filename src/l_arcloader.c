@@ -34,6 +34,9 @@ arcf_entry_t* L_LoadLumpsTable(FILE* arcFile, arcf_header_t* pHeader)
 	arcf_entry_t* pTable = (arcf_entry_t*) malloc(sizeof(arcf_entry_t) * pHeader->lumpsCount);
 	fread(pTable, sizeof(arcf_entry_t), pHeader->lumpsCount, arcFile);
 
+	if (!pTable)
+		printf("[ARC_LOADER] Error loading lumps table\n");
+
 	return pTable;
 }
 
@@ -51,9 +54,14 @@ void* L_LoadLump(FILE* arcFile, const char* lumpName, arcf_header_t* pHeader, ar
 			fread(buffer, 1, pTable[i].lumpSize, arcFile);
 
 			if (outSize) *outSize = pTable[i].lumpSize;
+
+			printf("[ARC_LOADER] Loading lump %s; Size %d\n", lumpName, *outSize);
 			break;
 		}
 	}
+
+	if (!buffer)
+		printf("[ARC_LOADER] Error loading lump %s\n", lumpName);
 
 	return buffer;
 }
