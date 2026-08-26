@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include "fixed_math.h"
 
-#define FLOOR_DISTANCE 80
+#define FLOOR_DISTANCE 160
 
 typedef struct GameState gamestate_t;
 typedef struct EntityManager e_manager_t;

@@ -40,11 +40,11 @@ map_t G_MapInit(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable, con
 	        char tile = mapData[y * columns + x];
 	        int srcX = -1, srcY = -1;
 
-	        if (tile >= 'A' && tile <= 'J')
+	        if (tile >= 'A' && tile <= 'Z')
 	        {
-	            int index = tile - 'A';          		// Getting tile index (0 for 'A', 1 for 'B', ...)
-	            srcX = (index % 5) * TILE_SPR_SIZE; 	// Offset on X (the row has 5 tiles)
-	            srcY = (index / 5) * TILE_SPR_SIZE; 	// Offset on Y (new line break after 5th tile)
+	            int index = tile - 'A';          					// Getting tile index (0 for 'A', 1 for 'B', ...)
+	            srcX = (index % TLS_IN_ATLS_ROW) * TILE_SPR_SIZE; 	// Offset on X (the row has 5 tiles)
+	            srcY = (index / TLS_IN_ATLS_ROW) * TILE_SPR_SIZE; 	// Offset on Y (new line break after 5th tile)
 	        }
 
 	        location.locationTiles[y * columns + x] = G_TileInit(srcX, srcY, tempX, tempY);

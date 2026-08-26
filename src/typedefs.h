@@ -209,6 +209,7 @@ typedef struct EntityManager
 	enum ENTITY_AI		ai[MAX_ENTITIES];
 	int 				atlasSprIdx[MAX_ENTITIES];
 	unsigned int		hp[MAX_ENTITIES];
+	int					rdLastDeathSprites[MAX_ENTITIES];
 	bool				isMoving[MAX_ENTITIES];
 	bool				isFalling[MAX_ENTITIES];
 	bool				hasDamaged[MAX_ENTITIES];
@@ -223,10 +224,11 @@ typedef struct EntityConfig
 	// FRAME COUNTS
 	uint32_t spawnFramesCount;
 	uint32_t deathFramesCount;
+	uint32_t deathLastFrames;
 	uint32_t walkFramesCount;
+	uint32_t stayFramesCount;
 	uint32_t angerFramesCount;
 	uint32_t attackFramesCount;
-	uint32_t hurtFramesCount;
 	// COMBAT
 	fixed_t  knockback;
 	fixed_t	 speed;
@@ -239,8 +241,8 @@ typedef struct EntityConfig
 	uint32_t deathFramesRow;
 	uint32_t angerFramesRow;
 	uint32_t attackFramesRow;
-	uint32_t hurtFramesRow;
 	uint32_t walkFramesRow;
+	uint32_t stayFramesRow;
 } e_config_t;
 
 typedef struct _ARCF_EntCfgHeader

@@ -241,7 +241,8 @@ void R_PushEntity(e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager)
 			|| screenY + ENT_SPR_SIZE < 0
 			|| screenY >= SCR_LOGICAL_HEIGHT)
 		{
-			G_MarkEntityToRemove(i, pEntManager);
+			if (pEntManager->state[i] != STATE_SPAWNING)
+				G_MarkEntityToRemove(i, pEntManager);
 			continue;
 		}
 		else I_ReactionTimerReset(&pEntManager->destructTimer[i]);
@@ -259,9 +260,6 @@ void R_PushEntity(e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager)
 			break;
 		case STATE_ATTACK:
 			R_Anim_Attack(pEntManager, pEntCfgManager, i);
-			break;
-		case STATE_HURT:
-			// TODO: HURT ANIMATION
 			break;
 		default:
 			R_Anim_Walk(pEntManager, pEntCfgManager, i);
@@ -350,23 +348,21 @@ void R_Anim_Attack(e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager, int
 
 void R_Anim_Walk(e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager, int i)
 {
-	if (pEntManager->isMoving[i])
-	{
-		I_ReactionTimerStart(&pEntManager->animTimer[i]);
+	I_ReactionTimerStart(&pEntManager->animTimer[i]);
 
-		if (I_IsTimeToReact(&pEntManager->animTimer[i]))
-		{
-			pEntManager->sprites[i].currentSprite = (pEntManager->sprites[i].currentSprite + 1) % pEntCfgManager->configs[i].walkFramesCount;
-			pEntManager->sprites[i].srcX = ENT_SPR_SIZE * pEntManager->sprites[i].currentSprite;
-			pEntManager->sprites[i].srcY = ENT_SPR_SIZE * pEntCfgManager->configs[i].walkFramesRow;
-
-			I_ReactionTimerEnd(&pEntManager->animTimer[i]);
-		}
-	}
-	else
+	if (I_IsTimeToReact(&pEntManager->animTimer[i]))
 	{
-		pEntManager->sprites[i].srcX = 0;
-		pEntManager->sprites[i].srcY = 0;
+		pEntManager->sprites[i].currentSprite = pEntManager->isMoving[i]
+			? (pEntManager->sprites[i].currentSprite + 1) % pEntCfgManager->configs[i].walkFramesCount
+			: (pEntManager->sprites[i].currentSprite + 1) % pEntCfgManager->configs[i].stayFramesCount;
+
+		pEntManager->sprites[i].srcX = ENT_SPR_SIZE * pEntManager->sprites[i].currentSprite;
+
+		pEntManager->sprites[i].srcY = pEntManager->isMoving[i]
+			? ENT_SPR_SIZE * pEntCfgManager->configs[i].walkFramesRow
+			: ENT_SPR_SIZE * pEntCfgManager->configs[i].stayFramesRow;
+
+		I_ReactionTimerEnd(&pEntManager->animTimer[i]);
 	}
 }
 
@@ -431,7 +427,10 @@ void R_Anim_Death(e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager, int 
 		if (pEntManager->sprites[i].currentSprite >= pEntCfgManager->configs[i].deathFramesCount)
 		{
 			I_ReactionTimerReset(&pEntManager->animTimer[i]);
-			pEntManager->sprites[i].currentSprite = pEntCfgManager->configs[i].deathFramesCount - 1;
+
+			int randomLastSprite = pEntManager->rdLastDeathSprites[i];
+
+			pEntManager->sprites[i].currentSprite = (pEntCfgManager->configs[i].deathFramesCount - 1) + randomLastSprite;
 			pEntManager->sprites[i].srcX = ENT_SPR_SIZE * pEntManager->sprites[i].currentSprite;
 			pEntManager->sprites[i].srcY = ENT_SPR_SIZE * pEntCfgManager->configs[i].deathFramesRow;
 			return;

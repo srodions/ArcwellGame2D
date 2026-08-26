@@ -31,8 +31,9 @@ void G_LoadEntityConfigs(e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManage
 		int speed = entHeader->items[i].speed;
 		int maxHP = entHeader->items[i].maxHp;
 		int atlasSprIdx = entHeader->items[i].atlasSprIdx;
+		int deathLastFrames = entHeader->items[i].deathLastFrames;
 
-		G_EntityInit(pEntManager, atlasSprIdx, posX, posY, speed, maxHP);
+		G_EntityInit(pEntManager, atlasSprIdx, posX, posY, speed, maxHP, deathLastFrames);
 	}
 }
 
@@ -40,12 +41,13 @@ void G_LoadEntityConfigs(e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManage
  * This function initializes entity (data-oriented style).
  *
  */
-void G_EntityInit(e_manager_t* pEntManager, int atlasSprIdx, int posX, int posY, int speed, int maxHP)
+void G_EntityInit(e_manager_t* pEntManager, int atlasSprIdx, int posX, int posY, int speed, int maxHP, int dlf)
 {
 	int i = pEntManager->entitiesCount;
 
 	if (i >= MAX_ENTITIES) return;
 
+	pEntManager->rdLastDeathSprites[i] = rand() % dlf;
 	// Texture load
 	pEntManager->atlasSprIdx[i] = atlasSprIdx;
 	pEntManager->sprites[i].srcX = 0;
@@ -194,7 +196,16 @@ void G_AI_Idle(e_manager_t* pEntManager, int i)
 		return;
 	}
 
-	pEntManager->isMoving[i] = true;
+	if (!pEntManager->isMoving[i])
+	{
+		I_ReactionTimerStart(&pEntManager->aiTimer[i]);
+
+		if (I_IsTimeToReact(&pEntManager->aiTimer[i]))
+		{
+			pEntManager->isMoving[i] = true;
+			I_ReactionTimerEnd(&pEntManager->aiTimer[i]);
+		}
+	}
 
 	if (pEntManager->aiParams[i].isCollisionOnLeft)
 		pEntManager->sprites[i].direction = DIR_RIGHT;
@@ -206,12 +217,22 @@ void G_AI_Idle(e_manager_t* pEntManager, int i)
 	if (I_IsTimeToReact(&pEntManager->aiTimer[i]))
 	{
 		pEntManager->aiTimer[i].reactionTime = AI_IDLE_MIN_RENEW_TIME + rand() % AI_IDLE_MAX_RENEW_TIME;
-		pEntManager->aiParams[i].currentChoice = rand() % 100;
+		pEntManager->aiParams[i].currentChoice = rand() % 120;
 
-		if (pEntManager->aiParams[i].currentChoice <= 50)
+		int currentChoice = pEntManager->aiParams[i].currentChoice;
+
+		if (currentChoice >= 0 && currentChoice <= 40)
+		{
 			pEntManager->sprites[i].direction = DIR_LEFT;
-		else
+		}
+		else if (currentChoice > 40 && currentChoice <= 80)
+		{
 			pEntManager->sprites[i].direction = DIR_RIGHT;
+		}
+		else if (currentChoice > 80 && currentChoice <= 120)
+		{
+			pEntManager->isMoving[i] = false;
+		}
 
 		I_ReactionTimerEnd(&pEntManager->aiTimer[i]);
 	}
@@ -228,6 +249,17 @@ void G_AI_Chase(gamestate_t* pGameState, e_manager_t* pEntManager, e_cfgmanager_
 	{
 		G_SetAi(i, pEntManager, AI_IDLE);
 		return;
+	}
+
+	if (!pEntManager->isMoving[i])
+	{
+		I_ReactionTimerStart(&pEntManager->aiTimer[i]);
+
+		if (I_IsTimeToReact(&pEntManager->aiTimer[i]))
+		{
+			pEntManager->isMoving[i] = true;
+			I_ReactionTimerEnd(&pEntManager->aiTimer[i]);
+		}
 	}
 
 	int chaserAttackDist = pEntCfgManager->configs[pEntManager->atlasSprIdx[i]].attackDist;
