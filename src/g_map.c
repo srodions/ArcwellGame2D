@@ -26,7 +26,10 @@ map_t G_MapInit(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable, con
 	map_t location;
 	location.rows = rows;
 	location.columns = columns;
+	location.bgRows = mapDataHeader->bgRows;
+	location.bgColumns = mapDataHeader->bgColumns;
 	location.tileAtlasIdx = mapDataHeader->tileAtlasIdx;
+	location.bgAtlasIdx = mapDataHeader->bgAtlasIdx;
 	location.locationTiles = (tile_t*) malloc(totalTiles * sizeof(tile_t));
 
 	// WORKING WITH DATA

@@ -20,6 +20,7 @@ typedef struct RenderAsset renderasset_t;
 typedef struct MapManager map_manager_t;
 
 extern uint32_t r_screenBuffer[SCR_LOGICAL_WIDTH * SCR_LOGICAL_HEIGHT];
+extern renderasset_t* r_mapBgAssets;
 extern renderasset_t* r_mapAssets;
 extern renderasset_t* r_objAssets;
 extern renderasset_t* r_entAssets;
@@ -28,6 +29,7 @@ extern renderasset_t* r_uiAssets;
 void R_MoveSpriteToBuffer(const uint32_t* pixels, int spriteW, int spriteH, int posX, int posY);
 void R_MoveAtlasSpriteToBuffer(const uint32_t* pixels, int atlasW, int posX, int posY, int srcX, int srcY, int srcW, int srcH, int flipX);
 void R_LoadSpritesData(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable, arcf_namesentry_t* pNamesHeader);
+void R_PushBackground(map_manager_t* pMapManager, int activeMapIdx);
 void R_PushLocation(map_manager_t* pMapManager, int activeMapIdx, e_manager_t* pEntManager);
 void R_PushObject(obj_manager_t* pObjManager, e_manager_t* pEntManager);
 void R_PushEntity(e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager);

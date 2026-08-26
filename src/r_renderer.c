@@ -6,6 +6,7 @@
 #include <stdlib.h>
 
 uint32_t r_screenBuffer[SCR_LOGICAL_WIDTH * SCR_LOGICAL_HEIGHT];
+renderasset_t* r_mapBgAssets;
 renderasset_t* r_mapAssets;
 renderasset_t* r_objAssets;
 renderasset_t* r_entAssets;
@@ -19,6 +20,7 @@ void R_LoadSpritesData(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTab
     r_entAssets = (renderasset_t*) malloc(pNamesHeader->entCount * sizeof(renderasset_t));
     r_mapAssets = (renderasset_t*) malloc(pNamesHeader->mapCount * sizeof(renderasset_t));
     r_uiAssets = (renderasset_t*) malloc(pNamesHeader->uiCount * sizeof(renderasset_t));
+    r_mapBgAssets = (renderasset_t*) malloc(pNamesHeader->mapBgCount * sizeof(renderasset_t));
 
     // OBJECTS
     char *objName = strtok(pNamesHeader->objNames, " ");
@@ -47,6 +49,20 @@ void R_LoadSpritesData(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTab
 
 		entName = strtok(NULL, " ");
     }
+
+    // BACKGROUNDS
+    char *mapBgName = strtok(pNamesHeader->mapBgNames, " ");
+
+	for (int i = 0; i < pNamesHeader->mapBgCount; ++i)
+	{
+		if (mapBgName == NULL) break;
+
+		r_mapBgAssets[i].rawData = L_LoadLump(arcFile, mapBgName, pHeader, pTable, &currentDataSize);
+		r_mapBgAssets[i].header  = (arcf_spriteheader_t*) r_mapBgAssets[i].rawData;
+		r_mapBgAssets[i].pixels  = (uint32_t*) (r_mapBgAssets[i].header + 1);
+
+		mapBgName = strtok(NULL, " ");
+	}
 
     // MAPS
     char *mapName = strtok(pNamesHeader->mapNames, " ");
@@ -130,6 +146,38 @@ void R_MoveAtlasSpriteToBuffer(const uint32_t* pixels, int atlasW, int posX, int
             }
         }
     }
+}
+
+void R_PushBackground(map_manager_t* pMapManager, int activeMapIdx)
+{
+	map_t currentMap = pMapManager->maps[activeMapIdx];
+	int atlasIdx = currentMap.bgAtlasIdx;
+
+	int tempY = 0;
+	for (uint32_t y = 0; y < currentMap.bgRows; ++y)
+	{
+		int tempX = 0;
+
+		for (uint32_t x = 0; x < currentMap.bgColumns; ++x)
+		{
+			if (tempX + TILE_SPR_SIZE < 0
+				|| tempX >= SCR_LOGICAL_WIDTH
+				|| tempY + TILE_SPR_SIZE < 0
+				|| tempY >= SCR_LOGICAL_HEIGHT)
+			{
+				continue;
+			}
+
+			int srcX = TILE_SPR_SIZE * x;
+			int srcY = TILE_SPR_SIZE * y;
+			int atlasW = r_mapBgAssets[atlasIdx].header->spriteW;
+
+			R_MoveAtlasSpriteToBuffer(r_mapBgAssets[atlasIdx].pixels, atlasW, tempX, tempY, srcX, srcY, TILE_SPR_SIZE, TILE_SPR_SIZE, 0);
+			tempX += TILE_SPR_SIZE;
+		}
+
+		tempY += TILE_SPR_SIZE;
+	}
 }
 
 void R_PushLocation(map_manager_t* pMapManager, int activeMapIdx, e_manager_t* pEntManager)
@@ -314,6 +362,7 @@ void R_PushScene(gamestate_t* pGameState, map_manager_t* pMapManager, obj_manage
 {
 	memset(r_screenBuffer, 0, sizeof(r_screenBuffer));	// Clears screen buffer
 
+	R_PushBackground(pMapManager, 0);
 	R_PushLocation(pMapManager, 0, pEntManager);
 	R_PushObject(pObjManager, pEntManager);
 	R_PushEntity(pEntManager, pEntCfgManager);
