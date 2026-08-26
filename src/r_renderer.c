@@ -160,14 +160,6 @@ void R_PushBackground(map_manager_t* pMapManager, int activeMapIdx)
 
 		for (uint32_t x = 0; x < currentMap.bgColumns; ++x)
 		{
-			if (tempX + TILE_SPR_SIZE < 0
-				|| tempX >= SCR_LOGICAL_WIDTH
-				|| tempY + TILE_SPR_SIZE < 0
-				|| tempY >= SCR_LOGICAL_HEIGHT)
-			{
-				continue;
-			}
-
 			int srcX = TILE_SPR_SIZE * x;
 			int srcY = TILE_SPR_SIZE * y;
 			int atlasW = r_mapBgAssets[atlasIdx].header->spriteW;
