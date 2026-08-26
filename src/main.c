@@ -10,51 +10,76 @@ int main()
 
 	packNamesHeader(arcFile, &currentOffset, &currentFilesCount);
 
-	arcf_objheader_t* objs = initObjectsHeader(22);
-	// TORCH 1
-	fillObjectData(objs, 0, 0, 0, 3, 4, true);
-	// TORCH 2
-	fillObjectData(objs, 0, 0, 0, 11, 4, true);
-	// TORCH 3
-	fillObjectData(objs, 0, 0, 0, 19, 4, true);
-	// TORCH 4
-	fillObjectData(objs, 0, 0, 0, 27, 4, true);
-	// TORCH 5
-	fillObjectData(objs, 0, 0, 0, 35, 4, true);
-	// CHEST
-	fillObjectData(objs, 2, 0, 0, 11, 6, false);
+	arcf_objheader_t* objs = initObjectsHeader(42);
 	// COLUMN 1
-	fillObjectData(objs, 1, 1, 1, 7, 6, false);
-	fillObjectData(objs, 1, 2, 1, 7, 5, false);
-	fillObjectData(objs, 1, 2, 1, 7, 4, false);
-	fillObjectData(objs, 1, 3, 1, 7, 3, false);
+	fillObjectData(objs, 1, 1, 1, 5, 11, false);
+	fillObjectData(objs, 1, 2, 1, 5, 10, false);
+	fillObjectData(objs, 1, 3, 1, 5, 9, false);
 	// COLUMN 2
-	fillObjectData(objs, 1, 1, 1, 15, 6, false);
-	fillObjectData(objs, 1, 2, 1, 15, 5, false);
-	fillObjectData(objs, 1, 2, 1, 15, 4, false);
-	fillObjectData(objs, 1, 3, 1, 15, 3, false);
+	fillObjectData(objs, 1, 1, 1, 7, 11, false);
+	fillObjectData(objs, 1, 2, 1, 7, 10, false);
+	fillObjectData(objs, 1, 3, 1, 7, 9, false);
 	// COLUMN 3
-	fillObjectData(objs, 1, 1, 1, 23, 6, false);
-	fillObjectData(objs, 1, 2, 1, 23, 5, false);
-	fillObjectData(objs, 1, 2, 1, 23, 4, false);
-	fillObjectData(objs, 1, 3, 1, 23, 3, false);
+	fillObjectData(objs, 1, 1, 1, 9, 11, false);
+	fillObjectData(objs, 1, 2, 1, 9, 10, false);
+	fillObjectData(objs, 1, 3, 1, 9, 9, false);
 	// COLUMN 4
-	fillObjectData(objs, 1, 1, 1, 31, 6, false);
-	fillObjectData(objs, 1, 2, 1, 31, 5, false);
-	fillObjectData(objs, 1, 2, 1, 31, 4, false);
-	fillObjectData(objs, 1, 3, 1, 31, 3, false);
+	fillObjectData(objs, 1, 1, 1, 11, 11, false);
+	fillObjectData(objs, 1, 2, 1, 11, 10, false);
+	fillObjectData(objs, 1, 3, 1, 11, 9, false);
+	// COLUMN 5
+	fillObjectData(objs, 1, 1, 1, 13, 11, false);
+	fillObjectData(objs, 1, 2, 1, 13, 10, false);
+	fillObjectData(objs, 1, 3, 1, 13, 9, false);
+	// COLUMN 6
+	fillObjectData(objs, 1, 1, 1, 15, 11, false);
+	fillObjectData(objs, 1, 2, 1, 15, 10, false);
+	fillObjectData(objs, 1, 3, 1, 15, 9, false);
+	// COLUMN 7
+	fillObjectData(objs, 1, 1, 1, 17, 11, false);
+	fillObjectData(objs, 1, 2, 1, 17, 10, false);
+	fillObjectData(objs, 1, 2, 1, 17, 9, false);
+	fillObjectData(objs, 1, 2, 1, 17, 8, false);
+	fillObjectData(objs, 1, 2, 1, 17, 7, false);
+	fillObjectData(objs, 1, 2, 1, 17, 6, false);
+	fillObjectData(objs, 1, 3, 1, 17, 5, false);
+	// COLUMN 8
+	fillObjectData(objs, 1, 1, 1, 23, 11, false);
+	fillObjectData(objs, 1, 3, 1, 23, 10, false);
+	// COLUMN 9
+	fillObjectData(objs, 1, 1, 1, 34, 11, false);
+	fillObjectData(objs, 1, 2, 1, 34, 10, false);
+	fillObjectData(objs, 1, 2, 1, 34, 9, false);
+	fillObjectData(objs, 1, 2, 1, 34, 8, false);
+	fillObjectData(objs, 1, 2, 1, 34, 7, false);
+	fillObjectData(objs, 1, 2, 1, 34, 6, false);
+	fillObjectData(objs, 1, 3, 1, 34, 5, false);
+	// LIANA 1
+	fillObjectData(objs, 1, 4, 1, 5, 10, false);
+	// LIANA 2
+	fillObjectData(objs, 1, 4, 1, 7, 11, false);
+	// LIANA 3
+	fillObjectData(objs, 1, 4, 1, 9, 10, false);
+	// LIANA 4
+	fillObjectData(objs, 1, 4, 1, 15, 10, false);
+	// TORCH 1
+	fillObjectData(objs, 0, 0, 0, 17, 6, true);
+	// TORCH 2
+	fillObjectData(objs, 0, 0, 0, 17, 8, true);
+	// TORCH 3
+	fillObjectData(objs, 0, 0, 0, 34, 6, true);
+	// TORCH 4
+	fillObjectData(objs, 0, 0, 0, 34, 8, true);
 	packObjectsData(objs, arcFile, &currentOffset, &currentFilesCount);
 
-	arcf_entcfgheader_t* ents = initEntHeader(6);
-	fillEntityData(ents, 0, 0, 0, 24, 4, 1, 0, 0, 2, 0, 0, 20, 6, 100, 100, 0, 0, 20, 2, 8, 0);
-	fillEntityData(ents, 11, 3, 1, 24, 9, 4, 7, 2, 3, 0, 0, 20, 6, 180, 100, 11, 1, 16, 1, 8, 0);
-	fillEntityData(ents, 11, 3, 1, 24, 9, 4, 7, 2, 3, 0, 0, 20, 6, 220, 100, 11, 1, 16, 1, 8, 0);
-	fillEntityData(ents, 11, 3, 1, 24, 9, 4, 7, 2, 3, 0, 0, 20, 6, 240, 100, 11, 1, 16, 1, 8, 0);
-	fillEntityData(ents, 11, 3, 1, 24, 9, 4, 7, 2, 3, 0, 0, 20, 6, 270, 100, 11, 1, 16, 1, 8, 0);
-	fillEntityData(ents, 11, 3, 1, 24, 9, 4, 7, 2, 3, 0, 0, 20, 6, 280, 100, 11, 1, 16, 1, 8, 0);
+	arcf_entcfgheader_t* ents = initEntHeader(4);
+	fillEntityData(ents, 0, 0, 0, 24, 4, 2, 0, 0, 1, 2, 20, 6, 100, 160, 0, 0, 20, 2, 8, 1, 6, 0);
+	fillEntityData(ents, 11, 4, 1, 24, 9, 5, 7, 3, 3, 3, 20, 6, 416, 160, 11, 2, 16, 1, 8, 1, 8, 0);
+	fillEntityData(ents, 11, 4, 1, 24, 9, 5, 7, 3, 3, 3, 20, 6, 432, 160, 11, 2, 16, 1, 8, 1, 8, 0);
+	fillEntityData(ents, 11, 4, 1, 24, 9, 5, 7, 3, 3, 3, 20, 6, 464, 160, 11, 2, 16, 1, 8, 1, 8, 0);
 	packEntityData(ents, arcFile, &currentOffset, &currentFilesCount);
 
-	packMap_Tomb(arcFile, 9, 39, &currentOffset, &currentFilesCount);
+	packMap_Tomb(arcFile, 17, 36, &currentOffset, &currentFilesCount);
 
 	packSpriteFile("in/font_bitmap.png", "FNT", arcFile, &currentOffset, &currentFilesCount);
 	packSpriteFile("in/health_bar.png", "HLTHBR", arcFile, &currentOffset, &currentFilesCount);

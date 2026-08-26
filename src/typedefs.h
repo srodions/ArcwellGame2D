@@ -68,10 +68,11 @@ typedef struct EntityConfig
 	// FRAME COUNTS
 	uint32_t spawnFramesCount;
 	uint32_t deathFramesCount;
+	uint32_t deathLastFrames;
 	uint32_t walkFramesCount;
+	uint32_t stayFramesCount;
 	uint32_t angerFramesCount;
 	uint32_t attackFramesCount;
-	uint32_t hurtFramesCount;
 	// COMBAT
 	uint32_t knockback;
 	uint32_t speed;
@@ -84,8 +85,8 @@ typedef struct EntityConfig
 	uint32_t deathFramesRow;
 	uint32_t angerFramesRow;
 	uint32_t attackFramesRow;
-	uint32_t hurtFramesRow;
 	uint32_t walkFramesRow;
+	uint32_t stayFramesRow;
 } e_config_t;
 
 typedef struct ARCF_EntCfgHeader

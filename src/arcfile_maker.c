@@ -10,19 +10,27 @@ arcf_entry_t allEntries[16];
 void packMap_Tomb(FILE* arcFile, uint32_t rows, uint32_t columns, uint32_t* currentOffset, uint32_t* currentFilesCount)
 {
 	const char* design[] = {
-		"........................................",
-		"........................................",
-		"IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII",
-		"........................................",
-		"........................................",
-		"........................................",
-		"........................................",
-		"DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
-		"IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII"
+		"....................................",
+		"....................................",
+		"....................................",
+		"....................................",
+		"................KKKKKKKKKKKKKKKKKKKK",
+		"................KFFFFFFFFFFFFFFFFFFK",
+		"................KFFFFLLFFFFFLLFFFFFK",
+		"................KFFFFFFFFFFFLLFFFFFK",
+		"....KKKKKKKKKKKKKFFFFFFFFFFFFFFFFFFK",
+		"....FFFFFFFFFFFFFFFFFLLLLFFFFFFFFFFK",
+		"....FFFFFFFLLFFFFFFLLLLFFFFFFFFFFFFK",
+		"....FFFFFFFLLLLLFFFFFFFFFFFFLLFFFFFK",
+		"BBABDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+		"HHGHJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ",
+		"HHGHJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ",
+		"HHGHJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ",
+		"AAAAHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH"
 	};
 
 	int maxRows = sizeof(design) / sizeof(design[0]);
-	int maxCols = 40;
+	int maxCols = 36;
 	if (rows > maxRows) rows = maxRows;
 	if (columns > maxCols) columns = maxCols;
 
@@ -199,8 +207,8 @@ void fillObjectData(arcf_objheader_t* objHeader, uint32_t si, uint32_t bsx, uint
 }
 
 void fillEntityData(arcf_entcfgheader_t* entHeader, int afc, int afr, int asi, int atd, int atfc, int atfr,
-int dfc, int dfr,int dmsi, int hfc, int hfr, int knck, int mhp, int pX, int pY, int sfc, int sfr, int spd,
-int str, int wfc, int wfr)				// That's awful for now
+int dfc, int dfr, int dlf, int dmsi, int knck, int mhp, int pX, int pY, int sfc, int sfr, int spd,
+int str, int wfc, int wfr, int stfc, int stfr)				// That's awful for now
 {
 	e_config_t cfg = {
 		.angerFramesCount = afc,
@@ -211,9 +219,8 @@ int str, int wfc, int wfr)				// That's awful for now
 		.attackFramesRow = atfr,
 		.deathFramesCount = dfc,
 		.deathFramesRow = dfr,
+		.deathLastFrames = dlf,
 		.dmgSpriteIndex = dmsi,
-		.hurtFramesCount = hfc,
-		.hurtFramesRow = hfr,
 		.knockback = knck,
 		.maxHp = mhp,
 		.posX = pX,
@@ -223,7 +230,9 @@ int str, int wfc, int wfr)				// That's awful for now
 		.speed = spd,
 		.strength = str,
 		.walkFramesCount = wfc,
-		.walkFramesRow = wfr
+		.walkFramesRow = wfr,
+		.stayFramesCount = stfc,
+		.stayFramesRow = stfr
 	};
 
 	entHeader->items[entHeader->cfgCount] = cfg;
