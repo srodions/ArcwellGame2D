@@ -74,18 +74,19 @@ int main()
 
 	arcf_entcfgheader_t* ents = initEntHeader(4);
 	fillEntityData(ents, 0, 0, 0, 24, 4, 2, 0, 0, 1, 2, 20, 6, 100, 160, 0, 0, 20, 2, 8, 1, 6, 0);
+	fillEntityData(ents, 11, 4, 1, 24, 9, 5, 7, 3, 3, 3, 20, 6, 384, 160, 11, 2, 16, 1, 8, 1, 8, 0);
 	fillEntityData(ents, 11, 4, 1, 24, 9, 5, 7, 3, 3, 3, 20, 6, 416, 160, 11, 2, 16, 1, 8, 1, 8, 0);
 	fillEntityData(ents, 11, 4, 1, 24, 9, 5, 7, 3, 3, 3, 20, 6, 432, 160, 11, 2, 16, 1, 8, 1, 8, 0);
-	fillEntityData(ents, 11, 4, 1, 24, 9, 5, 7, 3, 3, 3, 20, 6, 464, 160, 11, 2, 16, 1, 8, 1, 8, 0);
 	packEntityData(ents, arcFile, &currentOffset, &currentFilesCount);
 
-	packMap_Tomb(arcFile, 17, 36, &currentOffset, &currentFilesCount);
+	packMap_Tomb(arcFile, 19, 36, 15, 20, &currentOffset, &currentFilesCount);
 
 	packSpriteFile("in/font_bitmap.png", "FNT", arcFile, &currentOffset, &currentFilesCount);
 	packSpriteFile("in/health_bar.png", "HLTHBR", arcFile, &currentOffset, &currentFilesCount);
 	packSpriteFile("in/player.png", "PLR", arcFile, &currentOffset, &currentFilesCount);
 	packSpriteFile("in/skeleton.png", "SKLTN", arcFile, &currentOffset, &currentFilesCount);
 	packSpriteFile("in/tiles.png", "TMBTLS", arcFile, &currentOffset, &currentFilesCount);
+	packSpriteFile("in/bg_cemetery.png", "BGCMTRY", arcFile, &currentOffset, &currentFilesCount);
 	packSpriteFile("in/torch.png", "TRCH", arcFile, &currentOffset, &currentFilesCount);
 	packSpriteFile("in/chest.png", "CHST", arcFile, &currentOffset, &currentFilesCount);
 	packSpriteFile("in/decoration.png", "DCRTN", arcFile, &currentOffset, &currentFilesCount);

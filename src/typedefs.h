@@ -15,7 +15,10 @@ typedef struct ARCF_MapEntryHeader
 {
 	uint32_t mapRows;
 	uint32_t mapColumns;
+	uint32_t bgRows;
+	uint32_t bgColumns;
 	uint32_t tileAtlasIdx;
+	uint32_t bgAtlasIdx;
 	char	data[];
 } arcf_mapheader_t;
 
@@ -54,10 +57,12 @@ typedef struct ARCF_NamesEntry
 	uint32_t entCount;		// ...
 	uint32_t mapCount;		// ....
 	uint32_t uiCount;		// .....
+	uint32_t mapBgCount;
 	char	objNames[256];	// Lines with names
 	char	entNames[256];	// ...
 	char	mapNames[256];	// ....
 	char	uiNames[256];	// .....
+	char	mapBgNames[256];
 } arcf_namesentry_t;
 
 typedef struct EntityConfig

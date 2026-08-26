@@ -6,7 +6,7 @@
 
 extern arcf_entry_t allEntries[16];
 
-void packMap_Tomb(FILE* arcFile, uint32_t rows, uint32_t columns, uint32_t* currentOffset, uint32_t* currentFilesCount);
+void packMap_Tomb(FILE* arcFile, uint32_t rows, uint32_t columns, uint32_t bgRows, uint32_t bgColumns, uint32_t* currentOffset, uint32_t* currentFilesCount);
 void packFile(const char* filePath, const char* fileName, FILE* arcFile, uint32_t* currentOffset, uint32_t* currentFilesCount);
 void packNamesHeader(FILE* arcFile, uint32_t* currentOffset, uint32_t* currentFilesCount);
 arcf_entcfgheader_t* initEntHeader(uint32_t entCfgsCount);

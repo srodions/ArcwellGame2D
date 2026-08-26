@@ -7,7 +7,7 @@
 
 arcf_entry_t allEntries[16];
 
-void packMap_Tomb(FILE* arcFile, uint32_t rows, uint32_t columns, uint32_t* currentOffset, uint32_t* currentFilesCount)
+void packMap_Tomb(FILE* arcFile, uint32_t rows, uint32_t columns, uint32_t bgRows, uint32_t bgColumns, uint32_t* currentOffset, uint32_t* currentFilesCount)
 {
 	const char* design[] = {
 		"....................................",
@@ -26,7 +26,9 @@ void packMap_Tomb(FILE* arcFile, uint32_t rows, uint32_t columns, uint32_t* curr
 		"HHGHJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ",
 		"HHGHJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ",
 		"HHGHJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ",
-		"AAAAHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH"
+		"AAAAIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII",
+		"IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII",
+		"IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII"
 	};
 
 	int maxRows = sizeof(design) / sizeof(design[0]);
@@ -39,7 +41,10 @@ void packMap_Tomb(FILE* arcFile, uint32_t rows, uint32_t columns, uint32_t* curr
 	arcf_mapheader_t* mapDataHeader = (arcf_mapheader_t*) malloc(sizeof(arcf_mapheader_t) + totalTiles);
 	mapDataHeader->mapRows = rows;
 	mapDataHeader->mapColumns = columns;
+	mapDataHeader->bgRows = bgRows;
+	mapDataHeader->bgColumns = bgColumns;
 	mapDataHeader->tileAtlasIdx = 0;
+	mapDataHeader->bgAtlasIdx = 0;
 	char* mapData = mapDataHeader->data;
 
 	for(int y = 0; y < rows; y++)
@@ -175,6 +180,9 @@ void packNamesHeader(FILE* arcFile, uint32_t* currentOffset, uint32_t* currentFi
 	namesHeader->uiCount = 2;
 	memset(namesHeader->uiNames, 0, sizeof(namesHeader->uiNames));
 	strncpy(namesHeader->uiNames, "FNT HLTHBR", 256);
+	namesHeader->mapBgCount = 1;
+	memset(namesHeader->mapBgNames, 0, sizeof(namesHeader->mapBgNames));
+	strncpy(namesHeader->mapBgNames, "BGCMTRY", 256);
 
 	allEntries[*currentFilesCount].offsetToFile = *currentOffset;
 	allEntries[*currentFilesCount].lumpSize = (uint32_t) sizeof(arcf_namesentry_t);
