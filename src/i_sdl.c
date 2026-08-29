@@ -240,7 +240,7 @@ void I_HandleEvents(gamestate_t* pGameState, e_manager_t* pEntManager, inputstat
 		        gamepad = SDL_GameControllerOpen(event.cdevice.which);
 		        if (gamepad)
 		        {
-		        	printf("[INPUT] Controller %s connected\n", SDL_GameControllerName(gamepad));
+		        	printf("[INPUT]::(LOG) Controller '%s' connected\n", SDL_GameControllerName(gamepad));
 		        	pGameState->isGamepadAttached = true;
 		        }
 		    }
@@ -249,7 +249,7 @@ void I_HandleEvents(gamestate_t* pGameState, e_manager_t* pEntManager, inputstat
 		case SDL_CONTROLLERDEVICEREMOVED:
 		    if (gamepad && event.cdevice.which == SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(gamepad)))
 		    {
-		    	printf("[INPUT] Controller %s disconnected\n", SDL_GameControllerName(gamepad));
+		    	printf("[INPUT]::(LOG) Controller '%s' disconnected\n", SDL_GameControllerName(gamepad));
 		        SDL_GameControllerClose(gamepad);
 		        gamepad = NULL;
 		        pGameState->isGamepadAttached = false;
@@ -307,7 +307,7 @@ int I_LibInit()
 {
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_GAMECONTROLLER) < 0 || IMG_Init(IMG_INIT_PNG) < 0)
 	{
-		printf("[SDL_INIT] Error initializing SDL2 libraries\n");
+		printf("[SDL_INIT]::(ERR) Error initializing SDL2 libraries: '%s'\n", SDL_GetError());
 		return -1;
 	}
 
@@ -322,22 +322,33 @@ int I_WindowInit(gamestate_t* pGameState)
 {
 	pWindow = SDL_CreateWindow(
 		"Arcwell Game 2D | Alpha Build ver.0.1.1",
-		SDL_WINDOWPOS_CENTERED,
-		SDL_WINDOWPOS_CENTERED,
-		0, 0, SDL_WINDOW_FULLSCREEN_DESKTOP
+		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+		SCR_LOGICAL_WIDTH, SCR_LOGICAL_HEIGHT,
+		SDL_WINDOW_FULLSCREEN_DESKTOP
 	);
 
-	if (!pWindow) return -1;
+	if (!pWindow)
+	{
+		printf("[WINDOW_INIT]::(ERR) Error creating SDL2 window: '%s'\n", SDL_GetError());
+		return -1;
+	}
 
 	SDL_DisplayMode dMode;
 	int currentDisplayIndex = SDL_GetWindowDisplayIndex(pWindow);
 
 	if (SDL_GetDesktopDisplayMode(currentDisplayIndex, &dMode) == 0)
-		pGameState->targetFPS = dMode.refresh_rate > 0 ? dMode.refresh_rate : 60; // If there is an error fetching refresh rate - target FPS = 60
+	{
+		// If there is an error fetching refresh rate, then target FPS = 60
+		pGameState->targetFPS = dMode.refresh_rate > 0 ? dMode.refresh_rate : 60;
+	}
 	else
-		pGameState->targetFPS = 60; // Or if there is an error fetching screen mode, then target FPS is also 60
+	{
+		// Or if there is an error fetching screen mode, then target FPS is also 60
+		pGameState->targetFPS = 60;
+		printf("[DISPLAY]::(WRN) Error getting display mode: '%s'; targetFPS = 60\n", SDL_GetError());
+	}
 
-	pGameState->targetFrameTime = DOUBLE_TO_FIXED(1.0 / (double) pGameState->targetFPS);
+	pGameState->targetFrameTime = FIXED_ONE / pGameState->targetFPS;
 
 	return 0;
 }
@@ -358,17 +369,17 @@ int I_RendererInit()
 	// If accelerated renderer wasn't created - try to create software renderer
 	if (pRenderer == NULL)
 	{
-		printf("[RENDERER] Error creating GPU accelerated renderer: %s\n", SDL_GetError());
+		printf("[RENDERER]::(WRN) Error creating GPU accelerated renderer: '%s'\n", SDL_GetError());
 		pRenderer = SDL_CreateRenderer(pWindow, -1, SDL_RENDERER_SOFTWARE | SDL_RENDERER_PRESENTVSYNC);
 
 		if (pRenderer == NULL)
 		{
-			printf("[RENDERER] Error creating software renderer: %s\n", SDL_GetError());
+			printf("[RENDERER]::(ERR) Error creating software renderer: '%s'\n", SDL_GetError());
 			return -1;
 		}
-		else printf("[RENDERER] Software renderer created\n");
+		else printf("[RENDERER]::(LOG) Software renderer created\n");
 	}
-	else printf("[RENDERER] GPU accelerated renderer created\n");
+	else printf("[RENDERER]::(LOG) GPU accelerated renderer created\n");
 
 	SDL_RenderSetIntegerScale(pRenderer, SDL_TRUE);
 	SDL_RenderSetLogicalSize(pRenderer, SCR_LOGICAL_WIDTH, SCR_LOGICAL_HEIGHT);
@@ -383,7 +394,7 @@ int I_RendererInit()
 
 	if (!streaming_texture)
 	{
-		printf("[RENDERER] Error creating streaming texture: %s\n", SDL_GetError());
+		printf("[RENDERER]::(ERR) Error creating streaming texture: '%s'\n", SDL_GetError());
 		return -1;
 	}
 
