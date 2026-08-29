@@ -15,8 +15,10 @@ typedef struct GameState
 	int 			targetFPS;
 	int 			currentFPS;
 	bool 			isRunning;
+	bool			isGamepadAttached;
 	bool 			isPaused;
 	bool 			isDebugMode;
+	bool			isPlayerDead;
 } gamestate_t;
 
 typedef struct Rect

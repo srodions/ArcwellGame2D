@@ -18,6 +18,7 @@ typedef struct EntityCfgManager e_cfgmanager_t;
 void G_LoadEntityConfigs(e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager, FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable);
 void G_EntityInit(e_manager_t* pEntManager, int atlasSprIdx, int posX, int posY, int speed, int maxHP, int dlf);
 void G_UpdateEntity(gamestate_t* pGameState, e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager);
+void G_EntityRespawn(gamestate_t* pGameState, e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager);
 void G_EntityDirection(gamestate_t* pGameState, e_manager_t* pEntManager, int i);
 void G_EntityJump(gamestate_t* pGameState, e_manager_t* pEntManager, int index);
 void G_SetState(int index, e_manager_t* pEntManager, enum ENTITY_STATE state);

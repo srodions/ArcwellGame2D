@@ -93,9 +93,14 @@ void G_EntityHPControl(gamestate_t* pGameState, e_manager_t* pEntManager, int i)
 	if (pEntManager->hp[i] == 0 && pEntManager->state[i] != STATE_REMOVING)
 	{
 		if (i != PLAYER)
+		{
 			G_SetState(i, pEntManager, STATE_REMOVING);
+		}
 		else
+		{
 			pGameState->isPaused = true;
+			pGameState->isPlayerDead = true;
+		}
 	}
 }
 
@@ -124,6 +129,23 @@ void G_UpdateEntity(gamestate_t* pGameState, e_manager_t* pEntManager, e_cfgmana
 		G_EntityAttack(pEntManager, pEntCfgManager, i, PLAYER); // Entity attacks
 		G_EntityAttack(pEntManager, pEntCfgManager, PLAYER, i); // Player attacks
 		G_EntityHPControl(pGameState, pEntManager, i);
+	}
+}
+
+void G_EntityRespawn(gamestate_t* pGameState, e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager)
+{
+	pEntManager->entitiesCount = 0;
+
+	for (int i = 0; i < pEntCfgManager->cfgCount; ++i)
+	{
+		int posX = pEntCfgManager->configs[i].posX;
+		int posY = pEntCfgManager->configs[i].posY;
+		int speed = pEntCfgManager->configs[i].speed;
+		int maxHP = pEntCfgManager->configs[i].maxHp;
+		int atlasSprIdx = pEntCfgManager->configs[i].atlasSprIdx;
+		int deathLastFrames = pEntCfgManager->configs[i].deathLastFrames;
+
+		G_EntityInit(pEntManager, atlasSprIdx, posX, posY, speed, maxHP, deathLastFrames);
 	}
 }
 
@@ -338,6 +360,8 @@ void G_EntityJump(gamestate_t* pGameState, e_manager_t* pEntManager, int index)
 
 void G_SetState(int index, e_manager_t* pEntManager, enum ENTITY_STATE state)
 {
+	if (pEntManager->state[index] == state) return;
+
 	pEntManager->sprites[index].currentSprite = 0;
 	pEntManager->sprites[index].srcX = 0;
 	pEntManager->sprites[index].srcY = 0;

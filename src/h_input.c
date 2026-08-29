@@ -1,6 +1,7 @@
 #include "h_input.h"
 #include "g_entity.h"
 #include "p_physics.h"
+#include "g_gamestate.h"
 #include "typedefs.h"
 
 bool H_IsKeyHeld(const inputstate_t* input, inputmask_t button)
@@ -18,7 +19,7 @@ bool H_IsKeyJustReleased(const inputstate_t* input, inputmask_t button)
     return ((input->current & button) == 0) && ((input->previous & button) != 0);
 }
 
-void H_HandleKeyStates(gamestate_t* pGameState, e_manager_t* pEntManager, inputstate_t* input)
+void H_HandleKeyStates(gamestate_t* pGameState, e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager, inputstate_t* input)
 {
 	if (H_IsKeyJustPressed(input, INPUT_EXIT))
 		pGameState->isRunning = false;
@@ -26,7 +27,7 @@ void H_HandleKeyStates(gamestate_t* pGameState, e_manager_t* pEntManager, inputs
 	if (H_IsKeyJustPressed(input, INPUT_DEBUG))
 		pGameState->isDebugMode = !pGameState->isDebugMode;
 
-	if (H_IsKeyJustPressed(input, INPUT_PAUSE))
+	if (H_IsKeyJustPressed(input, INPUT_PAUSE) && !pGameState->isPlayerDead)
 		pGameState->isPaused = !pGameState->isPaused;
 
 	if (!pGameState->isPaused)
@@ -46,6 +47,11 @@ void H_HandleKeyStates(gamestate_t* pGameState, e_manager_t* pEntManager, inputs
 
 		if (H_IsKeyJustPressed(input, INPUT_ATTACK))
 			G_SetState(PLAYER, pEntManager, STATE_ATTACK);
+	}
+	else
+	{
+		if (H_IsKeyJustPressed(input, INPUT_USE))
+			G_GameRestart(pGameState, pEntManager, pEntCfgManager);
 	}
 }
 

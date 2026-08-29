@@ -33,7 +33,7 @@ int I_GameInit()
 
 	input.current = 0;
 	input.previous = 0;
-	gameState = G_GameInit();
+	gameState = G_GameStateInit();
 
 	entManager.entitiesCount = 0;
 	objManager.objCount = 0;
@@ -69,7 +69,7 @@ void update()
 	// Handle window events
 	I_HandleEvents(&gameState, &entManager, &input);
 	// Handle player input
-	H_HandleKeyStates(&gameState, &entManager, &input);
+	H_HandleKeyStates(&gameState, &entManager, &entCfgManager, &input);
 
 	if (!gameState.isPaused)
 	{

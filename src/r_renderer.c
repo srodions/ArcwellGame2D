@@ -338,16 +338,33 @@ void R_PushText(const char* text, int x, int y)
 
 void R_PushUI(gamestate_t* pGameState, e_manager_t* pEntManager)
 {
+	// HEALTH BAR
 	int yIndex = pEntManager->hp[PLAYER] * HP_BAR_SPR_H;
+
 	R_MoveAtlasSpriteToBuffer(r_uiAssets[HEALTH_BAR].pixels, HP_BAR_SPR_W, 20, 20, 0, yIndex, HP_BAR_SPR_W, HP_BAR_SPR_H, 0);
 
+	// DEBUG STATS
 	if (pGameState->isDebugMode)
 		R_PushText(pGameState->debugText, 20, 10);
 
-	if (pGameState->isPaused && pEntManager->hp[PLAYER] == 0)
-		R_PushText("GAME OVER", 116, 80);
-	else if (pGameState->isPaused)
-		R_PushText("PAUSE", 140, 80);
+	// PAUSE/GAME OVER TEXT
+	if (pGameState->isPaused)
+	{
+		if (pGameState->isPlayerDead)
+		{
+			const char* template = "Press '%c' to restart";
+			char currentBtn = pGameState->isGamepadAttached ? 'X' : 'J';
+			char resultStr[32];
+			snprintf(resultStr, sizeof(resultStr), template, currentBtn);
+
+			R_PushText("GAME OVER", 116, 80);
+			R_PushText(resultStr, 72, 100);
+		}
+		else
+		{
+			R_PushText("PAUSE", 140, 80);
+		}
+	}
 }
 
 void R_PushScene(gamestate_t* pGameState, map_manager_t* pMapManager, obj_manager_t* pObjManager, e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager)

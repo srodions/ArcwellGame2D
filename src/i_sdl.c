@@ -211,7 +211,7 @@ void I_HandleGamepadAxis(uint16_t* nextFrameInput)
  * These events can be: application's quit button event, any key pressed event,
  * any key released event, etc.
  */
-void I_HandleEvents(gamestate_t *pGameState, e_manager_t* pEntManager, inputstate_t* input)
+void I_HandleEvents(gamestate_t* pGameState, e_manager_t* pEntManager, inputstate_t* input)
 {
 	SDL_Event event;
 	input->previous = input->current;
@@ -239,7 +239,10 @@ void I_HandleEvents(gamestate_t *pGameState, e_manager_t* pEntManager, inputstat
 		    {
 		        gamepad = SDL_GameControllerOpen(event.cdevice.which);
 		        if (gamepad)
+		        {
 		        	printf("[INPUT] Controller %s connected\n", SDL_GameControllerName(gamepad));
+		        	pGameState->isGamepadAttached = true;
+		        }
 		    }
 		    break;
 
@@ -249,6 +252,7 @@ void I_HandleEvents(gamestate_t *pGameState, e_manager_t* pEntManager, inputstat
 		    	printf("[INPUT] Controller %s disconnected\n", SDL_GameControllerName(gamepad));
 		        SDL_GameControllerClose(gamepad);
 		        gamepad = NULL;
+		        pGameState->isGamepadAttached = false;
 		    }
 		    break;
 		case SDL_CONTROLLERBUTTONDOWN:
@@ -301,9 +305,11 @@ void I_FrameEnd(gamestate_t* pGameState, uint64_t* frameStart)
 
 int I_LibInit()
 {
-	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_GAMECONTROLLER) < 0
-	 || IMG_Init(IMG_INIT_PNG) < 0)
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_GAMECONTROLLER) < 0 || IMG_Init(IMG_INIT_PNG) < 0)
+	{
+		printf("[SDL_INIT] Error initializing SDL2 libraries\n");
 		return -1;
+	}
 
 	return 0;
 }

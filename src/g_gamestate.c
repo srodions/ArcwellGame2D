@@ -1,17 +1,20 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include "g_gamestate.h"
+#include "g_entity.h"
 #include "typedefs.h"
 
 /*
  * This method initializes structure with main parameters and states of the game.
  */
-gamestate_t G_GameInit()
+gamestate_t G_GameStateInit()
 {
     gamestate_t gameState = {
     	.isRunning = true,
 		.isPaused = false,
 		.isDebugMode = false,
+		.isPlayerDead = false,
+		.isGamepadAttached = false,
 		.currentFPS = 0
     };
 
@@ -33,4 +36,14 @@ void G_UpdateDebugStats(gamestate_t* pGameState, e_manager_t* pEntManager)
 		FIXED_TO_INT(pEntManager->transforms[PLAYER].logY),
 		pEntManager->hp[PLAYER]
 	);
+}
+
+void G_GameRestart(gamestate_t* pGameState, e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager)
+{
+	if (!pGameState->isPlayerDead) return;
+
+	G_EntityRespawn(pGameState, pEntManager, pEntCfgManager);
+
+	pGameState->isPaused = false;
+	pGameState->isPlayerDead = false;
 }
