@@ -546,4 +546,15 @@ void R_Destruct(arcf_namesentry_t* sprNamesHeader)
 		r_mapAssets[i].header = NULL;
 		r_mapAssets[i].pixels = NULL;
 	}
+
+	for (int i = 0; i < sprNamesHeader->mapBgCount; ++i)
+	{
+		if (r_mapBgAssets[i].rawData != NULL)
+		{
+			free(r_mapBgAssets[i].rawData);
+			r_mapBgAssets[i].rawData = NULL;
+		}
+		r_mapBgAssets[i].header = NULL;
+		r_mapBgAssets[i].pixels = NULL;
+	}
 }
