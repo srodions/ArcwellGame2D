@@ -35,7 +35,7 @@ arcf_entry_t* L_LoadLumpsTable(FILE* arcFile, arcf_header_t* pHeader)
 	fread(pTable, sizeof(arcf_entry_t), pHeader->lumpsCount, arcFile);
 
 	if (!pTable)
-		printf("[ARC_LOADER]::(ERR) Error loading lumps table\n");
+		printf("[ARC_LOADER]::(ERR) Error allocating memory for lumps table\n");
 
 	return pTable;
 }
@@ -61,7 +61,7 @@ void* L_LoadLump(FILE* arcFile, const char* lumpName, arcf_header_t* pHeader, ar
 	}
 
 	if (!buffer)
-		printf("[ARC_LOADER]::(ERR) Error loading lump: '%s'\n", lumpName);
+		printf("[ARC_LOADER]::(ERR) Error allocating memory for lump: '%s'\n", lumpName);
 
 	return buffer;
 }

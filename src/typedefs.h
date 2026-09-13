@@ -169,8 +169,8 @@ typedef struct Map
 
 typedef struct MapManager
 {
-	map_t*			maps;
-	int 			mapsCount;
+	map_t*			currentLocation;
+	int 			currentLocationIdx;
 } map_manager_t;
 
 typedef struct EntitySprite

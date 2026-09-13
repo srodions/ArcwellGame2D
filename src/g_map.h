@@ -13,7 +13,7 @@ typedef struct Map map_t;
 typedef struct ObjectManager obj_manager_t;
 typedef struct MapManager map_manager_t;
 
-map_t G_MapInit(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable, const char* name);
+map_t* G_MapInit(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable, const char* name);
 tile_t G_TileInit(int srcX, int srcY, int posX, int posY);
 void G_MapSetter(map_manager_t* pMapManager, FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable, const char* name);
 void G_ObjInit(obj_manager_t* pObjManager, int sprIndex, int bsx, int bsy, int btx, int bty, bool isAnim);

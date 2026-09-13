@@ -34,10 +34,9 @@ int I_GameInit()
 	input.current = 0;
 	input.previous = 0;
 	gameState = G_GameStateInit();
-
 	entManager.entitiesCount = 0;
 	objManager.objCount = 0;
-	mapManager.mapsCount = 0;
+	mapManager.currentLocationIdx = 0;
 	spawnTimer.reactionTime = ENTITY_SPAWN_TIME;
 
 	FILE* arcFile = fopen("assets.arc", "rb");
@@ -50,9 +49,15 @@ int I_GameInit()
 	// Loads sprites names table
 	uint32_t currentDataSize = 0;
 	sprNamesTable = (arcf_namesentry_t*) L_LoadLump(arcFile, "SPRNAMES", header, table, &currentDataSize);
+
+	if (!sprNamesTable)
+	{
+		printf("[GAME_INIT]::(ERR) Error loading sprite names table\n");
+		return -1;
+	}
+
 	R_LoadSpritesData(arcFile, header, table, sprNamesTable);
 
-	mapManager.maps = (map_t*) malloc(sizeof(map_t));
 	G_MapSetter(&mapManager, arcFile, header, table, "TOMB");
 	G_ObjSetter(arcFile, header, table, &objManager);
 	G_LoadEntityConfigs(&entManager, &entCfgManager, arcFile, header, table);
@@ -75,7 +80,7 @@ void update()
 	{
 		// Update physics
 		P_EntityFall(&entManager, &gameState);
-		P_EntityWallCollisionCheck(&mapManager, 0, &entManager, &gameState);
+		P_EntityWallCollisionCheck(&mapManager, &entManager, &gameState);
 		P_EntityToEntityCollisionCheck(&entManager, &gameState);
 		// Update transforms/AI
 		G_UpdateEntity(&gameState, &entManager, &entCfgManager);

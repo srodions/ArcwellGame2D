@@ -12,7 +12,7 @@
  * This new function is not compatible with Android platform
  * TODO: Use SDL I/O methods in future
  */
-map_t G_MapInit(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable, const char* name)
+map_t* G_MapInit(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable, const char* name)
 {
 	uint32_t currentFileSize = 0;
 	arcf_mapheader_t* mapDataHeader = (arcf_mapheader_t*) L_LoadLump(arcFile, name, pHeader, pTable, &currentFileSize);
@@ -23,14 +23,14 @@ map_t G_MapInit(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable, con
 	const int totalTiles = rows * columns;
 	char* mapData = mapDataHeader->data;
 
-	map_t location;
-	location.rows = rows;
-	location.columns = columns;
-	location.bgRows = mapDataHeader->bgRows;
-	location.bgColumns = mapDataHeader->bgColumns;
-	location.tileAtlasIdx = mapDataHeader->tileAtlasIdx;
-	location.bgAtlasIdx = mapDataHeader->bgAtlasIdx;
-	location.locationTiles = (tile_t*) malloc(totalTiles * sizeof(tile_t));
+	map_t* location = (map_t*) malloc(sizeof(map_t));
+	location->rows = rows;
+	location->columns = columns;
+	location->bgRows = mapDataHeader->bgRows;
+	location->bgColumns = mapDataHeader->bgColumns;
+	location->tileAtlasIdx = mapDataHeader->tileAtlasIdx;
+	location->bgAtlasIdx = mapDataHeader->bgAtlasIdx;
+	location->locationTiles = (tile_t*) malloc(totalTiles * sizeof(tile_t));
 
 	// WORKING WITH DATA
 	int tempY = 0;
@@ -50,7 +50,7 @@ map_t G_MapInit(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable, con
 	            srcY = (index / TLS_IN_ATLS_ROW) * TILE_SPR_SIZE; 	// Offset on Y (new line break after 5th tile)
 	        }
 
-	        location.locationTiles[y * columns + x] = G_TileInit(srcX, srcY, tempX, tempY);
+	        location->locationTiles[y * columns + x] = G_TileInit(srcX, srcY, tempX, tempY);
 	        tempX += TILE_SPR_SIZE;
 	    }
 
@@ -64,11 +64,9 @@ map_t G_MapInit(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable, con
 
 void G_MapSetter(map_manager_t* pMapManager, FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable, const char* name)
 {
-	int mapsCount = pMapManager->mapsCount;
+	pMapManager->currentLocation = G_MapInit(arcFile, pHeader, pTable, name);
 
-	pMapManager->maps[mapsCount] = G_MapInit(arcFile, pHeader, pTable, name);
-
-	++pMapManager->mapsCount;
+	++pMapManager->currentLocationIdx;
 }
 
 void G_ObjInit(obj_manager_t* pObjManager, int sprIndex, int bsx, int bsy, int btx, int bty, bool isAnim)

@@ -148,17 +148,17 @@ void R_MoveAtlasSpriteToBuffer(const uint32_t* pixels, int atlasW, int posX, int
     }
 }
 
-void R_PushBackground(map_manager_t* pMapManager, int activeMapIdx)
+void R_PushBackground(map_manager_t* pMapManager)
 {
-	map_t currentMap = pMapManager->maps[activeMapIdx];
-	int atlasIdx = currentMap.bgAtlasIdx;
+	map_t* currLoc = pMapManager->currentLocation;
+	int atlasIdx = currLoc->bgAtlasIdx;
 
 	int tempY = 0;
-	for (uint32_t y = 0; y < currentMap.bgRows; ++y)
+	for (uint32_t y = 0; y < currLoc->bgRows; ++y)
 	{
 		int tempX = 0;
 
-		for (uint32_t x = 0; x < currentMap.bgColumns; ++x)
+		for (uint32_t x = 0; x < currLoc->bgColumns; ++x)
 		{
 			int srcX = TILE_SPR_SIZE * x;
 			int srcY = TILE_SPR_SIZE * y;
@@ -172,7 +172,7 @@ void R_PushBackground(map_manager_t* pMapManager, int activeMapIdx)
 	}
 }
 
-void R_PushLocation(map_manager_t* pMapManager, int activeMapIdx, e_manager_t* pEntManager)
+void R_PushLocation(map_manager_t* pMapManager, e_manager_t* pEntManager)
 {
 	const int screenXCenter = SCR_LOGICAL_WIDTH / 2 - ENT_SPR_SIZE / 2;
 	const int screenYCenter = SCR_LOGICAL_HEIGHT / 2 - ENT_SPR_SIZE / 2;
@@ -180,20 +180,20 @@ void R_PushLocation(map_manager_t* pMapManager, int activeMapIdx, e_manager_t* p
 	int playerX = FIXED_TO_INT(pEntManager->transforms[PLAYER].logX);
 	int playerY = FIXED_TO_INT(pEntManager->transforms[PLAYER].logY);
 
-	map_t currentMap = pMapManager->maps[activeMapIdx];
-	int atlasIdx = currentMap.tileAtlasIdx;
+	map_t* currLoc = pMapManager->currentLocation;
+	int atlasIdx = currLoc->tileAtlasIdx;
 
-	for (uint32_t y = 0; y < currentMap.rows; ++y)
+	for (uint32_t y = 0; y < currLoc->rows; ++y)
 	{
-		for (uint32_t x = 0; x < currentMap.columns; ++x)
+		for (uint32_t x = 0; x < currLoc->columns; ++x)
 		{
-			int srcX = currentMap.locationTiles[y * currentMap.columns + x].srcX;
-			int srcY = currentMap.locationTiles[y * currentMap.columns + x].srcY;
+			int srcX = currLoc->locationTiles[y * currLoc->columns + x].srcX;
+			int srcY = currLoc->locationTiles[y * currLoc->columns + x].srcY;
 
 			if (srcX < 0 || srcY < 0) continue;
 
-			int screenX = currentMap.locationTiles[y * currentMap.columns + x].posX - playerX + screenXCenter;
-			int screenY = currentMap.locationTiles[y * currentMap.columns + x].posY - playerY + screenYCenter;
+			int screenX = currLoc->locationTiles[y * currLoc->columns + x].posX - playerX + screenXCenter;
+			int screenY = currLoc->locationTiles[y * currLoc->columns + x].posY - playerY + screenYCenter;
 
 			if (screenX + TILE_SPR_SIZE < 0
 				|| screenX >= SCR_LOGICAL_WIDTH
@@ -371,8 +371,8 @@ void R_PushScene(gamestate_t* pGameState, map_manager_t* pMapManager, obj_manage
 {
 	memset(r_screenBuffer, 0, sizeof(r_screenBuffer));	// Clears screen buffer
 
-	R_PushBackground(pMapManager, 0);
-	R_PushLocation(pMapManager, 0, pEntManager);
+	R_PushBackground(pMapManager);
+	R_PushLocation(pMapManager, pEntManager);
 	R_PushObject(pObjManager, pEntManager);
 	R_PushEntity(pEntManager, pEntCfgManager);
 	R_PushUI(pGameState, pEntManager);
@@ -503,6 +503,8 @@ void R_Anim_Death(e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager, int 
 
 void R_Destruct(arcf_namesentry_t* sprNamesHeader)
 {
+	if (!sprNamesHeader) return;
+
 	for (int i = 0; i < sprNamesHeader->objCount; ++i)
 	{
 		if (r_objAssets[i].rawData != NULL)

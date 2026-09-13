@@ -19,7 +19,7 @@ extern fixed_t 	skeleton_speed;
 extern fixed_t 	knockback_strength;
 
 void P_EntityFall(e_manager_t* pEntManager, gamestate_t* pGameState);
-void P_EntityWallCollisionCheck(map_manager_t* pMapManager, int activeMapIdx, e_manager_t* pEntManager, gamestate_t* pGameState);
+void P_EntityWallCollisionCheck(map_manager_t* pMapManager, e_manager_t* pEntManager, gamestate_t* pGameState);
 void P_EntityToEntityCollisionCheck(e_manager_t* pEntManager, gamestate_t* pGameState);
 bool P_IntersectRect(const rect_t* a, const rect_t* b, rect_t* result);
 
