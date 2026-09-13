@@ -40,21 +40,14 @@ int I_GameInit()
 	spawnTimer.reactionTime = ENTITY_SPAWN_TIME;
 
 	FILE* arcFile = fopen("assets.arc", "rb");
-	if (!arcFile) return -1;
+	if (!arcFile) printf("[GAME_INIT]::(ERR) Error opening assets file (may be moved or deleted)\n");
 	arcf_header_t* header = L_LoadHeader(arcFile);
-	if (!header) return -1;
 	arcf_entry_t* table = L_LoadLumpsTable(arcFile, header);
-	if (!table) return -1;
+	if (!arcFile || !header || !table) return -1;
 
 	// Loads sprites names table
 	uint32_t currentDataSize = 0;
 	sprNamesTable = (arcf_namesentry_t*) L_LoadLump(arcFile, "SPRNAMES", header, table, &currentDataSize);
-
-	if (!sprNamesTable)
-	{
-		printf("[GAME_INIT]::(ERR) Error loading sprite names table\n");
-		return -1;
-	}
 
 	R_LoadSpritesData(arcFile, header, table, sprNamesTable);
 

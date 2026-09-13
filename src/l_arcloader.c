@@ -9,34 +9,40 @@ arcf_header_t* L_LoadHeader(FILE* arcFile)
 {
 	if (!arcFile)
 	{
-		printf("[ARC_LOADER]::(ERR) Error loading assets file: 'The file is not opened for reading'\n");
+		printf("[ARC_LOADER]::(ERR) Error loading assets header: 'The assets file is not opened for reading'\n");
 		return NULL;
 	}
 
 	arcf_header_t* pHeader = malloc(sizeof(arcf_header_t));
 	fread(pHeader, sizeof(arcf_header_t), 1, arcFile);
 
-	if (strncmp(pHeader->signature, "ARCF", 4) != 0)
+	const char* correctSignature = "ARCF";
+	if (strncmp(pHeader->signature, correctSignature, 4) != 0)
 	{
-		printf("[ARC_LOADER]::(ERR) Error loading assets file: 'The file signature is not correct'\n");
+		printf("[ARC_LOADER]::(ERR) Error loading assets header: 'The assets file signature is not correct %s != %s'\n", pHeader->signature, correctSignature);
 		return NULL;
 	}
 
-	printf("[ARC_LOADER]::(LOG) Assets file loaded successfully\n");
+	printf("[ARC_LOADER]::(LOG) Assets header loaded successfully\n");
 	return pHeader;
 }
 
 arcf_entry_t* L_LoadLumpsTable(FILE* arcFile, arcf_header_t* pHeader)
 {
-	if (!arcFile) return NULL;
+	if (!arcFile)
+	{
+		printf("[ARC_LOADER]::(ERR) Error loading lumps table: 'The assets file is not opened for reading'\n");
+		return NULL;
+	}
 
 	fseek(arcFile, pHeader->offsetToLumpsTable, SEEK_SET);
 	arcf_entry_t* pTable = (arcf_entry_t*) malloc(sizeof(arcf_entry_t) * pHeader->lumpsCount);
 	fread(pTable, sizeof(arcf_entry_t), pHeader->lumpsCount, arcFile);
 
 	if (!pTable)
-		printf("[ARC_LOADER]::(ERR) Error allocating memory for lumps table\n");
+		printf("[ARC_LOADER]::(ERR) Error loading lumps table: 'Incorrect lumps count %d (Corrupted assets file)'\n", pHeader->lumpsCount);
 
+	printf("[ARC_LOADER]::(LOG) Lumps table loaded successfully\n");
 	return pTable;
 }
 
@@ -61,7 +67,7 @@ void* L_LoadLump(FILE* arcFile, const char* lumpName, arcf_header_t* pHeader, ar
 	}
 
 	if (!buffer)
-		printf("[ARC_LOADER]::(ERR) Error allocating memory for lump: '%s'\n", lumpName);
+		printf("[ARC_LOADER]::(ERR) Error loading lump: '%s'\n", lumpName);
 
 	return buffer;
 }

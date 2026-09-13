@@ -14,6 +14,8 @@ renderasset_t* r_uiAssets;
 
 void R_LoadSpritesData(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable, arcf_namesentry_t* pNamesHeader)
 {
+	if (!pNamesHeader) return;
+
     uint32_t currentDataSize = 0;
 
     r_objAssets = (renderasset_t*) malloc(pNamesHeader->objCount * sizeof(renderasset_t));
