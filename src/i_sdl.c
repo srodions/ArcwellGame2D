@@ -1,8 +1,8 @@
 
 #if defined(SDL2_X64)
 
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
+#include <SDL.h>
+#include <SDL_image.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -321,7 +321,7 @@ int I_LibInit()
 int I_WindowInit(gamestate_t* pGameState)
 {
 	pWindow = SDL_CreateWindow(
-		"Arcwell Game 2D | Alpha Build ver.0.1.1",
+		"Arcwell Game 2D | Alpha Build ver.1.0.0",
 		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
 		SCR_LOGICAL_WIDTH, SCR_LOGICAL_HEIGHT,
 		SDL_WINDOW_FULLSCREEN_DESKTOP
@@ -349,6 +349,7 @@ int I_WindowInit(gamestate_t* pGameState)
 	}
 
 	pGameState->targetFrameTime = FIXED_ONE / pGameState->targetFPS;
+	SDL_ShowCursor(SDL_DISABLE);
 
 	return 0;
 }
