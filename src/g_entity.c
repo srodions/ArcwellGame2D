@@ -10,17 +10,37 @@
 #include "fixed_math.h"
 #include "l_arcloader.h"
 
-void G_LoadEntityConfigs(e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager, FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable)
+int G_LoadEntityConfigs(e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager, FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable)
 {
 	uint32_t cfgEntrySize = 0;
 	arcf_entcfgheader_t* entHeader = (arcf_entcfgheader_t*) L_LoadLump(arcFile, "ENTITIES", pHeader, pTable, &cfgEntrySize);
 
+	if (!entHeader)
+	{
+		printf("[GAME_INIT]::(ERR) Failed to load ENTITIES config lump\n");
+		return -1;
+	}
+
 	int cfgCount = entHeader->cfgCount;
-	int capacity = cfgCount * sizeof(e_config_t);
+	if (cfgCount <= 0)
+	{
+		printf("[GAME_INIT]::(ERR) ENTITIES lump reports 0 configs\n");
+		free(entHeader);
+		return -1;
+	}
+
+	size_t capacity = (size_t) cfgCount * sizeof(e_config_t);
 
 	pEntCfgManager->configs = (e_config_t*) malloc(capacity);
+	if (!pEntCfgManager->configs)
+	{
+		printf("[GAME_INIT]::(ERR) Error allocating memory for entity configs\n");
+		free(entHeader);
+		return -1;
+	}
+
 	pEntCfgManager->cfgCount = cfgCount;
-	pEntCfgManager->capacity = capacity;
+	pEntCfgManager->capacity = (int) capacity;
 
 	memcpy(pEntCfgManager->configs, entHeader->items, capacity);
 
@@ -35,6 +55,9 @@ void G_LoadEntityConfigs(e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManage
 
 		G_EntityInit(pEntManager, atlasSprIdx, posX, posY, speed, maxHP, deathLastFrames);
 	}
+
+	free(entHeader);
+	return 0;
 }
 
 /*
@@ -47,7 +70,7 @@ void G_EntityInit(e_manager_t* pEntManager, int atlasSprIdx, int posX, int posY,
 
 	if (i >= MAX_ENTITIES) return;
 
-	pEntManager->rdLastDeathSprites[i] = rand() % dlf;
+	pEntManager->rdLastDeathSprites[i] = (dlf > 0) ? (rand() % dlf) : 0;
 	// Texture load
 	pEntManager->atlasSprIdx[i] = atlasSprIdx;
 	pEntManager->sprites[i].srcX = 0;
@@ -284,7 +307,10 @@ void G_AI_Chase(gamestate_t* pGameState, e_manager_t* pEntManager, e_cfgmanager_
 		}
 	}
 
-	int chaserAttackDist = pEntCfgManager->configs[pEntManager->atlasSprIdx[i]].attackDist;
+	int chaseCfgIdx = pEntManager->atlasSprIdx[i];
+	if (chaseCfgIdx < 0 || chaseCfgIdx >= pEntCfgManager->cfgCount) return;
+
+	int chaserAttackDist = pEntCfgManager->configs[chaseCfgIdx].attackDist;
 	fixed_t stopDist = INT_TO_FIXED(chaserAttackDist);
 
 	I_ReactionTimerStart(&pEntManager->aiTimer[i]);
@@ -333,7 +359,10 @@ void G_EntityAttack(e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager, in
 
 	int distance = abs(deltaX) + abs(deltaY);
 
-	e_config_t attackerCfg = pEntCfgManager->configs[pEntManager->atlasSprIdx[attackerId]];
+	int attackerCfgIdx = pEntManager->atlasSprIdx[attackerId];
+	if (attackerCfgIdx < 0 || attackerCfgIdx >= pEntCfgManager->cfgCount) return;
+
+	e_config_t attackerCfg = pEntCfgManager->configs[attackerCfgIdx];
 
 	if (distance <= attackerCfg.attackDist
 		&& !pEntManager->hasDamaged[attackerId]

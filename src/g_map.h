@@ -15,8 +15,8 @@ typedef struct MapManager map_manager_t;
 
 map_t* G_MapInit(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable, const char* name);
 tile_t G_TileInit(int srcX, int srcY, int posX, int posY);
-void G_MapSetter(map_manager_t* pMapManager, FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable, const char* name);
+int G_MapSetter(map_manager_t* pMapManager, FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable, const char* name);
 void G_ObjInit(obj_manager_t* pObjManager, int sprIndex, int bsx, int bsy, int btx, int bty, bool isAnim);
-void G_ObjSetter(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable, obj_manager_t* pObjManager);
+int G_ObjSetter(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable, obj_manager_t* pObjManager);
 
 #endif /* G_MAP_H_ */

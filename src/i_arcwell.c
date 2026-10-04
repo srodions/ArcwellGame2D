@@ -40,20 +40,74 @@ int I_GameInit()
 	spawnTimer.reactionTime = ENTITY_SPAWN_TIME;
 
 	FILE* arcFile = fopen("assets.arc", "rb");
-	if (!arcFile) printf("[GAME_INIT]::(ERR) Error opening assets file (may be moved or deleted)\n");
+	if (!arcFile)
+	{
+		printf("[GAME_INIT]::(ERR) Could not open 'assets.arc' in the current working directory.\n"
+			   "[GAME_INIT]::(ERR) Make sure you 'cd' into the game's folder before running the binary.\n");
+		return -1;
+	}
 	arcf_header_t* header = L_LoadHeader(arcFile);
+	if (!header)
+	{
+		fclose(arcFile);
+		return -1;
+	}
 	arcf_entry_t* table = L_LoadLumpsTable(arcFile, header);
-	if (!arcFile || !header || !table) return -1;
+	if (!table)
+	{
+		fclose(arcFile);
+		free(header);
+		return -1;
+	}
 
 	// Loads sprites names table
 	uint32_t currentDataSize = 0;
 	sprNamesTable = (arcf_namesentry_t*) L_LoadLump(arcFile, "SPRNAMES", header, table, &currentDataSize);
 
-	R_LoadSpritesData(arcFile, header, table, sprNamesTable);
+	if (!sprNamesTable)
+	{
+		printf("[GAME_INIT]::(ERR) Error loading sprite names table\n");
+		fclose(arcFile);
+		free(header);
+		free(table);
+		return -1;
+	}
 
-	G_MapSetter(&mapManager, arcFile, header, table, "TOMB");
-	G_ObjSetter(arcFile, header, table, &objManager);
-	G_LoadEntityConfigs(&entManager, &entCfgManager, arcFile, header, table);
+	if (R_LoadSpritesData(arcFile, header, table, sprNamesTable) < 0)
+	{
+		printf("[GAME_INIT]::(ERR) Error loading sprite render data\n");
+		fclose(arcFile);
+		free(header);
+		free(table);
+		return -1;
+	}
+
+	if (G_MapSetter(&mapManager, arcFile, header, table, "TOMB") < 0)
+	{
+		printf("[GAME_INIT]::(ERR) Error loading starting map 'TOMB'\n");
+		fclose(arcFile);
+		free(header);
+		free(table);
+		return -1;
+	}
+
+	if (G_ObjSetter(arcFile, header, table, &objManager) < 0)
+	{
+		printf("[GAME_INIT]::(ERR) Error loading map objects\n");
+		fclose(arcFile);
+		free(header);
+		free(table);
+		return -1;
+	}
+
+	if (G_LoadEntityConfigs(&entManager, &entCfgManager, arcFile, header, table) < 0)
+	{
+		printf("[GAME_INIT]::(ERR) Error loading entity configs\n");
+		fclose(arcFile);
+		free(header);
+		free(table);
+		return -1;
+	}
 
 	fclose(arcFile);
 	free(header);

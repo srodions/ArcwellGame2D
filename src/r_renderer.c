@@ -12,17 +12,41 @@ renderasset_t* r_objAssets;
 renderasset_t* r_entAssets;
 renderasset_t* r_uiAssets;
 
-void R_LoadSpritesData(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable, arcf_namesentry_t* pNamesHeader)
+static uint32_t r_objAssetsCount = 0;
+static uint32_t r_entAssetsCount = 0;
+static uint32_t r_mapAssetsCount = 0;
+static uint32_t r_uiAssetsCount = 0;
+static uint32_t r_mapBgAssetsCount = 0;
+
+int R_LoadSpritesData(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable, arcf_namesentry_t* pNamesHeader)
 {
-	if (!pNamesHeader) return;
+	if (!pNamesHeader) return -1;
 
     uint32_t currentDataSize = 0;
 
-    r_objAssets = (renderasset_t*) malloc(pNamesHeader->objCount * sizeof(renderasset_t));
-    r_entAssets = (renderasset_t*) malloc(pNamesHeader->entCount * sizeof(renderasset_t));
-    r_mapAssets = (renderasset_t*) malloc(pNamesHeader->mapCount * sizeof(renderasset_t));
-    r_uiAssets = (renderasset_t*) malloc(pNamesHeader->uiCount * sizeof(renderasset_t));
-    r_mapBgAssets = (renderasset_t*) malloc(pNamesHeader->mapBgCount * sizeof(renderasset_t));
+    pNamesHeader->objNames[sizeof(pNamesHeader->objNames) - 1] = '\0';
+	pNamesHeader->entNames[sizeof(pNamesHeader->entNames) - 1] = '\0';
+	pNamesHeader->mapNames[sizeof(pNamesHeader->mapNames) - 1] = '\0';
+	pNamesHeader->uiNames[sizeof(pNamesHeader->uiNames) - 1] = '\0';
+	pNamesHeader->mapBgNames[sizeof(pNamesHeader->mapBgNames) - 1] = '\0';
+
+	r_objAssets   = (renderasset_t*) calloc(pNamesHeader->objCount ? pNamesHeader->objCount : 1, sizeof(renderasset_t));
+	r_entAssets   = (renderasset_t*) calloc(pNamesHeader->entCount ? pNamesHeader->entCount : 1, sizeof(renderasset_t));
+	r_mapAssets   = (renderasset_t*) calloc(pNamesHeader->mapCount ? pNamesHeader->mapCount : 1, sizeof(renderasset_t));
+	r_uiAssets    = (renderasset_t*) calloc(pNamesHeader->uiCount ? pNamesHeader->uiCount : 1, sizeof(renderasset_t));
+	r_mapBgAssets = (renderasset_t*) calloc(pNamesHeader->mapBgCount ? pNamesHeader->mapBgCount : 1, sizeof(renderasset_t));
+
+	if (!r_objAssets || !r_entAssets || !r_mapAssets || !r_uiAssets || !r_mapBgAssets)
+	{
+		printf("[RENDERER]::(ERR) Error allocating asset tables\n");
+		return -1;
+	}
+
+	r_objAssetsCount   = pNamesHeader->objCount;
+	r_entAssetsCount   = pNamesHeader->entCount;
+	r_mapAssetsCount   = pNamesHeader->mapCount;
+	r_uiAssetsCount    = pNamesHeader->uiCount;
+	r_mapBgAssetsCount = pNamesHeader->mapBgCount;
 
     // OBJECTS
     char *objName = strtok(pNamesHeader->objNames, " ");
@@ -32,8 +56,15 @@ void R_LoadSpritesData(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTab
     	if (objName == NULL) break;
 
 		r_objAssets[i].rawData = L_LoadLump(arcFile, objName, pHeader, pTable, &currentDataSize);
-		r_objAssets[i].header  = (arcf_spriteheader_t*) r_objAssets[i].rawData;
-		r_objAssets[i].pixels  = (uint32_t*) (r_objAssets[i].header + 1);
+		if (r_objAssets[i].rawData)
+		{
+			r_objAssets[i].header  = (arcf_spriteheader_t*) r_objAssets[i].rawData;
+			r_objAssets[i].pixels  = (uint32_t*) (r_objAssets[i].header + 1);
+		}
+		else
+		{
+			printf("[RENDERER]::(ERR) Failed to load object sprite '%s' (index %d)\n", objName, i);
+		}
 
 		objName = strtok(NULL, " ");
     }
@@ -46,8 +77,15 @@ void R_LoadSpritesData(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTab
     	if (entName == NULL) break;
 
 		r_entAssets[i].rawData = L_LoadLump(arcFile, entName, pHeader, pTable, &currentDataSize);
-		r_entAssets[i].header  = (arcf_spriteheader_t*) r_entAssets[i].rawData;
-		r_entAssets[i].pixels  = (uint32_t*) (r_entAssets[i].header + 1);
+		if (r_entAssets[i].rawData)
+		{
+			r_entAssets[i].header  = (arcf_spriteheader_t*) r_entAssets[i].rawData;
+			r_entAssets[i].pixels  = (uint32_t*) (r_entAssets[i].header + 1);
+		}
+		else
+		{
+			printf("[RENDERER]::(ERR) Failed to load entity sprite '%s' (index %d)\n", entName, i);
+		}
 
 		entName = strtok(NULL, " ");
     }
@@ -60,8 +98,15 @@ void R_LoadSpritesData(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTab
 		if (mapBgName == NULL) break;
 
 		r_mapBgAssets[i].rawData = L_LoadLump(arcFile, mapBgName, pHeader, pTable, &currentDataSize);
-		r_mapBgAssets[i].header  = (arcf_spriteheader_t*) r_mapBgAssets[i].rawData;
-		r_mapBgAssets[i].pixels  = (uint32_t*) (r_mapBgAssets[i].header + 1);
+		if (r_mapBgAssets[i].rawData)
+		{
+			r_mapBgAssets[i].header  = (arcf_spriteheader_t*) r_mapBgAssets[i].rawData;
+			r_mapBgAssets[i].pixels  = (uint32_t*) (r_mapBgAssets[i].header + 1);
+		}
+		else
+		{
+			printf("[RENDERER]::(ERR) Failed to load map background '%s' (index %d)\n", mapBgName, i);
+		}
 
 		mapBgName = strtok(NULL, " ");
 	}
@@ -74,8 +119,15 @@ void R_LoadSpritesData(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTab
     	if (mapName == NULL) break;
 
 		r_mapAssets[i].rawData = L_LoadLump(arcFile, mapName, pHeader, pTable, &currentDataSize);
-		r_mapAssets[i].header  = (arcf_spriteheader_t*) r_mapAssets[i].rawData;
-		r_mapAssets[i].pixels  = (uint32_t*) (r_mapAssets[i].header + 1);
+		if (r_mapAssets[i].rawData)
+		{
+			r_mapAssets[i].header  = (arcf_spriteheader_t*) r_mapAssets[i].rawData;
+			r_mapAssets[i].pixels  = (uint32_t*) (r_mapAssets[i].header + 1);
+		}
+		else
+		{
+			printf("[RENDERER]::(ERR) Failed to load map atlas '%s' (index %d)\n", mapName, i);
+		}
 
 		mapName = strtok(NULL, " ");
 	}
@@ -88,11 +140,20 @@ void R_LoadSpritesData(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTab
         if (uiName == NULL) break;
 
         r_uiAssets[i].rawData = L_LoadLump(arcFile, uiName, pHeader, pTable, &currentDataSize);
-        r_uiAssets[i].header  = (arcf_spriteheader_t*) r_uiAssets[i].rawData;
-        r_uiAssets[i].pixels  = (uint32_t*) (r_uiAssets[i].header + 1);
+        if (r_uiAssets[i].rawData)
+		{
+			r_uiAssets[i].header  = (arcf_spriteheader_t*) r_uiAssets[i].rawData;
+			r_uiAssets[i].pixels  = (uint32_t*) (r_uiAssets[i].header + 1);
+		}
+        else
+		{
+			printf("[RENDERER]::(ERR) Failed to load UI sprite '%s' (index %d)\n", uiName, i);
+		}
 
         uiName = strtok(NULL, " ");
     }
+
+    return 0;
 }
 
 void R_MoveSpriteToBuffer(const uint32_t* pixels, int spriteW, int spriteH, int posX, int posY)
@@ -153,7 +214,13 @@ void R_MoveAtlasSpriteToBuffer(const uint32_t* pixels, int atlasW, int posX, int
 void R_PushBackground(map_manager_t* pMapManager, e_manager_t* pEntManager)
 {
     map_t* currLoc = pMapManager->currentLocation;
-    int atlasIdx = currLoc->bgAtlasIdx;
+    if (!currLoc) return;
+
+    uint32_t atlasIdx = currLoc->bgAtlasIdx;
+
+    if (atlasIdx >= r_mapBgAssetsCount) return;
+	if (!r_mapBgAssets[atlasIdx].header || !r_mapBgAssets[atlasIdx].pixels) return;
+
     int atlasW = r_mapBgAssets[atlasIdx].header->spriteW;
 
     int playerX = FIXED_TO_INT(pEntManager->transforms[PLAYER].logX);
@@ -229,7 +296,13 @@ void R_PushLocation(map_manager_t* pMapManager, e_manager_t* pEntManager)
 	int screenWorldMaxY = screenWorldMinY + SCR_LOGICAL_HEIGHT;
 
 	map_t* currLoc = pMapManager->currentLocation;
-	int atlasIdx = currLoc->tileAtlasIdx;
+	if (!currLoc || !currLoc->locationTiles) return;
+
+	uint32_t atlasIdx = currLoc->tileAtlasIdx;
+
+	if (atlasIdx >= r_mapAssetsCount) return;
+	if (!r_mapAssets[atlasIdx].header || !r_mapAssets[atlasIdx].pixels) return;
+
 	int atlasW = r_mapAssets[atlasIdx].header->spriteW;
 
 	int startX = screenWorldMinX / TILE_SPR_SIZE;
@@ -298,6 +371,8 @@ void R_PushObject(obj_manager_t* pObjManager, e_manager_t* pEntManager)
 		int screenY = objY - playerY + screenYCenter;
 		int sprIndex = pObjManager->sprIndex[i];
 
+		if (sprIndex < 0 || (uint32_t) sprIndex >= r_objAssetsCount) continue;
+
 		if (pObjManager->isAnimated[i])
 		{
 			I_ReactionTimerStart(&pObjManager->animTimer[i]);
@@ -310,6 +385,8 @@ void R_PushObject(obj_manager_t* pObjManager, e_manager_t* pEntManager)
 				I_ReactionTimerEnd(&pObjManager->animTimer[i]);
 			}
 		}
+
+		if (!r_objAssets[sprIndex].header || !r_objAssets[sprIndex].pixels) continue;
 
 		int srcX = pObjManager->sprites[i].srcX;
 		int srcY = pObjManager->sprites[i].srcY;
@@ -379,6 +456,10 @@ void R_PushEntity(e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager)
 		int screenY = entityY - playerY + screenYCenter;
 		int entityFlip = pEntManager->transforms[i].flip;
 		int atlasIdx = pEntManager->atlasSprIdx[i];
+
+		if (atlasIdx < 0 || (uint32_t) atlasIdx >= r_entAssetsCount) continue;
+		if (!r_entAssets[atlasIdx].header || !r_entAssets[atlasIdx].pixels) continue;
+
 		int srcX = pEntManager->sprites[i].srcX;
 		int srcY = pEntManager->sprites[i].srcY;
 		int atlasW = r_entAssets[atlasIdx].header->spriteW;
@@ -451,9 +532,19 @@ void R_PushScene(gamestate_t* pGameState, map_manager_t* pMapManager, obj_manage
 	R_PushUI(pGameState, pEntManager);
 }
 
+static inline const e_config_t* R_GetEntityConfig(e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager, int i)
+{
+	int cfgIdx = pEntManager->atlasSprIdx[i];
+	if (cfgIdx < 0 || cfgIdx >= pEntCfgManager->cfgCount) return NULL;
+	return &pEntCfgManager->configs[cfgIdx];
+}
+
 void R_Anim_Attack(e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager, int i)
 {
 	pEntManager->isMoving[i] = false;
+
+	const e_config_t* cfg = R_GetEntityConfig(pEntManager, pEntCfgManager, i);
+	if (!cfg) return;
 
 	I_ReactionTimerStart(&pEntManager->animTimer[i]);
 
@@ -461,7 +552,7 @@ void R_Anim_Attack(e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager, int
 	{
 		++(pEntManager->sprites[i].currentSprite);
 
-		if (pEntManager->sprites[i].currentSprite >= pEntCfgManager->configs[i].attackFramesCount)
+		if (pEntManager->sprites[i].currentSprite >= cfg->attackFramesCount)
 		{
 			G_SetState(i, pEntManager, STATE_NONE);
 			pEntManager->hasDamaged[i] = false;
@@ -471,7 +562,7 @@ void R_Anim_Attack(e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager, int
 		}
 
 		pEntManager->sprites[i].srcX = ENT_SPR_SIZE * pEntManager->sprites[i].currentSprite;
-		pEntManager->sprites[i].srcY = ENT_SPR_SIZE * pEntCfgManager->configs[i].attackFramesRow;
+		pEntManager->sprites[i].srcY = ENT_SPR_SIZE * cfg->attackFramesRow;
 
 		I_ReactionTimerEnd(&pEntManager->animTimer[i]);
 	}
@@ -479,19 +570,24 @@ void R_Anim_Attack(e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager, int
 
 void R_Anim_Walk(e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager, int i)
 {
+	const e_config_t* cfg = R_GetEntityConfig(pEntManager, pEntCfgManager, i);
+	if (!cfg) return;
+
+	if (cfg->walkFramesCount == 0 || cfg->stayFramesCount == 0) return;
+
 	I_ReactionTimerStart(&pEntManager->animTimer[i]);
 
 	if (I_IsTimeToReact(&pEntManager->animTimer[i]))
 	{
 		pEntManager->sprites[i].currentSprite = pEntManager->isMoving[i]
-			? (pEntManager->sprites[i].currentSprite + 1) % pEntCfgManager->configs[i].walkFramesCount
-			: (pEntManager->sprites[i].currentSprite + 1) % pEntCfgManager->configs[i].stayFramesCount;
+			? (pEntManager->sprites[i].currentSprite + 1) % cfg->walkFramesCount
+			: (pEntManager->sprites[i].currentSprite + 1) % cfg->stayFramesCount;
 
 		pEntManager->sprites[i].srcX = ENT_SPR_SIZE * pEntManager->sprites[i].currentSprite;
 
 		pEntManager->sprites[i].srcY = pEntManager->isMoving[i]
-			? ENT_SPR_SIZE * pEntCfgManager->configs[i].walkFramesRow
-			: ENT_SPR_SIZE * pEntCfgManager->configs[i].stayFramesRow;
+			? ENT_SPR_SIZE * cfg->walkFramesRow
+			: ENT_SPR_SIZE * cfg->stayFramesRow;
 
 		I_ReactionTimerEnd(&pEntManager->animTimer[i]);
 	}
@@ -501,13 +597,16 @@ void R_Anim_Spawn(e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager, int 
 {
 	pEntManager->isMoving[i] = false;
 
+	const e_config_t* cfg = R_GetEntityConfig(pEntManager, pEntCfgManager, i);
+	if (!cfg) return;
+
 	I_ReactionTimerStart(&pEntManager->animTimer[i]);
 
 	if (I_IsTimeToReact(&pEntManager->animTimer[i]))
 	{
 		++(pEntManager->sprites[i].currentSprite);
 
-		if (pEntManager->sprites[i].currentSprite >= pEntCfgManager->configs[i].spawnFramesCount)
+		if (pEntManager->sprites[i].currentSprite >= cfg->spawnFramesCount)
 		{
 			G_SetState(i, pEntManager, STATE_NONE);
 			I_ReactionTimerReset(&pEntManager->animTimer[i]);
@@ -515,7 +614,7 @@ void R_Anim_Spawn(e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager, int 
 		}
 
 		pEntManager->sprites[i].srcX = ENT_SPR_SIZE * pEntManager->sprites[i].currentSprite;
-		pEntManager->sprites[i].srcY = ENT_SPR_SIZE * pEntCfgManager->configs[i].spawnFramesRow;
+		pEntManager->sprites[i].srcY = ENT_SPR_SIZE * cfg->spawnFramesRow;
 
 		I_ReactionTimerEnd(&pEntManager->animTimer[i]);
 	}
@@ -525,13 +624,16 @@ void R_Anim_Anger(e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager, int 
 {
 	pEntManager->isMoving[i] = false;
 
+	const e_config_t* cfg = R_GetEntityConfig(pEntManager, pEntCfgManager, i);
+	if (!cfg) return;
+
 	I_ReactionTimerStart(&pEntManager->animTimer[i]);
 
 	if (I_IsTimeToReact(&pEntManager->animTimer[i]))
 	{
 		++(pEntManager->sprites[i].currentSprite);
 
-		if (pEntManager->sprites[i].currentSprite >= pEntCfgManager->configs[i].angerFramesCount)
+		if (pEntManager->sprites[i].currentSprite >= cfg->angerFramesCount)
 		{
 			G_SetState(i, pEntManager, STATE_NONE);
 			I_ReactionTimerReset(&pEntManager->animTimer[i]);
@@ -539,7 +641,7 @@ void R_Anim_Anger(e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager, int 
 		}
 
 		pEntManager->sprites[i].srcX = ENT_SPR_SIZE * pEntManager->sprites[i].currentSprite;
-		pEntManager->sprites[i].srcY = ENT_SPR_SIZE * pEntCfgManager->configs[i].angerFramesRow;
+		pEntManager->sprites[i].srcY = ENT_SPR_SIZE * cfg->angerFramesRow;
 
 		I_ReactionTimerEnd(&pEntManager->animTimer[i]);
 	}
@@ -549,26 +651,29 @@ void R_Anim_Death(e_manager_t* pEntManager, e_cfgmanager_t* pEntCfgManager, int 
 {
 	pEntManager->isMoving[i] = false;
 
+	const e_config_t* cfg = R_GetEntityConfig(pEntManager, pEntCfgManager, i);
+	if (!cfg) return;
+
 	I_ReactionTimerStart(&pEntManager->animTimer[i]);
 
 	if (I_IsTimeToReact(&pEntManager->animTimer[i]))
 	{
 		++(pEntManager->sprites[i].currentSprite);
 
-		if (pEntManager->sprites[i].currentSprite >= pEntCfgManager->configs[i].deathFramesCount)
+		if (pEntManager->sprites[i].currentSprite >= cfg->deathFramesCount)
 		{
 			I_ReactionTimerReset(&pEntManager->animTimer[i]);
 
 			int randomLastSprite = pEntManager->rdLastDeathSprites[i];
 
-			pEntManager->sprites[i].currentSprite = (pEntCfgManager->configs[i].deathFramesCount - 1) + randomLastSprite;
+			pEntManager->sprites[i].currentSprite = (cfg->deathFramesCount - 1) + randomLastSprite;
 			pEntManager->sprites[i].srcX = ENT_SPR_SIZE * pEntManager->sprites[i].currentSprite;
-			pEntManager->sprites[i].srcY = ENT_SPR_SIZE * pEntCfgManager->configs[i].deathFramesRow;
+			pEntManager->sprites[i].srcY = ENT_SPR_SIZE * cfg->deathFramesRow;
 			return;
 		}
 
 		pEntManager->sprites[i].srcX = ENT_SPR_SIZE * pEntManager->sprites[i].currentSprite;
-		pEntManager->sprites[i].srcY = ENT_SPR_SIZE * pEntCfgManager->configs[i].deathFramesRow;
+		pEntManager->sprites[i].srcY = ENT_SPR_SIZE * cfg->deathFramesRow;
 
 		I_ReactionTimerEnd(&pEntManager->animTimer[i]);
 	}

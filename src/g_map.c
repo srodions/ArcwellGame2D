@@ -17,13 +17,35 @@ map_t* G_MapInit(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable, co
 	uint32_t currentFileSize = 0;
 	arcf_mapheader_t* mapDataHeader = (arcf_mapheader_t*) L_LoadLump(arcFile, name, pHeader, pTable, &currentFileSize);
 
+	if (!mapDataHeader)
+	{
+		printf("[MAP_LOADER]::(ERR) Failed to load map lump '%s'\n", name);
+		return NULL;
+	}
+
 	uint32_t rows = mapDataHeader->mapRows;
 	uint32_t columns = mapDataHeader->mapColumns;
 
-	const int totalTiles = rows * columns;
+	const uint32_t totalTiles = rows * columns;
+
+	uint64_t requiredSize = (uint64_t) sizeof(arcf_mapheader_t) + (uint64_t) totalTiles;
+	if (rows == 0 || columns == 0 || requiredSize > currentFileSize)
+	{
+		printf("[MAP_LOADER]::(ERR) Map lump '%s' has invalid or truncated tile data\n", name);
+		free(mapDataHeader);
+		return NULL;
+	}
+
 	char* mapData = mapDataHeader->data;
 
 	map_t* location = (map_t*) malloc(sizeof(map_t));
+	if (!location)
+	{
+		printf("[MAP_LOADER]::(ERR) Error allocating memory for map location\n");
+		free(mapDataHeader);
+		return NULL;
+	}
+
 	location->rows = rows;
 	location->columns = columns;
 	location->bgRows = mapDataHeader->bgRows;
@@ -31,6 +53,14 @@ map_t* G_MapInit(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable, co
 	location->tileAtlasIdx = mapDataHeader->tileAtlasIdx;
 	location->bgAtlasIdx = mapDataHeader->bgAtlasIdx;
 	location->locationTiles = (tile_t*) malloc(totalTiles * sizeof(tile_t));
+
+	if (!location->locationTiles)
+	{
+		printf("[MAP_LOADER]::(ERR) Error allocating memory for map tiles\n");
+		free(location);
+		free(mapDataHeader);
+		return NULL;
+	}
 
 	// WORKING WITH DATA
 	int tempY = 0;
@@ -57,16 +87,19 @@ map_t* G_MapInit(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable, co
 	    tempY += TILE_SPR_SIZE;
 	}
 
-	if (mapDataHeader != NULL) free(mapDataHeader);
+	free(mapDataHeader);
 
 	return location;
 }
 
-void G_MapSetter(map_manager_t* pMapManager, FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable, const char* name)
+int G_MapSetter(map_manager_t* pMapManager, FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable, const char* name)
 {
 	pMapManager->currentLocation = G_MapInit(arcFile, pHeader, pTable, name);
 
+	if (!pMapManager->currentLocation) return -1;
+
 	++pMapManager->currentLocationIdx;
+	return 0;
 }
 
 void G_ObjInit(obj_manager_t* pObjManager, int sprIndex, int bsx, int bsy, int btx, int bty, bool isAnim)
@@ -87,18 +120,43 @@ void G_ObjInit(obj_manager_t* pObjManager, int sprIndex, int bsx, int bsy, int b
 	++pObjManager->objCount;
 }
 
-void G_ObjSetter(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable, obj_manager_t* pObjManager)
+int G_ObjSetter(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable, obj_manager_t* pObjManager)
 {
 	uint32_t objEntrySize = 0;
 	arcf_objheader_t* objHeader = (arcf_objheader_t*) L_LoadLump(arcFile, "OBJECTS", pHeader, pTable, &objEntrySize);
 
+	if (!objHeader)
+	{
+		printf("[GAME_INIT]::(ERR) Failed to load OBJECTS lump\n");
+		return -1;
+	}
+
 	int objCount = objHeader->objCount;
+
+	if (objCount <= 0)
+	{
+		pObjManager->transforms = NULL;
+		pObjManager->sprites = NULL;
+		pObjManager->sprIndex = NULL;
+		pObjManager->animTimer = NULL;
+		pObjManager->isAnimated = NULL;
+		free(objHeader);
+		return 0;
+	}
 
 	pObjManager->transforms = (obj_tform_t*) malloc(objCount * sizeof(obj_tform_t));
 	pObjManager->sprites = (obj_sprite_t*) malloc(objCount * sizeof(obj_sprite_t));
 	pObjManager->sprIndex = (int*) malloc(objCount * sizeof(int));
 	pObjManager->animTimer = (rtimer_t*) malloc(objCount * sizeof(rtimer_t));
 	pObjManager->isAnimated = (bool*) malloc(objCount * sizeof(bool));
+
+	if (!pObjManager->transforms || !pObjManager->sprites || !pObjManager->sprIndex
+		|| !pObjManager->animTimer || !pObjManager->isAnimated)
+	{
+		printf("[GAME_INIT]::(ERR) Error allocating memory for objects\n");
+		free(objHeader);
+		return -1;
+	}
 
 	for (int i = 0; i < objCount; ++i)
 	{
@@ -111,6 +169,9 @@ void G_ObjSetter(FILE* arcFile, arcf_header_t* pHeader, arcf_entry_t* pTable, ob
 
 		G_ObjInit(pObjManager, si, bsx, bsy, btx, bty, isAnim);
 	}
+
+	free(objHeader);
+	return 0;
 }
 
 tile_t G_TileInit(int srcX, int srcY, int posX, int posY)

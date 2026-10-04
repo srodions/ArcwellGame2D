@@ -39,6 +39,8 @@ void P_EntityFall(e_manager_t* pEntManager, gamestate_t* pGameState)
  */
 void P_EntityWallCollisionCheck(map_manager_t* pMapManager, e_manager_t* pEntManager, gamestate_t* pGameState)
 {
+	if (!pMapManager->currentLocation) return;
+
 	const int mapWidth = pMapManager->currentLocation->columns * TILE_SPR_SIZE;
 
 	const int screenXCenter = SCR_LOGICAL_WIDTH / 2 - ENT_SPR_SIZE / 2;
