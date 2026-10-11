@@ -1,4 +1,6 @@
 Debug/
+src/build/
+src/.qtcreator/
 Release/
 .settings/
 .cproject
